@@ -26,8 +26,12 @@ module Norm
       describe 'extension' do
         subject { extender }
 
-        it 'dispatches to a load method for a subclass if necessary' do
+        it 'dispatches to a load method for an ancestor if necessary' do
           subject.load(42).must_equal 'load_Numeric'
+        end
+
+        it 'loads nil as nil' do
+          subject.load(nil).must_equal nil
         end
 
         it 'caches method dispatch information for subsequent calls' do

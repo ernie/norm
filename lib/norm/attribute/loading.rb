@@ -36,6 +36,8 @@ module Norm
         object
       end
 
+      alias :load_NilClass :noop
+
     end
   end
 end
