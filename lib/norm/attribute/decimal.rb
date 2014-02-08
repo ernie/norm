@@ -1,6 +1,4 @@
 require 'bigdecimal'
-require 'delegate'
-
 module Norm
   module Attribute
     class Decimal
