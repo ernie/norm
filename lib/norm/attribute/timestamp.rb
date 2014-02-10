@@ -5,8 +5,12 @@ module Norm
     class Timestamp < DateTime
       extend Loading
 
+      def sec_fraction
+        super.round(6)
+      end
+
       def to_s
-        strftime('%Y-%m-%d %H:%M:%S%z')
+        strftime('%Y-%m-%d %H:%M:%S.%6N%z')
       end
 
       class << self
@@ -15,9 +19,11 @@ module Norm
 
         def cast_to_datetime(object, *args)
           datetime = object.to_datetime.new_offset(0)
+          seconds_with_fraction = datetime.second + datetime.sec_fraction
           Timestamp.new(
             datetime.year, datetime.month, datetime.day,
-            datetime.hour, datetime.minute, datetime.second, datetime.offset
+            datetime.hour, datetime.minute, seconds_with_fraction,
+            datetime.offset
           )
         end
         alias :load_Time :cast_to_datetime

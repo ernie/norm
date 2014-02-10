@@ -13,6 +13,11 @@ module Norm
           timestamp.offset.must_equal 0
         end
 
+        it 'rounds fractional seconds to microseconds' do
+          timestamp = subject.load('2014-12-25 00:00:00.123456789')
+          timestamp.sec_fraction.must_equal 0.123457
+        end
+
         it 'loads a String with a named time zone as UTC' do
           timestamp = subject.load('2014-12-25 00:00:00 EST')
           timestamp.must_equal(DateTime.new(2014, 12, 25, 5, 0, 0))
@@ -61,10 +66,11 @@ module Norm
       end
 
       describe 'loaded object' do
-        subject { Timestamp.load('2014-12-25 00:00:00') }
 
         it 'casts to string' do
-          subject.to_s.must_equal '2014-12-25 00:00:00+0000'
+          Timestamp.load('2014-12-25 00:00:00').to_s.must_equal(
+            '2014-12-25 00:00:00.000000+0000'
+          )
         end
 
       end
