@@ -5,6 +5,8 @@ module Norm
 
       class << self
 
+        private
+
         def load_Object(object, size = nil, *args)
           size ? object.to_s[0, size] : object.to_s
         end

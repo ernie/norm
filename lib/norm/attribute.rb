@@ -5,6 +5,7 @@ require 'norm/attribute/decimal'
 require 'norm/attribute/character'
 require 'norm/attribute/string'
 require 'norm/attribute/binary'
+require 'norm/attribute/timestamp'
 
 module Norm
   module Attribute
