@@ -12,7 +12,7 @@ module Norm
         end
 
         it 'loads a Time' do
-          subject.load(Time.parse('2014-12-25')).must_equal(
+          subject.load(::Time.parse('2014-12-25')).must_equal(
             ::Date.new(2014, 12, 25)
           )
         end
