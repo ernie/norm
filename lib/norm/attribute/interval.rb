@@ -2,13 +2,15 @@ module Norm
   module Attribute
     class Interval
       extend Loading
+      include Comparable
 
       YEAR, MONTH, DAY, HOUR, MINUTE, SECOND = 0..5
 
       attr_reader :years, :months, :days, :seconds
 
       def initialize(years, months, days, seconds)
-        @years, @months, @days, @seconds = years, months, days, seconds
+        @years, @months, @days, @seconds =
+          years.to_r, months.to_r, days.to_r, seconds.to_r
         normalize!
       end
 
@@ -16,13 +18,32 @@ module Norm
         (word_parts + number_parts).join(' ')
       end
 
+      def to_r
+        # Interestingly, extracting epoch from an interval of a year yields a
+        # number that accounts for an extra 1/4 days, but extracting it from a
+        # month or day doesn't treat them as 1/12th of that number, or
+        # 1/365.25th, respectively. I'm just following PostgreSQL's example,
+        # here.
+        [@years * 31557600, @months * 2592000, @days * 86400, @seconds].
+          inject(&:+)
+      end
+
+      def to_i
+        to_r.to_i
+      end
+
+      def to_f
+        to_r.to_f
+      end
+
+      def <=>(other)
+        Interval === other ? self.to_r <=> other.to_r : self.to_r <=> other
+      end
+
       def eql?(other)
         self.class == other.class &&
-          self.years   == other.years &&
-          self.months  == other.months &&
-          self.seconds == other.seconds
+          self.to_r == other.to_r
       end
-      alias :== :eql?
 
       private
 
