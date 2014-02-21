@@ -4,8 +4,24 @@ class NormRecordSpecClass
   extend Norm::Record
 end
 
+class NormRecordSpecLoader
+  def self.load(object, *args)
+    object
+  end
+end
+
 module Norm
   describe Record do
+
+    let(:simple_record_class) {
+      Class.new do
+        extend Record
+
+        attribute :name, NormRecordSpecLoader
+        attribute :age,  NormRecordSpecLoader
+      end
+    }
+
     subject { NormRecordSpecClass }
 
     it 'creates an AttributeMethods module inside the extending class' do
@@ -39,16 +55,16 @@ module Norm
       subject { Class.new { extend Record } }
 
       it 'adds the attribute name to #attribute_names as a string' do
-        subject.attribute :my_attr, nil
+        subject.attribute :my_attr, NormRecordSpecLoader
         subject.new.attribute_names.must_equal ['my_attr']
       end
 
       it 'alters only the locally-defined attribute names in a subclass' do
-        subject.attribute :my_attr, nil
+        subject.attribute :my_attr, NormRecordSpecLoader
         subclass = Class.new(subject)
-        subclass.attribute :my_other_attr, nil
+        subclass.attribute :my_other_attr, NormRecordSpecLoader
         subclass_of_subclass = Class.new(subclass)
-        subclass_of_subclass.attribute :yet_another_attr, nil
+        subclass_of_subclass.attribute :yet_another_attr, NormRecordSpecLoader
         subject.attribute_names.must_equal ['my_attr']
         subclass.attribute_names.must_equal ['my_attr', 'my_other_attr']
         subclass_of_subclass.attribute_names.must_equal(
@@ -58,14 +74,14 @@ module Norm
 
       it 'allows for later addition of parent class attributes' do
         subclass = Class.new(subject)
-        subclass.attribute :my_attr, nil
+        subclass.attribute :my_attr, NormRecordSpecLoader
         subclass.attribute_names.must_equal ['my_attr']
-        subject.attribute :parent_attr, nil
+        subject.attribute :parent_attr, NormRecordSpecLoader
         subclass.attribute_names.must_equal ['parent_attr', 'my_attr']
       end
 
       it 'creates an attribute reader' do
-        subject.attribute :my_attr, nil
+        subject.attribute :my_attr, NormRecordSpecLoader
         subject.new.must_respond_to :my_attr
       end
 
@@ -79,6 +95,57 @@ module Norm
         loader.verify
       end
 
+    end
+
+    describe '#initialize' do
+      subject { simple_record_class }
+
+      it 'sets attributes from a hash' do
+        record = subject.new(:name => 'Ernie Miller', :age => 36)
+        record.name.must_equal 'Ernie Miller'
+        record.age.must_equal 36
+      end
+
+      it 'sets attributes present on the record' do
+        record = subject.new(:name => 'Ernie Miller', :langauge => 'Ruby')
+        record.name.must_equal 'Ernie Miller'
+        record.age.must_be_nil
+      end
+
+    end
+
+    describe '#attributes' do
+      subject { simple_record_class }
+
+      it 'returns a hash of all record attribute names and values' do
+        subject.new(:name => 'Ernie Miller').attributes.must_equal(
+          'name' => 'Ernie Miller',
+          'age'  => nil
+        )
+      end
+
+    end
+
+    describe '#attributes=' do
+      subject { simple_record_class }
+
+      it 'sets the value of all attributes, not just the ones supplied' do
+        record = subject.new(:name => 'Ernie Miller', :age => 36)
+        record.attributes = {:name => 'Bert Mueller'}
+        record.name.must_equal 'Bert Mueller'
+        record.age.must_be_nil
+      end
+    end
+
+    describe '#update_attributes' do
+      subject { simple_record_class }
+
+      it 'updates only attributes common between the record and hash' do
+        record = subject.new(:name => 'Ernie Miller', :age => 36)
+        record.update_attributes(:age => 37)
+        record.name.must_equal 'Ernie Miller'
+        record.age.must_equal 37
+      end
     end
 
   end
