@@ -1,7 +1,9 @@
 require 'pg'
+require 'connection_pool'
 require 'norm/version'
-require 'norm/record'
+require 'norm/connection'
 require 'norm/attribute'
+require 'norm/record'
 
 module Norm
 end

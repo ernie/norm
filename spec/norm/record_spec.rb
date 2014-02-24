@@ -126,6 +126,41 @@ module Norm
 
     end
 
+    describe '#initialized_attributes' do
+      subject { simple_record_class }
+
+      it 'returns a hash of all set attribute names and values' do
+        subject.new(:name => 'Ernie Miller').initialized_attributes.must_equal(
+          'name' => 'Ernie Miller'
+        )
+      end
+    end
+
+    describe '#updated_attributes' do
+      subject { simple_record_class.new(:name => 'Ernie Miller', :age => 36) }
+
+      it 'returns an empty hash just after initialization' do
+        subject.updated_attributes.must_equal Hash.new
+      end
+
+      it 'captures changes' do
+        subject.name = 'Bert Mueller'
+        subject.updated_attributes.must_equal('name' => 'Bert Mueller')
+      end
+
+      it 'does not consider "changes" to the same value as updates' do
+        subject.name = 'Ernie Miller'
+        subject.updated_attributes.must_equal Hash.new
+      end
+
+      it 'removes updates that have returned to original value' do
+        original_name = subject.name
+        subject.name = 'Bert Mueller'
+        subject.name = original_name
+        subject.updated_attributes.must_equal Hash.new
+      end
+    end
+
     describe '#attributes=' do
       subject { simple_record_class }
 
