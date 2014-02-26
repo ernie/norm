@@ -172,12 +172,12 @@ module Norm
       end
     end
 
-    describe '#update_attributes' do
+    describe '#set_attributes' do
       subject { simple_record_class }
 
       it 'updates only attributes common between the record and hash' do
         record = subject.new(:name => 'Ernie Miller', :age => 36)
-        record.update_attributes(:age => 37)
+        record.set_attributes(:age => 37)
         record.name.must_equal 'Ernie Miller'
         record.age.must_equal 37
       end

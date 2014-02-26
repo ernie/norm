@@ -58,7 +58,7 @@ module Norm
       def initialize(attributes = {})
         @_initialized_attributes = Hash.new { |h, k| h[k] = true }
         reset_updated_attributes!
-        update_attributes(attributes)
+        set_attributes(attributes)
         track_attribute_updates!
       end
 
@@ -97,7 +97,7 @@ module Norm
         end
       end
 
-      def update_attributes(attributes)
+      def set_attributes(attributes)
         attributes = stringified_hash(attributes)
         (attribute_names & attributes.keys).each do |attr_name|
           send("#{attr_name}=", attributes[attr_name])
