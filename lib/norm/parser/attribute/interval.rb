@@ -1,7 +1,8 @@
 module Norm
-  module Attribute
-    module Parsing
+  module Parser
+    module Attribute
       class Interval
+
         REGEXP = /
           ((\s+|\A)(?<years>[\-\d\.]+)\s+years?)?
           ((\s+|\A)(?<months>[\-\d\.]+)\s+mon(th)?s?)?

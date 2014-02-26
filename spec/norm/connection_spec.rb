@@ -33,54 +33,5 @@ module Norm
       end
     end
 
-    describe '#process_query' do
-      let(:params) { {'qty' => 42, 'description' => 'A lovely item'} }
-      let(:query)  {
-        query = MiniTest::Mock.new
-        query.expect(:params, params)
-      }
-
-      it 'replaces :param with $n and orders parameters' do
-        query.expect(:sql, 'insert into items values (:description, :qty)')
-        sql, params = subject.process_query(query)
-        query.verify
-        sql.must_equal 'insert into items values ($1, $2)'
-        params.must_equal ['A lovely item', 42]
-      end
-
-      it 'does not substitute :param if preceded by another colon' do
-        query.expect(:sql, 'select 1::text')
-        sql, params = subject.process_query(query)
-        query.verify
-        sql.must_equal 'select 1::text'
-        params.must_equal []
-      end
-
-      it 'allows escaping of : with backslash' do
-        query.expect(:sql, "select '\\:string'")
-        sql, params = subject.process_query(query)
-        query.verify
-        sql.must_equal "select ':string'"
-        params.must_equal []
-      end
-
-      it 'allows literal backslashes' do
-        query.expect(:sql, 'select \\word')
-        sql, params = subject.process_query(query)
-        query.verify
-        sql.must_equal "select \\word"
-        params.must_equal []
-      end
-
-      it 'allows literal backslash before colons with a double backslash' do
-        query.expect(:sql, 'select \\\\:word')
-        sql, params = subject.process_query(query)
-        query.verify
-        sql.must_equal "select \\:word"
-        params.must_equal []
-      end
-
-    end
-
   end
 end

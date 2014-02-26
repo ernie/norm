@@ -1,8 +1,8 @@
 require 'spec_helper'
 
 module Norm
-  module Attribute
-    module Parsing
+  module Parser
+    module Attribute
       describe Interval do
 
         it 'parses with explicit parts' do

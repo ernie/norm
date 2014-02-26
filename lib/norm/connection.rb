@@ -14,22 +14,9 @@ module Norm
       @db.exec_params(*args, &block)
     end
 
-    def process_query(query)
-      counter = Range.new(1, Float::INFINITY).to_enum
-      params_out = []
-      sql_in, params_in = query.sql, query.params
-      sql_out = sql_in.gsub(/(:|\\)?:(\w+)/) { |match|
-        case $1
-        when ':'
-          match
-        when '\\'
-          ":#{$2}"
-        else
-          params_out << params_in[$2]
-          "$#{counter.next}"
-        end
-      }
-      [sql_out, params_out]
+    def parse_query(query)
+      parsed = Parser::Query.new(query)
+      [parsed.sql, parsed.params]
     end
 
   end

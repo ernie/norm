@@ -134,7 +134,7 @@ module Norm
         private
 
         def load_String(object, *args)
-          parsed = Parsing::Interval.new(object)
+          parsed = Parser::Attribute::Interval.new(object)
           new(parsed.years, parsed.months, parsed.days, parsed.seconds)
         end
 
