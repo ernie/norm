@@ -14,9 +14,9 @@ module Norm
       @db.exec_params(*args, &block)
     end
 
-    def parse_query(query)
-      parsed = Parser::Query.new(query)
-      [parsed.sql, parsed.params]
+    def exec_statement(statement, &block)
+      parsed = Parser::Statement.new(statement)
+      @db.exec_params(parsed.sql, parsed.params, parsed.format, &block)
     end
 
   end

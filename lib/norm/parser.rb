@@ -1,4 +1,4 @@
-require 'norm/parser/query'
+require 'norm/parser/statement'
 require 'norm/parser/attribute/interval'
 
 module Norm

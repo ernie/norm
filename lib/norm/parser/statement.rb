@@ -1,14 +1,16 @@
 module Norm
   module Parser
-    class Query
+    class Statement
 
       REGEXP = /\\?%{(\w+)}/
+      FORMATS = { :text => 0, :binary => 1 }
 
-      attr_reader :sql, :params
+      attr_reader :sql, :params, :format
 
-      def initialize(query)
-        @query  = query
-        @params = []
+      def initialize(statement)
+        @statement = statement
+        @format    = FORMATS.fetch(statement.format, 0)
+        @params    = []
         parse!
       end
 
@@ -16,7 +18,7 @@ module Norm
 
       def parse!
         counter = Range.new(1, Float::INFINITY).to_enum
-        sql, params = @query.sql, @query.params
+        sql, params = @statement.sql, @statement.params
         @sql = sql.gsub(REGEXP) { |match|
           if match.start_with? '\\'
             "%{#{$1}}"
