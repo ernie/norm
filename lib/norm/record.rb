@@ -73,9 +73,11 @@ module Norm
     end
 
     def fetch(*args)
-      Connection.new.exec_statement(fetch_statement(*args)) do |result|
-        record = result.first
-        new_from_db(record) if record
+      Norm.with_connection do |conn|
+        conn.exec_statement(fetch_statement(*args)) do |result|
+          record = result.first
+          new_from_db(record) if record
+        end
       end
     end
 
@@ -91,10 +93,12 @@ module Norm
     end
 
     def insert(record)
-      Connection.new.exec_statement(insert_statement(record)) do |result|
-        attributes = result.first
-        record.reset_attributes!(attributes)
-        record.stored!
+      Norm.with_connection do |conn|
+        conn.exec_statement(insert_statement(record)) do |result|
+          attributes = result.first
+          record.reset_attributes!(attributes)
+          record.stored!
+        end
       end
     end
 
@@ -110,10 +114,12 @@ module Norm
     end
 
     def update(record)
-      Connection.new.exec_statement(update_statement(record)) do |result|
-        attributes = result.first
-        record.reset_attributes!(attributes)
-        record.stored!
+      Norm.with_connection do |conn|
+        conn.new.exec_statement(update_statement(record)) do |result|
+          attributes = result.first
+          record.reset_attributes!(attributes)
+          record.stored!
+        end
       end
     end
 
