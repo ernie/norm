@@ -8,9 +8,10 @@ module Norm
         subject { Interval }
 
         it 'loads a String with explicit parts' do
-          subject.load('1 year 2 months 3 days 4 hours 5 minutes 6.7 seconds').must_equal(
-            Interval.new(1, 2, 3, Rational(147067, 10))
-          )
+          subject.load('1 year 2 months 3 days 4 hours 5 minutes 6.7 seconds').
+            must_equal(
+              Interval.new(1, 2, 3, Rational(147067, 10))
+            )
         end
 
         it 'loads a String with explicit years, month, days and H:M:S' do

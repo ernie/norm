@@ -16,7 +16,7 @@ module Norm
 
     def exec_statement(statement, &block)
       parsed = Parser::Statement.new(statement)
-      @db.exec_params(parsed.sql, parsed.params, parsed.format, &block)
+      @db.exec_params(parsed.sql, parsed.params, parsed.result_format, &block)
     end
 
   end

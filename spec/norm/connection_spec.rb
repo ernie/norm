@@ -48,7 +48,7 @@ module Norm
         query = MiniTest::Mock.new
         query.expect(:sql, 'insert into items values (%{description}, %{qty})')
         query.expect(:params, 'qty' => 42, 'description' => 'A lovely item')
-        query.expect(:format, :text)
+        query.expect(:result_format, :text)
         query
       }
 
