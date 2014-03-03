@@ -5,6 +5,7 @@ require 'norm/statement'
 require 'norm/connection'
 require 'norm/connection_manager'
 require 'norm/attribute'
+require 'norm/repository'
 require 'norm/record'
 
 module Norm

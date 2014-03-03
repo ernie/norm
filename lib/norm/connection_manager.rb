@@ -7,14 +7,14 @@ module Norm
     def initialize(spec = {})
       @pools = {}
       spec = {'default' => {}}.merge(spec)
-      spec.each do |key, config|
+      spec.each do |name, config|
         config = config.dup
         pool_config = {
           :size => config.delete('pool') || 5,
           :timeout => config.delete('pool_timeout') || 5
         }
-        pools[key] = ConnectionPool.new(pool_config) {
-          Connection.new(config)
+        pools[name] = ConnectionPool.new(pool_config) {
+          Connection.new(name, config)
         }
       end
     end

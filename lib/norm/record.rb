@@ -39,88 +39,8 @@ module Norm
       @local_attribute_loaders[name.to_s] = loader
     end
 
-    def primary_keys=(attrs)
-      keys = Array(attrs).map(&:to_s)
-      define_singleton_method(:primary_keys) { keys }
-    end
-
-    def primary_keys
-      ['id']
-    end
-
-    def table_name=(name)
-      define_singleton_method(:table_name) { name }
-    end
-
-    def table_name
-      raise 'zomg'
-    end
-
     def new_from_db(attributes)
       new(attributes).tap { |record| record.stored! }
-    end
-
-    def fetch_sql
-      <<-SQL
-        select * from #{table_name}
-        where #{primary_keys.map { |k| "#{k} = %{#{k}}" }.join(' AND ')}
-        limit 1
-      SQL
-    end
-
-    def fetch_statement(*args)
-      Statement.select(fetch_sql, Hash[primary_keys.zip(args)])
-    end
-
-    def fetch(*args)
-      Norm.with_connection do |conn|
-        conn.exec_statement(fetch_statement(*args)) do |result|
-          record = result.first
-          new_from_db(record) if record
-        end
-      end
-    end
-
-    def insert_sql
-      <<-SQL
-        insert into #{table_name} (&{param_keys}) values (&{param_values})
-        returning *
-      SQL
-    end
-
-    def insert_statement(record)
-      Statement.insert(insert_sql, record.initialized_attributes)
-    end
-
-    def insert(record)
-      Norm.with_connection do |conn|
-        conn.exec_statement(insert_statement(record)) do |result|
-          attributes = result.first
-          record.reset_attributes!(attributes)
-          record.stored!
-        end
-      end
-    end
-
-    def update_sql
-      <<-SQL
-        update #{table_name} set &{param_sets}
-        returning *
-      SQL
-    end
-
-    def update_statement(record)
-      Statement.update(update_sql, record.updated_attributes)
-    end
-
-    def update(record)
-      Norm.with_connection do |conn|
-        conn.new.exec_statement(update_statement(record)) do |result|
-          attributes = result.first
-          record.reset_attributes!(attributes)
-          record.stored!
-        end
-      end
     end
 
     module SubclassExtensions
