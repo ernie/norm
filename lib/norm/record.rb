@@ -39,7 +39,14 @@ module Norm
       @local_attribute_loaders[name.to_s] = loader
     end
 
-    def new_from_db(attributes)
+    def repo=(repo)
+      @repo = nil
+      define_singleton_method(:repo) {
+        @repo ||= repo.dup.tap { |repo| repo.record_class = self }
+      }
+    end
+
+    def from_repo(attributes)
       new(attributes).tap { |record| record.stored! }
     end
 
@@ -70,6 +77,10 @@ module Norm
         self.class.attribute_names
       end
 
+      def attribute?(name)
+        attribute_names.include?(name.to_s)
+      end
+
       def attributes
         read_attributes(attribute_names)
       end
@@ -81,11 +92,11 @@ module Norm
       end
 
       def initialized_attribute_names
-        @_initialized_attributes.keys
+        attribute_names.select { |n| @_initialized_attributes.has_key?(n) }
       end
 
       def updated_attribute_names
-        @_updated_attributes.keys
+        attribute_names.select { |n| @_updated_attributes.has_key?(n) }
       end
 
       def initialized_attributes
@@ -114,19 +125,6 @@ module Norm
         end
       end
 
-      def store
-        result = stored? ? update : insert
-        !!result
-      end
-
-      def insert
-        self.class.insert(self)
-      end
-
-      def update
-        self.class.update(self)
-      end
-
       def stored!
         @_stored = true
         self
@@ -134,6 +132,10 @@ module Norm
 
       def stored?
         @_stored == true
+      end
+
+      def repo
+        self.class.repo
       end
 
       private

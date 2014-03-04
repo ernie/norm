@@ -19,9 +19,8 @@ module Norm
       end
     end
 
-    def exec_statement(statement, &block)
-      parsed = Parser::Statement.new(statement)
-      @db.exec_params(parsed.sql, parsed.params, parsed.result_format) do |result|
+    def exec_statement(stmt, &block)
+      @db.exec_params(stmt.sql, stmt.params, stmt.result_format) do |result|
         yield result, self
       end
     end

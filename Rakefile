@@ -14,5 +14,6 @@ task :console do
   require 'irb/completion'
   require 'norm'
   ARGV.clear
+  Norm.init!
   IRB.start
 end

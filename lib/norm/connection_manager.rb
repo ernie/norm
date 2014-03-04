@@ -6,7 +6,7 @@ module Norm
 
     def initialize(spec = {})
       @pools = {}
-      spec = {'default' => {}}.merge(spec)
+      spec = {'master' => {}}.merge(spec)
       spec.each do |name, config|
         config = config.dup
         pool_config = {
@@ -30,7 +30,7 @@ module Norm
       end
     end
 
-    def with_connection(name = 'default', &block)
+    def with_connection(name = 'master', &block)
       with_connections(name, &block)
     end
 

@@ -1,17 +1,56 @@
 module Norm
   module Statement
-    class Insert < Statement
+    class Insert
+      attr_reader :sql, :params, :result_format
 
-      def non_private_param_keys
-        params.keys.reject { |k| k.start_with? '_' }
+      def initialize(table_name, attribute_names, records)
+        @table_name, @attribute_names, @records =
+          table_name, attribute_names, Array(records)
+        @params = []
+        @result_format = 0
+        compile!
       end
 
-      def param_keys
-        non_private_param_keys.join(', ')
+      def compile!
+        @sql = <<-SQL
+          insert into #{table_identifier} (#{attr_identifiers})
+          values #{attr_placeholders}
+          returning #{table_identifier}.*
+        SQL
       end
 
-      def param_values
-        non_private_param_keys.map { |k| "%{#{k}}" }.join(', ')
+      def counter
+        @counter ||= (1..65536).to_enum
+      end
+
+      def attr_identifiers
+        @attribute_names.map { |n| make_identifier(n) }.join(', ')
+      end
+
+      def attr_placeholders
+        @records.map { |record|
+          "(#{record_placeholders(record)})"
+        }.join(', ')
+      end
+
+      def record_placeholders(record)
+        attrs = record.initialized_attributes
+        @attribute_names.map { |attr|
+          if attrs.has_key?(attr)
+            @params << attrs[attr]
+            "$#{counter.next}"
+          else
+            'DEFAULT'
+          end
+        }.join(', ')
+      end
+
+      def table_identifier
+        make_identifier(@table_name)
+      end
+
+      def make_identifier(stringable)
+        PG::Connection.quote_ident(stringable.to_s)
       end
 
     end

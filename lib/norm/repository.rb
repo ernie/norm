@@ -5,10 +5,6 @@ module Norm
       mod.send :include, InstanceMethods
     end
 
-    def record_class=(klass)
-      define_method(:record_class) { klass }
-    end
-
     def primary_keys=(attrs)
       keys = Array(attrs).map(&:to_s)
       define_method(:primary_keys) { keys }
@@ -20,16 +16,14 @@ module Norm
 
     module InstanceMethods
 
+      attr_accessor :record_class
+
       def read_connection
-        'default'
+        'master'
       end
 
       def write_connection
-        'default'
-      end
-
-      def record_class
-        raise 'zomg' # TODO: real error
+        'master'
       end
 
       def table_name
@@ -40,86 +34,72 @@ module Norm
         ['id']
       end
 
-      def fetch(*args)
-        exec_select(fetch_statement(*args)).first
+      def attribute_names
+        record_class.attribute_names
       end
 
-      def insert(record)
-        exec_insert(insert_statement(record), [record]).first
+      def fetch(*args)
+        exec_select(
+          Statement.select(
+            :from => table_name, :where => Hash[primary_keys.zip(args)]
+          )
+        ).first
+      end
+
+      def store(record)
+        record.stored? ? update(record) : insert(record)
+      end
+
+      def insert(records)
+        exec_insert(
+          Statement.insert(
+            table_name, attribute_names, records
+          ), records
+        )
       end
 
       def update(record)
-        exec_update(update_statement(record), [record]).first
+        return record unless record.updated_attributes.any?
+
+        exec_update_one(
+          Statement::UpdateOneByPrimaryKeys.new(
+            table_name, primary_keys, record
+          ), record
+        )
       end
 
       def exec_select(statement)
         Norm.with_connection(read_connection) do |conn|
           conn.exec_statement(statement) do |result, conn|
-            result.map { |tuple| record_class.new_from_db(tuple) }
+            result.map { |tuple| record_class.from_repo(tuple) }
           end
         end
       end
 
       def exec_insert(statement, records)
+        records = Array(records)
         Norm.with_connection(write_connection) do |conn|
           conn.exec_statement(statement) do |result, conn|
-            result.each { |tuple|
-              records.select { |record|
-                record.object_id == tuple['_object_id'].to_i
-              }.each { |record|
-                record.reset_attributes!(tuple)
-                record.stored!
-              }
-            }
+            records.zip(result.to_a).each do |record, tuple|
+              record.reset_attributes!(tuple)
+              record.stored!
+            end
           end
         end
         records
       end
 
-      def exec_update(statement, records)
+      def exec_update_one(statement, record)
         Norm.with_connection(write_connection) do |conn|
           conn.exec_statement(statement) do |result, conn|
-            result.each { |tuple|
-              puts tuple.inspect
-              records.select { |record|
-                record.object_id == tuple['_object_id'].to_i
-              }.each { |record|
-                record.reset_attributes!(tuple)
-                record.stored!
-              }
-            }
+            tuple = result.first
+            record.reset_attributes!(tuple) if tuple
           end
         end
-        records
+        record
       end
 
       def exec_delete(statement)
-      end
-
-      def fetch_sql
-        <<-SQL
-          select * from #{table_name}
-          where #{primary_keys.map { |k| "#{k} = %{#{k}}" }.join(' AND ')}
-          limit 1
-        SQL
-      end
-
-      def fetch_statement(*args)
-        Statement.select(fetch_sql, Hash[primary_keys.zip(args)])
-      end
-
-      def insert_sql
-        <<-SQL
-          insert into #{table_name} (&{param_keys}) values (&{param_values})
-          returning *, %{_object_id}::bigint as _object_id
-        SQL
-      end
-
-      def insert_statement(record)
-        Statement.insert(
-          insert_sql,
-          record.initialized_attributes.merge('_object_id' => record.object_id)
-        )
       end
 
       def update_sql
@@ -133,7 +113,10 @@ module Norm
       def update_statement(record)
         Statement.update(
           update_sql,
-          record.updated_attributes.merge('_object_id' => record.object_id)
+          record.updated_attributes.merge(
+            '_object_id' => record.object_id,
+            'updated_at' => 'now()'
+          ).merge(Hash[primary_keys.map { |k| [k, record.send(k)] }])
         )
       end
 

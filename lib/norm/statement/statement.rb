@@ -3,16 +3,8 @@ module Norm
     class Statement
       attr_reader :sql, :params, :result_format
 
-      def initialize(sql = '', params = {})
-        @sql           = sql
-        @params        = normalize_params(params)
-        @result_format = :text
-      end
-
-      private
-
-      def normalize_params(params)
-        params.each_with_object({}) { |(k, v), h| h[k.to_s] = v }
+      def initialize(sql = '', params = [], result_format = 0)
+        @sql, @params, @result_format = sql, params, result_format
       end
 
     end

@@ -5,20 +5,20 @@ module Norm
     let(:mock_pg) { MiniTest::Mock.new }
     subject {
       PG::Connection.stub(:new, mock_pg) do
-        Connection.new('default')
+        Connection.new('master')
       end
     }
 
     it 'requires a name' do
       proc { Connection.new }.must_raise ArgumentError
       mock_pg.expect(:new, mock_pg, [{}])
-      Connection.new('default').name.must_equal 'default'
+      Connection.new('master').name.must_equal 'master'
     end
 
     it 'creates a database connection with options from initialize' do
       mock_pg.expect(:new, mock_pg, [{:host => 'zomg.lol'}])
       PG::Connection.stub(:new, proc { |*args| mock_pg.new(*args) }) do
-        Connection.new('default', :host => 'zomg.lol')
+        Connection.new('master', :host => 'zomg.lol')
       end
       mock_pg.verify
     end
@@ -56,27 +56,26 @@ module Norm
     end
 
     describe '#exec_statement' do
-      let(:query) {
-        query = MiniTest::Mock.new
-        query.expect(:sql, 'insert into items values (%{description}, %{qty})')
-        query.expect(:params, 'qty' => 42, 'description' => 'A lovely item')
-        query.expect(:result_format, :text)
-        query
+      let(:statement) {
+        Statement.new(
+          'insert into items values ($1, $2)',
+          ['A lovely item', 42],
+          0
+        )
       }
 
-      it 'parses the query and calls exec_params on the result' do
+      it 'calls exec_params on the contents of the statement' do
         mock_pg.expect(:exec_params, nil, &->(sql, params, format, &block) {
-          sql == 'insert into items values ($1, $2)' &&
-          params == ['A lovely item', 42] &&
-          format == 0 &&
+          sql == statement.sql &&
+          params == statement.params &&
+          format == statement.result_format &&
           block.call('result') == 'called!'
         })
-        subject.exec_statement(query) do |result, conn|
+        subject.exec_statement(statement) do |result, conn|
           result.must_equal 'result'
           conn.must_be_kind_of Connection
           'called!'
         end
-        query.verify
         mock_pg.verify
       end
     end

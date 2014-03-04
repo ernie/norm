@@ -10,11 +10,11 @@ module Norm
       end
 
       it 'defaults to empty params' do
-        subject.new.params.must_equal Hash.new
+        subject.new.params.must_equal []
       end
 
-      it 'defaults to :text result format' do
-        subject.new.result_format.must_equal :text
+      it 'defaults to 0 result format' do
+        subject.new.result_format.must_equal 0
       end
 
       it 'allows specification of custom SQL' do
@@ -22,7 +22,11 @@ module Norm
       end
 
       it 'allows specification of custom params' do
-        subject.new('', :key => 'value').params.must_equal('key' => 'value')
+        subject.new('', ['zomg']).params.must_equal(['zomg'])
+      end
+
+      it 'allows specification of custom result format' do
+        subject.new('', [], 1).result_format.must_equal 1
       end
 
     end

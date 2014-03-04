@@ -1,7 +1,7 @@
 require 'norm/statement/statement'
 require 'norm/statement/select'
 require 'norm/statement/insert'
-require 'norm/statement/update'
+require 'norm/statement/update_one_by_primary_keys'
 require 'norm/statement/delete'
 
 module Norm

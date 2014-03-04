@@ -1,5 +1,13 @@
+class PersonRepo
+  extend Norm::Repository
+
+  self.table_name = 'people'
+end
+
 class Person
   extend Norm::Record
+
+  self.repo = PersonRepo.new
 
   attribute :id, Attr::Integer
   attribute :name, Attr::String
@@ -8,9 +16,5 @@ class Person
   attribute :updated_at, Attr::Timestamp
 end
 
-class PersonRepo
-  extend Norm::Repository
-
-  self.table_name = 'people'
-  self.record_class = Person
-end
+person = Person.new :name => 'Bob', :age => 32
+person.repo.insert person
