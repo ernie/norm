@@ -1,7 +1,7 @@
 module Norm
   module Statement
     class Insert
-      attr_reader :sql, :params, :result_format
+      attr_reader :sql, :params
 
       def initialize(table_name, attribute_names, records)
         @table_name, @attribute_names, @records =

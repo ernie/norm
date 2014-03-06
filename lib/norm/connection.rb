@@ -1,5 +1,8 @@
 module Norm
   class Connection
+
+    PLACEHOLDER_FINALIZATION_REGEXP = /\\?\$\?/
+
     attr_reader :name, :db
 
     def initialize(name, opts = {})
@@ -19,10 +22,24 @@ module Norm
       end
     end
 
-    def exec_statement(stmt, &block)
-      @db.exec_params(stmt.sql, stmt.params, stmt.result_format) do |result|
+    def exec_statement(stmt, result_format = 0, &block)
+      sql = finalize_placeholders(stmt.sql)
+      @db.exec_params(sql, stmt.params, result_format) do |result|
         yield result, self
       end
+    end
+
+    private
+
+    def finalize_placeholders(sql)
+      counter = (1..65536).to_enum
+      sql.gsub(PLACEHOLDER_FINALIZATION_REGEXP) { |match|
+        if match.start_with? '\\'
+          '$?'
+        else
+          "$#{counter.next}"
+        end
+      }
     end
 
   end

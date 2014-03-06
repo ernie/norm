@@ -57,27 +57,27 @@ module Norm
 
     describe '#exec_statement' do
       let(:statement) {
-        Statement.new(
-          'insert into items values ($1, $2)',
-          ['A lovely item', 42],
-          0
+        Statement.sql(
+          'insert into items values ($?, $?)',
+          'A lovely item', 42
         )
       }
 
-      it 'calls exec_params on the contents of the statement' do
+      it 'calls exec_params after replacing $? with numeric placeholders' do
         mock_pg.expect(:exec_params, nil, &->(sql, params, format, &block) {
-          sql == statement.sql &&
+          sql == 'insert into items values ($1, $2)' &&
           params == statement.params &&
-          format == statement.result_format &&
+          format == 1 &&
           block.call('result') == 'called!'
         })
-        subject.exec_statement(statement) do |result, conn|
+        subject.exec_statement(statement, 1) do |result, conn|
           result.must_equal 'result'
           conn.must_be_kind_of Connection
           'called!'
         end
         mock_pg.verify
       end
+
     end
 
   end

@@ -1,4 +1,4 @@
-require 'norm/statement/statement'
+require 'norm/statement/sql'
 require 'norm/statement/select'
 require 'norm/statement/insert'
 require 'norm/statement/update_one_by_primary_keys'
@@ -7,8 +7,8 @@ require 'norm/statement/delete'
 module Norm
   module Statement
 
-    def self.new(*args, &block)
-      Statement.new(*args, &block)
+    def self.sql(*args, &block)
+      SQL.new(*args, &block)
     end
 
     def self.select(*args, &block)
