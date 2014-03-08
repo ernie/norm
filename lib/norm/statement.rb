@@ -1,3 +1,5 @@
+require 'norm/statement/fragment'
+require 'norm/statement/predicate_fragment'
 require 'norm/statement/sql'
 require 'norm/statement/select'
 require 'norm/statement/insert'
@@ -6,6 +8,8 @@ require 'norm/statement/delete'
 
 module Norm
   module Statement
+
+    MissingInterpolationError = Class.new(Error)
 
     def self.sql(*args, &block)
       SQL.new(*args, &block)

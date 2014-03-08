@@ -40,9 +40,9 @@ module Norm
 
       def fetch(*args)
         exec_select(
-          Statement.select(
-            :from => table_name, :where => Hash[primary_keys.zip(args)]
-          )
+          Statement.select('*').
+                    from(table_name).
+                    where(Hash[primary_keys.zip(args)])
         ).first
       end
 
