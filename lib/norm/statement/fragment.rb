@@ -9,9 +9,9 @@ module Norm
       def initialize(sql = '', *args)
         if Hash === args.first
           @params = []
-          @sql = interpolate_hash_params(sql, args.first)
+          @sql = interpolate_hash_params(sql.to_s, args.first)
         else
-          @sql, @params = sql, args
+          @sql, @params = sql.to_s, args
         end
       end
 

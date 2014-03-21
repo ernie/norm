@@ -1,3 +1,5 @@
+require 'norm/statement/value_clause'
+require 'norm/statement/collection_clause'
 require 'norm/statement/fragment'
 require 'norm/statement/predicate_fragment'
 require 'norm/statement/sql'

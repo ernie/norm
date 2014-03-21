@@ -2,8 +2,8 @@ require 'spec_helper'
 
 module Norm
   module Statement
-    describe Fragment do
-      subject { Fragment }
+    describe PredicateFragment do
+      subject { PredicateFragment }
 
       it 'defaults to empty sql' do
         subject.new.sql.must_equal ''
@@ -50,6 +50,18 @@ module Norm
         fragment = subject.new('\\$:foo', {})
         fragment.sql.must_equal '$:foo'
         fragment.params.must_equal []
+      end
+
+      it 'builds sql/params with equality predicates from a hash' do
+        fragment = subject.new(:id => 1)
+        fragment.sql.must_equal '"id" = $?'
+        fragment.params.must_equal [1]
+      end
+
+      it 'builds sql/params with "is NULL" if a nil is on RHS of hash' do
+        fragment = subject.new(:id => nil)
+        fragment.sql.must_equal '"id" is NULL'
+        fragment.params.must_be :empty?
       end
 
     end
