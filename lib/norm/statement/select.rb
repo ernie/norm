@@ -21,8 +21,8 @@ module Norm
         @groups     = @groups.dup
         @havings    = @havings.dup
         @orders     = @orders.dup
-        @offset     = @offset.dup
         @limit      = @limit.dup
+        @offset     = @offset.dup
         @sql        = nil
         @params     = nil
       end
@@ -49,7 +49,7 @@ module Norm
 
       def non_empty_clauses
         [@selects, @froms, @wheres, @havings,
-         @groups, @orders, @offset, @limit].reject(&:empty?)
+         @groups, @orders, @limit, @offset].reject(&:empty?)
       end
 
       def select(*args)
