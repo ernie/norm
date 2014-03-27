@@ -42,7 +42,6 @@ module Norm
       def compile!
         clauses = non_empty_clauses
         sql = clauses.map(&:sql).join("\n")
-        # TODO: limit, offset
         params = clauses.map(&:params).inject(&:+)
         @sql, @params = sql, params
       end

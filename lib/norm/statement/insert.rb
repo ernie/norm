@@ -1,56 +1,62 @@
+require 'norm/statement/insert_clause'
+require 'norm/statement/values_clause'
+require 'norm/statement/returning_clause'
+
 module Norm
   module Statement
-    class Insert
-      attr_reader :sql, :params
+    class Insert < SQL
 
-      def initialize(table_name, attribute_names, records)
-        @table_name, @attribute_names, @records =
-          table_name, attribute_names, Array(records)
-        @params = []
-        @result_format = 0
-        compile!
+      def initialize(table_name, *columns)
+        @insert    = InsertClause.new(table_name, *columns)
+        @values    = ValuesClause.new
+        @returning = ReturningClause.new
       end
 
-      def compile!
-        @sql = <<-SQL
-          insert into #{table_identifier} (#{attr_identifiers})
-          values #{attr_placeholders}
-          returning #{table_identifier}.*
-        SQL
+      def initialize_copy(orig)
+        @insert    = @insert.dup
+        @values    = @values.dup
+        @returning = @returning.dup
       end
 
-      def counter
-        @counter ||= (1..65536).to_enum
+      def sql
+        non_empty_clauses.map(&:sql).join("\n")
       end
 
-      def attr_identifiers
-        @attribute_names.map { |n| make_identifier(n) }.join(', ')
+      def params
+        non_empty_clauses.map(&:params).inject(&:+)
       end
 
-      def attr_placeholders
-        @records.map { |record|
-          "(#{record_placeholders(record)})"
-        }.join(', ')
+      def values(*args)
+        dup.values!(*args)
       end
 
-      def record_placeholders(record)
-        attrs = record.initialized_attributes
-        @attribute_names.map { |attr|
-          if attrs.has_key?(attr)
-            @params << attrs[attr]
-            "$#{counter.next}"
-          else
-            'DEFAULT'
-          end
-        }.join(', ')
+      def values!(*args)
+        @values << Fragment.new((['$?'] * args.size).join(', '), *args)
+        self
       end
 
-      def table_identifier
-        make_identifier(@table_name)
+      def values_sql(sql, *args)
+        dup.values_sql!(sql, *args)
       end
 
-      def make_identifier(stringable)
-        PG::Connection.quote_ident(stringable.to_s)
+      def values_sql!(sql, *args)
+        @values << Fragment.new(sql, *args)
+        self
+      end
+
+      def returning(*args)
+        dup.returning!(*args)
+      end
+
+      def returning!(*args)
+        @returning.value = Fragment.new(*args)
+        self
+      end
+
+      private
+
+      def non_empty_clauses
+        [@insert, @values, @returning].reject(&:empty?)
       end
 
     end
