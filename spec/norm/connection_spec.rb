@@ -12,7 +12,9 @@ module Norm
     it 'requires a name' do
       proc { Connection.new }.must_raise ArgumentError
       mock_pg.expect(:new, mock_pg, [{}])
-      Connection.new('master').name.must_equal 'master'
+      PG::Connection.stub(:new, proc { |*args| mock_pg.new(*args) }) do
+        Connection.new('master').name.must_equal 'master'
+      end
     end
 
     it 'creates a database connection with options from initialize' do
