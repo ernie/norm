@@ -41,16 +41,6 @@ module Norm
 
     end
 
-    describe '#attribute_names' do
-
-      it 'delegates to the class' do
-        subject.stub(:attribute_names, ['zomg']) do
-          subject.new.attribute_names.must_equal ['zomg']
-        end
-      end
-
-    end
-
     describe '.attribute' do
       subject { Class.new { extend Record } }
 
@@ -97,7 +87,7 @@ module Norm
 
     end
 
-    describe '#initialize' do
+    describe 'initialization' do
       subject { simple_record_class }
 
       it 'sets attributes from a hash' do
@@ -112,75 +102,223 @@ module Norm
         record.age.must_be_nil
       end
 
-    end
-
-    describe '#attributes' do
-      subject { simple_record_class }
-
-      it 'returns a hash of all record attribute names and values' do
-        subject.new(:name => 'Ernie Miller').attributes.must_equal(
-          'name' => 'Ernie Miller',
-          'age'  => nil
-        )
+      it 'creates an unstored, undeleted record' do
+        record = subject.new
+        record.wont_be :stored?
+        record.wont_be :deleted?
       end
 
     end
 
-    describe '#initialized_attributes' do
-      subject { simple_record_class }
+    describe 'instance methods' do
+      subject { simple_record_class.new }
 
-      it 'returns a hash of all set attribute names and values' do
-        subject.new(:name => 'Ernie Miller').initialized_attributes.must_equal(
-          'name' => 'Ernie Miller'
-        )
-      end
-    end
+      describe '#attribute_names' do
 
-    describe '#updated_attributes' do
-      subject { simple_record_class.new(:name => 'Ernie Miller', :age => 36) }
+        it 'delegates to the class implementation by default' do
+          simple_record_class.stub(:attribute_names, ['zomg']) do
+            subject.attribute_names.must_equal ['zomg']
+          end
+        end
 
-      it 'returns an empty hash just after initialization' do
-        subject.updated_attributes.must_equal Hash.new
       end
 
-      it 'captures changes' do
-        subject.name = 'Bert Mueller'
-        subject.updated_attributes.must_equal('name' => 'Bert Mueller')
+      describe '#attribute?' do
+
+        it 'tells if the record contains this attribute' do
+          subject.attribute?(:name).must_equal true
+          subject.attribute?(:foo).must_equal false
+        end
+
       end
 
-      it 'does not consider "changes" to the same value as updates' do
-        subject.name = 'Ernie Miller'
-        subject.updated_attributes.must_equal Hash.new
+      describe '#attributes' do
+
+        it 'returns a hash of all record attribute names and values' do
+          record = simple_record_class.new(:name => 'Ernie Miller')
+          record.attributes.must_equal(
+            'name' => 'Ernie Miller',
+            'age'  => nil
+          )
+        end
+
       end
 
-      it 'removes updates that have returned to original value' do
-        original_name = subject.name
-        subject.name = 'Bert Mueller'
-        subject.name = original_name
-        subject.updated_attributes.must_equal Hash.new
+      describe '#initialized_attribute_names' do
+
+        it 'tells all attributes that have had a value set' do
+          record = simple_record_class.new(:name => 'Ernie Miller')
+          record.initialized_attribute_names.must_equal ['name']
+        end
+
       end
-    end
 
-    describe '#attributes=' do
-      subject { simple_record_class }
+      describe '#initialized_attributes' do
 
-      it 'sets the value of all attributes, not just the ones supplied' do
-        record = subject.new(:name => 'Ernie Miller', :age => 36)
-        record.attributes = {:name => 'Bert Mueller'}
-        record.name.must_equal 'Bert Mueller'
-        record.age.must_be_nil
+        it 'returns a hash of all set attribute names and values' do
+          record = simple_record_class.new(:name => 'Ernie Miller')
+          record.initialized_attributes.must_equal(
+            'name' => 'Ernie Miller'
+          )
+        end
+
       end
-    end
 
-    describe '#set_attributes' do
-      subject { simple_record_class }
+      describe '#updated_attribute_names' do
 
-      it 'updates only attributes common between the record and hash' do
-        record = subject.new(:name => 'Ernie Miller', :age => 36)
-        record.set_attributes(:age => 37)
-        record.name.must_equal 'Ernie Miller'
-        record.age.must_equal 37
+        it 'tells all attributes that have been updated from initial value' do
+          subject.name = 'Bob'
+          subject.updated_attribute_names.must_equal ['name']
+        end
+
       end
+
+      describe '#updated_attributes' do
+        subject { simple_record_class.new(:name => 'Ernie Miller', :age => 36) }
+
+        it 'returns an empty hash just after initialization' do
+          subject.updated_attributes.must_equal Hash.new
+        end
+
+        it 'captures changes' do
+          subject.name = 'Bert Mueller'
+          subject.updated_attributes.must_equal('name' => 'Bert Mueller')
+        end
+
+        it 'does not consider "changes" to the same value as updates' do
+          subject.name = 'Ernie Miller'
+          subject.updated_attributes.must_equal Hash.new
+        end
+
+        it 'removes updates that have returned to original value' do
+          original_name = subject.name
+          subject.name = 'Bert Mueller'
+          subject.name = original_name
+          subject.updated_attributes.must_equal Hash.new
+        end
+      end
+
+      describe '#read_attributes' do
+
+        it 'returns a hash of requested attributes using symbols' do
+          record = simple_record_class.new(:name => 'Ernie')
+          record.read_attributes(:name, :age).must_equal(
+            :name => 'Ernie', :age => nil
+          )
+        end
+
+        it 'returns a hash of requested attributes using strings' do
+          record = simple_record_class.new(:name => 'Ernie')
+          record.read_attributes('name', 'age').must_equal(
+            'name' => 'Ernie', 'age' => nil
+          )
+        end
+
+        it 'does not filter list of requested attributes' do
+          record = simple_record_class.new(:name => 'Ernie', :age => 36)
+          proc { record.read_attributes(:name, :age, :favorite_color) }.
+            must_raise NoMethodError
+        end
+
+      end
+
+      describe '#set_attributes' do
+
+        it 'updates only attributes common between the record and hash' do
+          record = simple_record_class.new(:name => 'Ernie Miller', :age => 36)
+          record.set_attributes(:age => 37)
+          record.name.must_equal 'Ernie Miller'
+          record.age.must_equal 37
+        end
+
+      end
+
+      describe '#stored?' do
+
+        it 'returns false on new records' do
+          subject.wont_be :stored?
+        end
+
+        it 'returns true on inserted records' do
+          subject.inserted!
+          subject.must_be :stored?
+        end
+
+      end
+
+      describe 'stored!' do
+
+        it 'tells object to consider itself stored' do
+          subject.wont_be :stored?
+          subject.stored!
+          subject.must_be :stored?
+        end
+
+      end
+
+      describe 'inserted!' do
+
+        it 'sets the record as stored' do
+          subject.wont_be :stored?
+          subject.inserted!
+          subject.must_be :stored?
+        end
+
+        it 'tells the record it no longer has updated attributes' do
+          subject.name = 'Ernie'
+          subject.updated_attribute_names.must_equal ['name']
+          subject.inserted!
+          subject.updated_attribute_names.must_be :empty?
+        end
+
+      end
+
+      describe 'updated!' do
+
+        it 'sets the record as stored' do
+          subject.wont_be :stored?
+          subject.updated!
+          subject.must_be :stored?
+        end
+
+        it 'tells the record it no longer has updated attributes' do
+          subject.name = 'Ernie'
+          subject.updated_attribute_names.must_equal ['name']
+          subject.updated!
+          subject.updated_attribute_names.must_be :empty?
+        end
+
+      end
+
+      describe 'deleted?' do
+
+        it 'is false for new records' do
+          subject.wont_be :deleted?
+        end
+
+        it 'is true when a record has received the deleted! message' do
+          subject.deleted!
+          subject.must_be :deleted?
+        end
+
+      end
+
+      describe 'deleted!' do
+
+        it 'sets the record as not stored' do
+          subject.inserted!
+          subject.must_be :stored?
+          subject.deleted!
+          subject.wont_be :stored?
+        end
+
+        it 'sets the record as deleted' do
+          subject.deleted!
+          subject.must_be :deleted?
+        end
+
+      end
+
     end
 
   end

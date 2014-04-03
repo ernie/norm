@@ -82,13 +82,7 @@ module Norm
       end
 
       def attributes
-        read_attributes(attribute_names)
-      end
-
-      def reset_attributes!(attributes = {})
-        self.attributes = attributes
-        reset_updated_attributes!
-        self
+        read_attributes(*attribute_names)
       end
 
       def initialized_attribute_names
@@ -100,22 +94,15 @@ module Norm
       end
 
       def initialized_attributes
-        read_attributes(initialized_attribute_names)
+        read_attributes(*initialized_attribute_names)
       end
 
       def updated_attributes
-        read_attributes(updated_attribute_names)
+        read_attributes(*updated_attribute_names)
       end
 
-      def read_attributes(attribute_names)
+      def read_attributes(*attribute_names)
         attribute_names.each_with_object({}) { |k, h| h[k] = send(k) }
-      end
-
-      def attributes=(attributes)
-        attributes = normalize_attributes(attributes)
-        attribute_names.each do |attr_name|
-          send("#{attr_name}=", attributes[attr_name])
-        end
       end
 
       def set_attributes(attributes)
@@ -127,11 +114,29 @@ module Norm
 
       def stored!
         @_stored = true
-        self
       end
 
       def stored?
         @_stored == true
+      end
+
+      def inserted!
+        stored!
+        reset_updated_attributes!
+      end
+
+      def updated!
+        stored!
+        reset_updated_attributes!
+      end
+
+      def deleted!
+        @_stored  = false
+        @_deleted = true
+      end
+
+      def deleted?
+        @_deleted == true
       end
 
       def repo
