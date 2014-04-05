@@ -86,11 +86,11 @@ module Norm
       end
 
       def initialized_attribute_names
-        attribute_names.select { |n| @_initialized_attributes.has_key?(n) }
+        attribute_names & @_initialized_attributes.keys
       end
 
       def updated_attribute_names
-        attribute_names.select { |n| @_updated_attributes.has_key?(n) }
+        attribute_names & @_updated_attributes.keys
       end
 
       def initialized_attributes

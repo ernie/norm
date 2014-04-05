@@ -2,7 +2,7 @@ module Norm
   module Statement
     class Fragment
 
-      HASH_INTERPOLATION = /\\?\$:([\w\.]+)/
+      HASH_INTERPOLATION = /\\?\$([a-zA-Z][\w\.]*)/
 
       attr_reader :sql, :params
 
@@ -25,7 +25,7 @@ module Norm
         hash_params = stringify_hash(hash_params)
         sql.gsub(HASH_INTERPOLATION) { |match|
           if match.start_with? '\\'
-            "$:#{$1}"
+            "$#{$1}"
           else
             @params << fetch_hash_interpolation($1, hash_params)
             '$?'

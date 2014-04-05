@@ -6,7 +6,7 @@ require 'norm/statement/grouping'
 require 'norm/statement/sql'
 require 'norm/statement/select'
 require 'norm/statement/insert'
-require 'norm/statement/update_one_by_primary_keys'
+require 'norm/statement/update'
 require 'norm/statement/delete'
 
 module Norm

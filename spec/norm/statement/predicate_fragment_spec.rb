@@ -26,29 +26,29 @@ module Norm
       end
 
       it 'allows interpolation of hash params' do
-        fragment = subject.new('$:foo', :foo => 'bar')
+        fragment = subject.new('$foo', :foo => 'bar')
         fragment.sql.must_equal '$?'
         fragment.params.must_equal ['bar']
       end
 
       it 'allows interpolation of nested hash params' do
         fragment = subject.new(
-          '$:foo.bar.baz', :foo => {:bar => {:baz => 'qux'}}
+          '$foo.bar.baz', :foo => {:bar => {:baz => 'qux'}}
         )
         fragment.sql.must_equal '$?'
         fragment.params.must_equal ['qux']
       end
 
       it 'raises MissingInterpolationError if a missing key is referenced' do
-        error = proc { subject.new('$:foo.bar', :foo => {}) }.must_raise(
+        error = proc { subject.new('$foo.bar', :foo => {}) }.must_raise(
           MissingInterpolationError
         )
         error.message.must_equal 'Missing content for "foo.bar".'
       end
 
       it 'allows escaping of interpolation with backslash' do
-        fragment = subject.new('\\$:foo', {})
-        fragment.sql.must_equal '$:foo'
+        fragment = subject.new('\\$foo', {})
+        fragment.sql.must_equal '$foo'
         fragment.params.must_equal []
       end
 
@@ -58,9 +58,9 @@ module Norm
         fragment.params.must_equal [1]
       end
 
-      it 'builds sql/params with "is NULL" if a nil is on RHS of hash' do
+      it 'builds sql/params with "IS NULL" if a nil is on RHS of hash' do
         fragment = subject.new(:id => nil)
-        fragment.sql.must_equal '"id" is NULL'
+        fragment.sql.must_equal '"id" IS NULL'
         fragment.params.must_be :empty?
       end
 

@@ -15,7 +15,7 @@ module Norm
         params = []
         hash.map { |attr, value|
           if value.nil?
-            sql << "#{quote_identifier(attr)} is NULL"
+            sql << "#{quote_identifier(attr)} IS NULL"
           else
             params << value
             sql << "#{quote_identifier(attr)} = $?"

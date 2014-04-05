@@ -92,7 +92,7 @@ module Norm
       end
 
       def having!(*args)
-        @having << PredicateFragment.new(*args)
+        @havings << PredicateFragment.new(*args)
         self
       end
 
