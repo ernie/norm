@@ -14,7 +14,7 @@ module Norm
 
       describe '#select!' do
 
-        it 'appends to the existing statement select clause' do
+        it 'appends to the existing statement SELECT clause' do
           select = Select.new('"id"')
           select.select!('"name"')
           select.sql.must_equal 'SELECT "id", "name"'
@@ -24,7 +24,7 @@ module Norm
 
       describe '#select' do
 
-        it 'returns a new statment with appended select clause' do
+        it 'returns a new statment with appended SELECT clause' do
           select = Select.new('"id"')
           another_select = select.select('"name"')
           select.sql.must_equal 'SELECT "id"'

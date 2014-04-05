@@ -39,18 +39,6 @@ module Norm
         @params
       end
 
-      def compile!
-        clauses = non_empty_clauses
-        sql = clauses.map(&:sql).join("\n")
-        params = clauses.map(&:params).inject(&:+)
-        @sql, @params = sql, params
-      end
-
-      def non_empty_clauses
-        [@selects, @froms, @wheres, @havings,
-         @groups, @orders, @limit, @offset].reject(&:empty?)
-      end
-
       def select(*args)
         dup.select!(*args)
       end
@@ -121,6 +109,20 @@ module Norm
       def offset!(*args)
         @offset.value = Fragment.new(*args)
         self
+      end
+
+      private
+
+      def compile!
+        clauses = non_empty_clauses
+        sql = clauses.map(&:sql).join("\n")
+        params = clauses.map(&:params).inject(&:+) || []
+        @sql, @params = sql, params
+      end
+
+      def non_empty_clauses
+        [@selects, @froms, @wheres, @havings,
+         @groups, @orders, @limit, @offset].reject(&:empty?)
       end
 
     end

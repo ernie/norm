@@ -18,4 +18,3 @@ module Norm
     end
   end
 end
-

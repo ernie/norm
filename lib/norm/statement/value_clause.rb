@@ -28,3 +28,6 @@ end
 
 require 'norm/statement/limit_clause'
 require 'norm/statement/offset_clause'
+require 'norm/statement/insert_clause'
+require 'norm/statement/update_clause'
+require 'norm/statement/returning_clause'

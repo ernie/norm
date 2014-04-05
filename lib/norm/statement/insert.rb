@@ -1,7 +1,3 @@
-require 'norm/statement/insert_clause'
-require 'norm/statement/values_clause'
-require 'norm/statement/returning_clause'
-
 module Norm
   module Statement
     class Insert < SQL
@@ -17,14 +13,20 @@ module Norm
         @insert    = @insert.dup
         @values    = @values.dup
         @returning = @returning.dup
+        @sql       = nil
+        @params    = nil
       end
 
       def sql
-        non_empty_clauses.map(&:sql).join("\n")
+        return @sql if @sql
+        compile!
+        @sql
       end
 
       def params
-        non_empty_clauses.map(&:params).inject(&:+)
+        return @params if @params
+        compile!
+        @params
       end
 
       def insert!(*args)
@@ -64,6 +66,13 @@ module Norm
       end
 
       private
+
+      def compile!
+        clauses = non_empty_clauses
+        sql = clauses.map(&:sql).join("\n")
+        params = clauses.map(&:params).inject(&:+) || []
+        @sql, @params = sql, params
+      end
 
       def non_empty_clauses
         [@insert, @values, @returning].reject(&:empty?)
