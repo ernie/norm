@@ -6,10 +6,11 @@ module Norm
   module Statement
     class Insert < SQL
 
-      def initialize(table_name, *columns)
-        @insert    = InsertClause.new(table_name, *columns)
+      def initialize(*args)
+        @insert    = InsertClause.new
         @values    = ValuesClause.new
         @returning = ReturningClause.new
+        insert!(*args) unless args.empty?
       end
 
       def initialize_copy(orig)
@@ -26,6 +27,15 @@ module Norm
         non_empty_clauses.map(&:params).inject(&:+)
       end
 
+      def insert!(*args)
+        @insert.value = Fragment.new(*args)
+        self
+      end
+
+      def insert(*args)
+        dup.insert!(*args)
+      end
+
       def values(*args)
         dup.values!(*args)
       end
@@ -35,12 +45,12 @@ module Norm
         self
       end
 
-      def values_sql(sql, *args)
-        dup.values_sql!(sql, *args)
+      def values_sql(*args)
+        dup.values_sql!(*args)
       end
 
-      def values_sql!(sql, *args)
-        @values << Fragment.new(sql, *args)
+      def values_sql!(*args)
+        @values << Fragment.new(*args)
         self
       end
 
