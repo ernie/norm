@@ -1,8 +1,6 @@
 require 'spec_helper'
 
-class NormRecordSpecClass
-  extend Norm::Record
-end
+NormRecordSpecClass = Class.new(Norm::Record)
 
 class NormRecordSpecLoader
   def self.load(object, *args)
@@ -14,9 +12,7 @@ module Norm
   describe Record do
 
     let(:simple_record_class) {
-      Class.new do
-        extend Record
-
+      Class.new(Record) do
         attribute :name, NormRecordSpecLoader
         attribute :age,  NormRecordSpecLoader
       end
@@ -24,11 +20,11 @@ module Norm
 
     subject { NormRecordSpecClass }
 
-    it 'creates an AttributeMethods module inside the extending class' do
+    it 'creates an AttributeMethods module inside the inheriting class' do
       subject.ancestors.must_include subject::AttributeMethods
     end
 
-    it 'creates another AttributeMethods module when inheriting' do
+    it 'creates another AttributeMethods module when subclassing the class' do
       subclass = Class.new(subject)
       subclass::AttributeMethods.wont_be_same_as subject::AttributeMethods
     end
@@ -42,7 +38,7 @@ module Norm
     end
 
     describe '.attribute' do
-      subject { Class.new { extend Record } }
+      subject { Class.new(Record) }
 
       it 'adds the attribute name to #attribute_names as a string' do
         subject.attribute :my_attr, NormRecordSpecLoader

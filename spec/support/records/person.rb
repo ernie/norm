@@ -4,9 +4,7 @@ class PersonRepo
   self.table_name = 'people'
 end
 
-class Person
-  extend Norm::Record
-
+class Person < Norm::Record
   self.repo = PersonRepo.new
 
   attribute :id, Attr::Integer
