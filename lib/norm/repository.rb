@@ -13,6 +13,10 @@ module Norm
 
     primary_key :id
 
+    def initialize(instantiator)
+      @instantiator = instantiator
+    end
+
     def all
       raise NotImplementedError, 'Repositories must implement #all'
     end
@@ -29,9 +33,7 @@ module Norm
       raise NotImplementedError, 'Repositories must implement #delete'
     end
 
-    def instantiate(tuples)
-      raise NotImplementedError, 'Repositories must implement #instantiate'
-    end
-
   end
 end
+
+require 'norm/memory_repository'
