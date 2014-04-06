@@ -5,7 +5,7 @@ module Norm
     let(:mock_pg) { MiniTest::Mock.new }
     subject {
       PG::Connection.stub(:new, mock_pg) do
-        Connection.new('master')
+        Connection.new('primary')
       end
     }
 
@@ -13,14 +13,14 @@ module Norm
       proc { Connection.new }.must_raise ArgumentError
       mock_pg.expect(:new, mock_pg, [{}])
       PG::Connection.stub(:new, proc { |*args| mock_pg.new(*args) }) do
-        Connection.new('master').name.must_equal 'master'
+        Connection.new('primary').name.must_equal 'primary'
       end
     end
 
     it 'creates a database connection with options from initialize' do
       mock_pg.expect(:new, mock_pg, [{:host => 'zomg.lol'}])
       PG::Connection.stub(:new, proc { |*args| mock_pg.new(*args) }) do
-        Connection.new('master', :host => 'zomg.lol')
+        Connection.new('primary', :host => 'zomg.lol')
       end
       mock_pg.verify
     end

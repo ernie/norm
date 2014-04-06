@@ -19,11 +19,11 @@ module Norm
       attr_accessor :record_class
 
       def read_connection
-        'master'
+        'primary'
       end
 
       def write_connection
-        'master'
+        'primary'
       end
 
       def table_name
