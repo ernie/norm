@@ -10,9 +10,7 @@ module Norm
     end
 
     def store(record_or_records)
-      to_update, to_insert = Array(record_or_records).partition { |record|
-        record.stored?
-      }
+      to_update, to_insert = Array(record_or_records).partition(&:stored?)
       insert(to_insert)
       update(to_update)
     end
@@ -23,10 +21,7 @@ module Norm
         set_defaults!(attrs)
         key = attrs.values_at(*primary_keys)
         require_insertable_key!(key)
-        timestamp!(
-          attrs,
-          record.attribute_names & ['created_at', 'updated_at']
-        )
+        timestamp_insert!(attrs, record)
         @store[key] = attrs
         record.set_attributes(attrs)
         record.inserted!
@@ -39,10 +34,7 @@ module Norm
         set_defaults!(attrs)
         key = attrs.values_at(*primary_keys)
         require_updateable_key!(key)
-        timestamp!(
-          attrs,
-          record.attribute_names & ['updated_at']
-        )
+        timestamp_update!(attrs, record)
         @store[key] = attrs
         record.set_attributes(attrs)
         record.updated!
@@ -90,6 +82,19 @@ module Norm
     def require_present_key!(key)
       unless @store.key?(key)
         raise ArgumentError, "No result found for key: #{key.join('-')}"
+      end
+    end
+
+    def timestamp_insert!(attrs, record)
+      if record.attribute?(:created_at)
+        attrs['created_at'] = Attr::Timestamp.now.to_s
+      end
+      timestamp_update!(attrs, record)
+    end
+
+    def timestamp_update!(attrs, record)
+      if record.attribute?(:updated_at)
+        attrs['updated_at'] = Attr::Timestamp.now.to_s
       end
     end
 
