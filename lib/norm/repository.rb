@@ -3,18 +3,23 @@ module Norm
 
     class << self
 
-      def primary_keys(*keys)
-        keys.map!(&:to_s)
+      def primary_keys=(key_or_keys)
+        keys = Array(key_or_keys).map(&:to_s)
         define_method(:primary_keys) { keys }
       end
-      alias :primary_key :primary_keys
+      alias :primary_key= :primary_keys=
+
+      def record_class=(record_class)
+        define_method(:record_class) { record_class }
+      end
 
     end
 
-    primary_key :id
+    self.primary_key = :id
 
-    def initialize(instantiator)
-      @instantiator = instantiator
+    def record_class
+      raise NotImplementedError,
+        'Repositories must set their record class with self.record_class='
     end
 
     def all

@@ -12,7 +12,12 @@ module Norm
         attribute :updated_at,  Attr::Timestamp
       end
     }
-    subject { Class.new(MemoryRepository).new(person_record_class) }
+    subject {
+      record_class = person_record_class
+      Class.new(MemoryRepository) {
+        self.record_class = record_class
+      }.new
+    }
 
     it 'returns a list of all records in the store' do
       subject.all.must_equal []

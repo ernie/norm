@@ -1,13 +1,12 @@
 module Norm
   class MemoryRepository < Repository
 
-    def initialize(instantiator, store = {})
-      super(instantiator)
+    def initialize(store = {})
       @store = store
     end
 
     def all
-      @store.values.map { |tuple| @instantiator.from_repo(tuple) }
+      @store.values.map { |tuple| record_class.from_repo(tuple) }
     end
 
     def store(record_or_records)
@@ -23,45 +22,36 @@ module Norm
         attrs = stringify_values(record.initialized_attributes)
         set_defaults!(attrs)
         key = attrs.values_at(*primary_keys)
-        if @store.key?(key)
-          raise ArgumentError, "Duplicate primary key #{key.join('-')}"
-        elsif key.any?(&:nil?)
-          raise ArgumentError, "A primary key is nil: #{key.join('-')}"
-        else
-          timestamp!(
-            attrs,
-            record.attribute_names & ['created_at', 'updated_at']
-          )
-          @store[key] = attrs
-          record.set_attributes(attrs)
-          record.inserted!
-        end
+        require_insertable_key!(key)
+        timestamp!(
+          attrs,
+          record.attribute_names & ['created_at', 'updated_at']
+        )
+        @store[key] = attrs
+        record.set_attributes(attrs)
+        record.inserted!
       end
     end
 
     def update(record_or_records)
       Array(record_or_records).each do |record|
         attrs = stringify_values(record.initialized_attributes)
+        set_defaults!(attrs)
         key = attrs.values_at(*primary_keys)
-        if !@store.key?(key)
-          raise ArgumentError, "No result found for #{key.join('-')}"
-        elsif key.any?(&:nil?)
-          raise ArgumentError, "A primary key is nil: #{key.join('-')}"
-        else
-          timestamp!(
-            attrs,
-            record.attribute_names & ['updated_at']
-          )
-          @store[key] = attrs
-          record.set_attributes(attrs)
-          record.updated!
-        end
+        require_updateable_key!(key)
+        timestamp!(
+          attrs,
+          record.attribute_names & ['updated_at']
+        )
+        @store[key] = attrs
+        record.set_attributes(attrs)
+        record.updated!
       end
     end
 
     def fetch(*keys)
       if tuple = @store[keys.map(&:to_s)]
-        @instantiator.from_repo(tuple)
+        record_class.from_repo(tuple)
       end
     end
 
@@ -74,6 +64,34 @@ module Norm
     end
 
     private
+
+    def require_insertable_key!(key)
+      require_non_nil_key!(key)
+      require_absent_key!(key)
+    end
+
+    def require_updateable_key!(key)
+      require_non_nil_key!(key)
+      require_present_key!(key)
+    end
+
+    def require_non_nil_key!(key)
+      if key.any?(&:nil?)
+        raise ArgumentError, "A primary key is nil: #{key.join('-')}"
+      end
+    end
+
+    def require_absent_key!(key)
+      if @store.key?(key)
+        raise ArgumentError, "Duplicate primary key: #{key.join('-')}"
+      end
+    end
+
+    def require_present_key!(key)
+      unless @store.key?(key)
+        raise ArgumentError, "No result found for key: #{key.join('-')}"
+      end
+    end
 
     def default_id
       id_sequence.next
@@ -90,7 +108,7 @@ module Norm
     end
 
     def set_defaults!(attrs)
-      (@instantiator.attribute_names - attrs.keys).each do |attr|
+      (record_class.attribute_names - attrs.keys).each do |attr|
         if respond_to?("default_#{attr}", true)
           new_value = send("default_#{attr}")
           attrs[attr] = new_value.nil? ? nil : new_value.to_s
