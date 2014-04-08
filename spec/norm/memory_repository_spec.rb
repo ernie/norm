@@ -45,6 +45,22 @@ module Norm
         person.updated_at.must_be_kind_of Attr::Timestamp
       end
 
+      it 'raises InvalidKeyError if the record has a nil value in its key' do
+        person = person_record_class.new(:id => nil, :name => 'Ernie')
+        proc { subject.insert(person) }.must_raise(
+          Repository::InvalidKeyError
+        )
+      end
+
+      it 'raises DuplicateKeyError if a record with that key already exists' do
+        person1 = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(person1)
+        person2 = person_record_class.new(:id => person1.id, :name => 'Bert')
+        proc { subject.insert(person2) }.must_raise(
+          Repository::DuplicateKeyError
+        )
+      end
+
     end
 
     describe '#update' do
@@ -59,6 +75,24 @@ module Norm
         person = subject.fetch(person.id)
         person.name.must_equal 'Bert'
         person.updated_at.must_be :>, previous_updated_at
+      end
+
+      it 'raises InvalidKeyError if the record has a nil value in its key' do
+        person = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(person)
+        person.id = nil
+        proc { subject.update(person) }.must_raise(
+          Repository::InvalidKeyError
+        )
+      end
+
+      it 'raises NotFoundError if the record being updated is not present' do
+        person = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(person)
+        person.id = 42
+        proc { subject.update(person) }.must_raise(
+          Repository::NotFoundError
+        )
       end
 
     end

@@ -71,19 +71,19 @@ module Norm
 
     def require_non_nil_key!(key)
       if key.any?(&:nil?)
-        raise ArgumentError, "A primary key is nil: #{key.join('-')}"
+        raise InvalidKeyError, "A primary key is nil: #{key.join('-')}"
       end
     end
 
     def require_absent_key!(key)
       if fetch(*key)
-        raise ArgumentError, "Duplicate primary key: #{key.join('-')}"
+        raise DuplicateKeyError, "Duplicate primary key: #{key.join('-')}"
       end
     end
 
     def require_present_key!(key)
       unless fetch(*key)
-        raise ArgumentError, "No result found for key: #{key.join('-')}"
+        raise NotFoundError, "No result found for key: #{key.join('-')}"
       end
     end
 
