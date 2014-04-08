@@ -19,52 +19,90 @@ module Norm
       }.new
     }
 
-    it 'returns a list of all records in the store' do
-      subject.all.must_equal []
+    describe '#all' do
+
+      it 'returns a list of all records in the store' do
+        subject.all.must_equal []
+        subject.store(person_record_class.new(:name => 'Ernie', :age => 36))
+        subject.all.size.must_equal 1
+        subject.all.first.must_be_kind_of person_record_class
+      end
+
     end
 
-    it 'stores a new record' do
-      person = person_record_class.new(:name => 'Ernie', :age => 36)
-      subject.store(person)
-      records = subject.all
-      records.size.must_equal 1
-      person = records.first
-      person.id.must_equal 1
-      person.name.must_equal 'Ernie'
-      person.age.must_equal 36
-      person.created_at.must_be_kind_of Attr::Timestamp
-      person.updated_at.must_be_kind_of Attr::Timestamp
+    describe '#insert' do
+
+      it 'inserts a new record' do
+        person = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(person)
+        records = subject.all
+        records.size.must_equal 1
+        person = records.first
+        person.id.must_equal 1
+        person.name.must_equal 'Ernie'
+        person.age.must_equal 36
+        person.created_at.must_be_kind_of Attr::Timestamp
+        person.updated_at.must_be_kind_of Attr::Timestamp
+      end
+
     end
 
-    it 'fetches a stored record' do
-      person = person_record_class.new(:name => 'Ernie', :age => 36)
-      subject.store(person)
-      person = subject.fetch(person.id)
-      person.name.must_equal 'Ernie'
-      person.age.must_equal 36
-      person.created_at.must_be_kind_of Attr::Timestamp
-      person.updated_at.must_be_kind_of Attr::Timestamp
+    describe '#update' do
+
+      it 'updates a stored record' do
+        person = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(person)
+        person = subject.fetch(person.id)
+        person.name = 'Bert'
+        previous_updated_at = person.updated_at
+        subject.update(person)
+        person = subject.fetch(person.id)
+        person.name.must_equal 'Bert'
+        person.updated_at.must_be :>, previous_updated_at
+      end
+
     end
 
-    it 'updates a stored record' do
-      person = person_record_class.new(:name => 'Ernie', :age => 36)
-      subject.store(person)
-      person = subject.fetch(person.id)
-      person.name = 'Bert'
-      subject.store(person)
-      person = subject.fetch(person.id)
-      person.name.must_equal 'Bert'
-      person.updated_at.must_be :>, person.created_at
+    describe '#fetch' do
+
+      it 'fetches a stored record' do
+        person = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.store(person)
+        person = subject.fetch(person.id)
+        person.name.must_equal 'Ernie'
+        person.age.must_equal 36
+        person.created_at.must_be_kind_of Attr::Timestamp
+        person.updated_at.must_be_kind_of Attr::Timestamp
+      end
+
     end
 
-    it 'deletes a stored record' do
-      person = person_record_class.new(:name => 'Ernie', :age => 36)
-      subject.store(person)
-      person = subject.fetch(person.id)
-      subject.delete(person)
-      subject.fetch(person.id).must_be_nil
-      person.must_be :deleted?
-      person.wont_be :stored?
+    describe '#delete' do
+
+      it 'deletes a stored record' do
+        person = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.store(person)
+        person = subject.fetch(person.id)
+        subject.delete(person)
+        subject.fetch(person.id).must_be_nil
+        person.must_be :deleted?
+        person.wont_be :stored?
+      end
+
+    end
+
+    describe '#store' do
+
+      it 'updates and inserts records as appropriate' do
+        person1 = person_record_class.new(:name => 'Ernie', :age => 36)
+        person2 = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.insert(person1)
+        previous_updated_at = person1.updated_at
+        subject.store([person1, person2])
+        person1.updated_at.must_be :>, previous_updated_at
+        person2.must_be :stored?
+      end
+
     end
 
   end

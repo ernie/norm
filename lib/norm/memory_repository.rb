@@ -17,45 +17,47 @@ module Norm
 
     def insert(record_or_records)
       Array(record_or_records).each do |record|
-        attrs = stringify_values(record.initialized_attributes)
-        set_defaults!(attrs)
-        key = attrs.values_at(*primary_keys)
+        attributes = record.initialized_attributes
+        set_defaults!(attributes)
+        key = attributes.values_at(*primary_keys)
         require_insertable_key!(key)
-        timestamp_insert!(attrs, record)
-        @store[key] = attrs
-        record.set_attributes(attrs)
+        timestamp_insert!(attributes, record)
+        store!(key, record.attributes.merge(attributes), record)
         record.inserted!
       end
     end
 
     def update(record_or_records)
       Array(record_or_records).each do |record|
-        attrs = stringify_values(record.initialized_attributes)
-        set_defaults!(attrs)
-        key = attrs.values_at(*primary_keys)
+        attributes = record.updated_attributes
+        key = record.attributes.values_at(*primary_keys)
         require_updateable_key!(key)
-        timestamp_update!(attrs, record)
-        @store[key] = attrs
-        record.set_attributes(attrs)
+        stored_record = fetch(*key)
+        timestamp_update!(attributes, record)
+        store!(key, stored_record.attributes.merge(attributes), record)
         record.updated!
       end
     end
 
     def fetch(*keys)
-      if tuple = @store[keys.map(&:to_s)]
+      if tuple = @store[stringify_key(keys)]
         record_class.from_repo(tuple)
       end
     end
 
     def delete(record_or_records)
       Array(record_or_records).each do |record|
-        attrs = stringify_values(record.initialized_attributes)
-        @store.delete(attrs.values_at(*primary_keys))
+        @store.delete(stringify_key(record.attributes.values_at(*primary_keys)))
         record.deleted!
       end
     end
 
     private
+
+    def store!(key, attributes, record)
+      @store[stringify_key(key)] = stringify_values(attributes)
+      record.set_attributes(attributes)
+    end
 
     def require_insertable_key!(key)
       require_non_nil_key!(key)
@@ -74,27 +76,27 @@ module Norm
     end
 
     def require_absent_key!(key)
-      if @store.key?(key)
+      if fetch(*key)
         raise ArgumentError, "Duplicate primary key: #{key.join('-')}"
       end
     end
 
     def require_present_key!(key)
-      unless @store.key?(key)
+      unless fetch(*key)
         raise ArgumentError, "No result found for key: #{key.join('-')}"
       end
     end
 
     def timestamp_insert!(attrs, record)
       if record.attribute?(:created_at)
-        attrs['created_at'] = Attr::Timestamp.now.to_s
+        attrs['created_at'] = Attr::Timestamp.now
       end
       timestamp_update!(attrs, record)
     end
 
     def timestamp_update!(attrs, record)
       if record.attribute?(:updated_at)
-        attrs['updated_at'] = Attr::Timestamp.now.to_s
+        attrs['updated_at'] = Attr::Timestamp.now
       end
     end
 
@@ -115,8 +117,7 @@ module Norm
     def set_defaults!(attrs)
       (record_class.attribute_names - attrs.keys).each do |attr|
         if respond_to?("default_#{attr}", true)
-          new_value = send("default_#{attr}")
-          attrs[attr] = new_value.nil? ? nil : new_value.to_s
+          attrs[attr] = send("default_#{attr}")
         end
       end
     end
@@ -127,7 +128,15 @@ module Norm
     end
 
     def stringify_values(attributes)
-      Hash[ attributes.map { |k, v| [k, v.nil? ? v : v.to_s] } ]
+      Hash[ attributes.map { |k, v| [k, stringify(v)] } ]
+    end
+
+    def stringify_key(key)
+      key.map { |k| stringify(k) }
+    end
+
+    def stringify(obj)
+      obj.nil? ? nil : obj.to_s
     end
 
   end
