@@ -37,13 +37,6 @@ module Norm
         @local_attribute_loaders[name.to_s] = loader
       end
 
-      def repo=(repo)
-        @repo = nil
-        define_singleton_method(:repo) {
-          @repo ||= repo.dup.tap { |repo| repo.record_class = self }
-        }
-      end
-
       def from_repo(attributes)
         new(attributes).tap { |record| record.stored! }
       end
@@ -57,8 +50,18 @@ module Norm
       track_attribute_updates!
     end
 
+    def inspect
+      "#<#{self.class} #{
+        attributes.map { |k, v| "#{k}: #{v.nil? ? nil : v.to_s}" }.join(', ')
+      }>"
+    end
+
     def attribute_names
       self.class.attribute_names
+    end
+
+    def attribute_values(*attribute_names)
+      attribute_names.map! { |name| send(name) }
     end
 
     def attribute?(name)
@@ -98,6 +101,7 @@ module Norm
 
     def stored!
       @_stored = true
+      self
     end
 
     def stored?
@@ -107,24 +111,23 @@ module Norm
     def inserted!
       stored!
       reset_updated_attributes!
+      self
     end
 
     def updated!
       stored!
       reset_updated_attributes!
+      self
     end
 
     def deleted!
       @_stored  = false
       @_deleted = true
+      self
     end
 
     def deleted?
       @_deleted == true
-    end
-
-    def repo
-      self.class.repo
     end
 
     private

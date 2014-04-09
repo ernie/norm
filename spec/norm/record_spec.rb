@@ -119,6 +119,15 @@ module Norm
 
       end
 
+      describe '#attribute_values' do
+
+        it 'returns an array of values in the specified order' do
+          record = simple_record_class.new(:name => 'Ernie', :age => 36)
+          record.attribute_values(:age, :name).must_equal [36, 'Ernie']
+        end
+
+      end
+
       describe '#attribute?' do
 
         it 'tells if the record contains this attribute' do

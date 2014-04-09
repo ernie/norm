@@ -12,20 +12,20 @@ module Norm
 
     def exec_string(*args, &block)
       @db.exec(*args) do |result|
-        yield result, self
+        yield result, self if block_given?
       end
     end
 
     def exec_params(*args, &block)
       @db.exec_params(*args) do |result|
-        yield result, self
+        yield result, self if block_given?
       end
     end
 
     def exec_statement(stmt, result_format = 0, &block)
       sql = finalize_placeholders(stmt.sql)
       @db.exec_params(sql, stmt.params, result_format) do |result|
-        yield result, self
+        yield result, self if block_given?
       end
     end
 

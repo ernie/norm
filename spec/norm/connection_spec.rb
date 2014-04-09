@@ -26,6 +26,7 @@ module Norm
     end
 
     describe '#exec_string' do
+
       it 'delegates to PG::Connection#exec' do
         mock_pg.expect(:exec, nil, &->(sql, &block) {
           sql == 'select 1' &&
@@ -38,9 +39,19 @@ module Norm
         end
         mock_pg.verify
       end
+
+      it 'does not require a block' do
+        mock_pg.expect(:exec, nil, &->(sql, &block) {
+          sql == 'select 1'
+        })
+        subject.exec_string('select 1')
+        mock_pg.verify
+      end
+
     end
 
     describe '#exec_params' do
+
       it 'delegates to PG::Connection#exec_params' do
         mock_pg.expect(:exec_params, nil, &->(sql, params, format, &block) {
           sql == 'select $1' &&
@@ -55,6 +66,17 @@ module Norm
         end
         mock_pg.verify
       end
+
+      it 'does not require a block' do
+        mock_pg.expect(:exec_params, nil, &->(sql, params, format, &block) {
+          sql == 'select $1' &&
+          params == [1] &&
+          format == 0
+        })
+        subject.exec_params('select $1', [1], 0)
+        mock_pg.verify
+      end
+
     end
 
     describe '#exec_statement' do
@@ -77,6 +99,16 @@ module Norm
           conn.must_be_kind_of Connection
           'called!'
         end
+        mock_pg.verify
+      end
+
+      it 'does not require a block' do
+        mock_pg.expect(:exec_params, nil, &->(sql, params, format, &block) {
+          sql == 'insert into items values ($1, $2)' &&
+          params == statement.params &&
+          format == 1
+        })
+        subject.exec_statement(statement, 1)
         mock_pg.verify
       end
 

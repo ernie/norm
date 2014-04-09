@@ -30,7 +30,7 @@ module Norm
     def update(record_or_records)
       Array(record_or_records).each do |record|
         attributes = record.updated_attributes
-        key = record.attributes.values_at(*primary_keys)
+        key = record.attribute_values(*primary_keys)
         require_updateable_key!(key)
         stored_record = fetch(*key)
         timestamp_update!(attributes, record)
@@ -47,7 +47,7 @@ module Norm
 
     def delete(record_or_records)
       Array(record_or_records).each do |record|
-        @store.delete(stringify_key(record.attributes.values_at(*primary_keys)))
+        @store.delete(stringify_key(record.attribute_values(*primary_keys)))
         record.deleted!
       end
     end

@@ -38,6 +38,14 @@ module Norm
       raise NotImplementedError, 'Repositories must implement #store'
     end
 
+    def insert(record_or_records)
+      raise NotImplementedError, 'Repositories must implement #insert'
+    end
+
+    def update(record_or_records)
+      raise NotImplementedError, 'Repositories must implement #update'
+    end
+
     def delete(record_or_records)
       raise NotImplementedError, 'Repositories must implement #delete'
     end
@@ -46,3 +54,4 @@ module Norm
 end
 
 require 'norm/memory_repository'
+require 'norm/postgresql_repository'
