@@ -11,12 +11,11 @@ module Norm
 
     def store(record_or_records)
       to_update, to_insert = Array(record_or_records).partition(&:stored?)
-      insert(to_insert)
-      update(to_update)
+      insert(to_insert) + update(to_update)
     end
 
     def insert(record_or_records)
-      Array(record_or_records).each do |record|
+      Array(record_or_records).map do |record|
         attributes = record.initialized_attributes
         set_defaults!(attributes)
         key = attributes.values_at(*primary_keys)
@@ -28,7 +27,7 @@ module Norm
     end
 
     def update(record_or_records)
-      Array(record_or_records).each do |record|
+      Array(record_or_records).map do |record|
         attributes = record.updated_attributes
         key = record.attribute_values(*primary_keys)
         require_updateable_key!(key)
@@ -46,7 +45,7 @@ module Norm
     end
 
     def delete(record_or_records)
-      Array(record_or_records).each do |record|
+      Array(record_or_records).map do |record|
         @store.delete(stringify_key(record.attribute_values(*primary_keys)))
         record.deleted!
       end
