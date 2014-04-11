@@ -11,8 +11,8 @@ Norm.with_connection do |conn|
       id serial NOT NULL,
       name character varying(255),
       age integer,
-      created_at timestamp with time zone NOT NULL DEFAULT now(),
-      updated_at timestamp with time zone NOT NULL DEFAULT now(),
+      created_at timestamp with time zone NOT NULL,
+      updated_at timestamp with time zone NOT NULL,
       CONSTRAINT people_pkey PRIMARY KEY (id)
     )
   SQL

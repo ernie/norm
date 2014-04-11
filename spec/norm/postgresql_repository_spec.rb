@@ -30,6 +30,10 @@ module Norm
           Norm::Statement.insert("people (#{column_list})").returning('*')
         end
 
+        def update_statement
+          Norm::Statement.update('people').returning('*')
+        end
+
       }.new
     }
 
@@ -89,7 +93,6 @@ module Norm
     describe '#update' do
 
       it 'updates a stored record' do
-        skip
         person = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(person)
         person = subject.fetch(person.id)
@@ -99,6 +102,20 @@ module Norm
         person = subject.fetch(person.id)
         person.name.must_equal 'Bert'
         person.updated_at.must_be :>, previous_updated_at
+      end
+
+      it 'sets updated attributes on the passed-in records' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert  = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.insert([ernie, bert])
+        ernie_updated = ernie.updated_at
+        bert_updated  = bert.updated_at
+        ernie.name, bert.name = bert.name, ernie.name
+        subject.update([ernie, bert])
+        ernie.updated_at.must_be :>, ernie_updated
+        bert.updated_at.must_be :>, bert_updated
+        ernie.name.must_equal 'Bert'
+        bert.name.must_equal 'Ernie'
       end
 
       it 'raises InvalidKeyError if the record has a nil value in its key' do
