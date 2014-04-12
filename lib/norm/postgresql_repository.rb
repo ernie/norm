@@ -6,7 +6,7 @@ module Norm
     end
 
     def fetch(*keys)
-      selecting(fetch_statement(*keys)).first
+      selecting(select_statement.where(Hash[primary_keys.zip(keys)])).first
     end
 
     def store(record_or_records)
@@ -21,9 +21,9 @@ module Norm
 
     def update(record_or_records)
       records = Array(record_or_records)
-      records.group_by(&:updated_attributes).map { |attrs, records|
-        update_all(attrs, records)
-      }.flatten!
+      records.group_by(&:updated_attributes).flat_map { |attrs, records|
+        attrs.empty? ? [] : update_all(attrs, records)
+      }
     end
 
     def update_all(attrs, records)
@@ -55,7 +55,7 @@ module Norm
 
     def delete(record_or_records)
       records = Array(record_or_records)
-      deleting(build_delete(records), records)
+      deleting(scope_to_records(records, delete_statement), records)
     end
 
     def selecting(statement)
@@ -102,6 +102,22 @@ module Norm
             if record = update_map[updated.attribute_values(*primary_keys)]
               record.set_attributes(updated.initialized_attributes)
               record.updated!
+            end
+          }
+          records
+        end
+      end
+    end
+
+    def deleting(statement, records)
+      Norm.with_connection do |conn|
+        conn.exec_statement(statement) do |result|
+          delete_map = record_map(records)
+          result.each { |tuple|
+            deleted = record_class.from_repo(tuple)
+            if record = delete_map[deleted.attribute_values(*primary_keys)]
+              record.set_attributes(deleted.initialized_attributes)
+              record.deleted!
             end
           }
           records

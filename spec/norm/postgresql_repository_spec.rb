@@ -18,11 +18,7 @@ module Norm
         self.record_class = record_class
 
         def select_statement
-          @select_statement ||= Norm::Statement.select.from('people')
-        end
-
-        def fetch_statement(*keys)
-          select_statement.where(Hash[primary_keys.zip(keys)])
+          Norm::Statement.select.from('people')
         end
 
         def insert_statement
@@ -61,7 +57,6 @@ module Norm
     describe '#insert' do
 
       it 'inserts a new record' do
-        skip
         person = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(person)
         records = subject.all
@@ -74,22 +69,18 @@ module Norm
         person.updated_at.must_be_kind_of Attr::Timestamp
       end
 
-      it 'raises InvalidKeyError if the record has a nil value in its key' do
-        skip
+      it 'raises PG::NotNullViolation if a nil value is supplied for a key' do
+        skip 'what do we really want to do here?'
         person = person_record_class.new(:id => nil, :name => 'Ernie')
-        proc { subject.insert(person) }.must_raise(
-          Repository::InvalidKeyError
-        )
+        proc { subject.insert(person) }.must_raise(PG::NotNullViolation)
       end
 
-      it 'raises DuplicateKeyError if a record with that key already exists' do
-        skip
+      it 'raises PG::UniqueViolation if a record with that key exists' do
+        skip 'what do we really want to do here?'
         person1 = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(person1)
         person2 = person_record_class.new(:id => person1.id, :name => 'Bert')
-        proc { subject.insert(person2) }.must_raise(
-          Repository::DuplicateKeyError
-        )
+        proc { subject.insert(person2) }.must_raise(PG::UniqueViolation)
       end
 
     end
@@ -122,23 +113,31 @@ module Norm
         bert.name.must_equal 'Ernie'
       end
 
+      it 'does nothing if the record has not been updated' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(ernie)
+        updated_at = ernie.updated_at
+        subject.update(ernie)
+        ernie.updated_at.must_equal updated_at
+      end
+
       it 'raises InvalidKeyError if the record has a nil value in its key' do
-        skip
+        skip 'what do we really want to do here?'
         person = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(person)
         person.id = nil
         proc { subject.update(person) }.must_raise(
-          Repository::InvalidKeyError
+          InvalidKeyError
         )
       end
 
       it 'raises NotFoundError if the record being updated is not present' do
-        skip
+        skip 'what do we really want to do here?'
         person = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(person)
         person.id = 42
         proc { subject.update(person) }.must_raise(
-          Repository::NotFoundError
+          NotFoundError
         )
       end
 
@@ -161,14 +160,16 @@ module Norm
     describe '#delete' do
 
       it 'deletes a stored record' do
-        skip
-        person = person_record_class.new(:name => 'Ernie', :age => 36)
-        subject.store(person)
-        person = subject.fetch(person.id)
-        subject.delete(person)
-        subject.fetch(person.id).must_be_nil
-        person.must_be :deleted?
-        person.wont_be :stored?
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.store([ernie, bert])
+        subject.delete(ernie)
+        subject.fetch(ernie.id).must_be_nil
+        bert = subject.fetch(bert.id)
+        ernie.must_be :deleted?
+        ernie.wont_be :stored?
+        bert.must_be :stored?
+        bert.wont_be :deleted?
       end
 
     end
@@ -176,14 +177,14 @@ module Norm
     describe '#store' do
 
       it 'updates and inserts records as appropriate' do
-        skip
-        person1 = person_record_class.new(:name => 'Ernie', :age => 36)
-        person2 = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.insert(person1)
-        previous_updated_at = person1.updated_at
-        subject.store([person1, person2])
-        person1.updated_at.must_be :>, previous_updated_at
-        person2.must_be :stored?
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.insert(ernie)
+        ernie.age = 37
+        previous_updated_at = ernie.updated_at
+        subject.store([ernie, bert])
+        ernie.updated_at.must_be :>, previous_updated_at
+        bert.must_be :stored?
       end
 
     end
