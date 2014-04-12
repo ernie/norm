@@ -1,5 +1,6 @@
 module Norm
   class Record
+    extend Identity
 
     Attr = Attribute = Norm::Attribute
 
@@ -37,6 +38,14 @@ module Norm
         @local_attribute_loaders[name.to_s] = loader
       end
 
+      def identity(*attribute_names)
+        super
+        attribute_names.map!(&:to_s)
+        define_singleton_method(:identifying_attribute_names) {
+          attribute_names
+        }
+      end
+
       def from_repo(attributes)
         new(attributes).tap { |record| record.stored! }
       end
@@ -50,14 +59,28 @@ module Norm
       track_attribute_updates!
     end
 
+    identity :id
+
     def inspect
       "#<#{self.class} #{
-        attributes.map { |k, v| "#{k}: #{v.nil? ? nil : v.to_s}" }.join(', ')
+        attributes.map { |k, v| "#{k}: #{v.inspect}" }.join(', ')
       }>"
     end
 
     def attribute_names
       self.class.attribute_names
+    end
+
+    def identifying_attribute_names
+      self.class.identifying_attribute_names
+    end
+
+    def identifying_attributes
+      read_attributes(*identifying_attribute_names)
+    end
+
+    def identifying_attribute_values
+      attribute_values(*identifying_attribute_names)
     end
 
     def attribute_values(*attribute_names)

@@ -13,6 +13,7 @@ module Norm
 
     let(:simple_record_class) {
       Class.new(Record) do
+        attribute :id,   NormRecordSpecLoader
         attribute :name, NormRecordSpecLoader
         attribute :age,  NormRecordSpecLoader
       end
@@ -39,6 +40,11 @@ module Norm
 
     describe '.attribute' do
       subject { Class.new(Record) }
+
+      it 'adds the attribute name to .attribute_names as a string' do
+        subject.attribute :my_attr, NormRecordSpecLoader
+        subject.attribute_names.must_equal ['my_attr']
+      end
 
       it 'adds the attribute name to #attribute_names as a string' do
         subject.attribute :my_attr, NormRecordSpecLoader
@@ -83,6 +89,39 @@ module Norm
 
     end
 
+    describe '.identity' do
+      subject {
+        Class.new(Record) {
+          attribute :id,   Attr::Integer
+          attribute :name, Attr::String
+          attribute :age,  Attr::Integer
+        }
+      }
+
+      it 'requires at least one attribute name' do
+        proc { subject.identity }.must_raise ArgumentError
+      end
+
+      it 'sets .identifying_attribute_names to stringified params' do
+        subject.identity :name, :age
+        subject.identifying_attribute_names.must_equal ['name', 'age']
+      end
+
+      it 'is available as .identifier' do
+        subject.identity :id
+        subject.identifying_attribute_names.must_equal ['id']
+      end
+
+    end
+
+    describe '.identifying_attribute_names' do
+
+      it 'defaults to id' do
+        subject.identifying_attribute_names.must_equal ['id']
+      end
+
+    end
+
     describe 'initialization' do
       subject { simple_record_class }
 
@@ -109,12 +148,51 @@ module Norm
     describe 'instance methods' do
       subject { simple_record_class.new }
 
+      describe '#inspect' do
+
+        it 'returns a legible string listing object attributes' do
+          subject.name, subject.age = 'Ernie', 36
+          subject.inspect.must_match(
+            /\A#<#<Class:.*?> id: nil, name: "Ernie", age: 36>\z/
+          )
+        end
+
+      end
+
       describe '#attribute_names' do
 
         it 'delegates to the class implementation by default' do
           simple_record_class.stub(:attribute_names, ['zomg']) do
             subject.attribute_names.must_equal ['zomg']
           end
+        end
+
+      end
+
+      describe '#identifying_attribute_names' do
+
+        it 'delegates to the class implementation by default' do
+          simple_record_class.stub(:identifying_attribute_names, ['zomg']) do
+            subject.identifying_attribute_names.must_equal ['zomg']
+          end
+        end
+
+      end
+
+      describe '#identifying_attributes' do
+
+        it 'returns a hash of identifying attribute keys and values' do
+          subject.id = 42
+          subject.identifying_attributes.must_equal('id' => 42)
+        end
+
+      end
+
+      describe '#identifying_attribute_values' do
+
+        it 'returns an array of identifying attribute values' do
+          subject.id = 42
+          subject.identifying_attribute_values.must_equal [42]
         end
 
       end
@@ -142,6 +220,7 @@ module Norm
         it 'returns a hash of all record attribute names and values' do
           record = simple_record_class.new(:name => 'Ernie Miller')
           record.attributes.must_equal(
+            'id'   => nil,
             'name' => 'Ernie Miller',
             'age'  => nil
           )

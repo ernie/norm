@@ -4,8 +4,16 @@ module Norm
   describe Repository do
     subject { Class.new(Repository) }
 
-    it 'defaults to "id" for primary keys' do
-      subject.new.primary_keys.must_equal ['id']
+    it 'requires a record class be set' do
+      proc { subject.new.record_class }.must_raise NotImplementedError
+    end
+
+    it 'defaults PKs to the identifying attribute names of the record class' do
+      record_class = Class.new(Record)
+      subject.record_class = record_class
+      subject.new.primary_keys.must_equal(
+        record_class.identifying_attribute_names
+      )
     end
 
     it 'allows setting an alternate list of primary keys with .primary_keys=' do

@@ -16,6 +16,15 @@ module Norm
         hash.map { |attr, value|
           if value.nil?
             sql << "#{quote_identifier(attr)} IS NULL"
+          elsif Array === value
+            if value.include?(nil)
+              sql << 'FALSE /* IN with NULL value is never TRUE */'
+            else
+              sql << "#{quote_identifier(attr)} IN (#{
+                (['$?'] * value.size).join(', ')
+              })"
+              params.concat(value)
+            end
           else
             params << value
             sql << "#{quote_identifier(attr)} = $?"

@@ -37,10 +37,7 @@ module Norm
       if primary_keys.size == 1
         key = primary_keys.first
         values = records.map(&key.to_sym)
-        statement.where(
-          "#{key} IN (#{(['$?'] * values.size).join(', ')})",
-          *values
-        )
+        statement.where(key => records.map(&key.to_sym))
       else
         preds = records.map { |record| record.read_attributes(*primary_keys) }.
           map { |attrs|

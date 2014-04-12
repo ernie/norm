@@ -15,11 +15,13 @@ module Norm
 
     end
 
-    self.primary_key = :id
-
     def record_class
       raise NotImplementedError,
         'Repositories must set their record class with self.record_class='
+    end
+
+    def primary_keys
+      record_class.identifying_attribute_names
     end
 
     def all

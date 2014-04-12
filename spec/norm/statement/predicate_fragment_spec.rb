@@ -52,16 +52,32 @@ module Norm
         fragment.params.must_equal []
       end
 
-      it 'builds sql/params with equality predicates from a hash' do
-        fragment = subject.new(:id => 1)
-        fragment.sql.must_equal '"id" = $?'
-        fragment.params.must_equal [1]
-      end
+      describe 'with a hash param' do
 
-      it 'builds sql/params with "IS NULL" if a nil is on RHS of hash' do
-        fragment = subject.new(:id => nil)
-        fragment.sql.must_equal '"id" IS NULL'
-        fragment.params.must_be :empty?
+        it 'builds sql/params with equality predicates' do
+          fragment = subject.new(:id => 1)
+          fragment.sql.must_equal '"id" = $?'
+          fragment.params.must_equal [1]
+        end
+
+        it 'builds sql/params with "IS NULL" if a nil is on RHS' do
+          fragment = subject.new(:id => nil)
+          fragment.sql.must_equal '"id" IS NULL'
+          fragment.params.must_be :empty?
+        end
+
+        it 'builds sql/params with IN if an array is on RHS' do
+          fragment = subject.new(:id => [1, 2])
+          fragment.sql.must_equal '"id" IN ($?, $?)'
+          fragment.params.must_equal [1, 2]
+        end
+
+        it 'builds sql/params with FALSE if an array with nil is on RHS' do
+          fragment = subject.new(:id => [1, nil])
+          fragment.sql.must_equal 'FALSE /* IN with NULL value is never TRUE */'
+          fragment.params.must_be :empty?
+        end
+
       end
 
     end
