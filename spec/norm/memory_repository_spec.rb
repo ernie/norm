@@ -48,7 +48,7 @@ module Norm
       it 'raises InvalidKeyError if the record has a nil value in its key' do
         person = person_record_class.new(:id => nil, :name => 'Ernie')
         proc { subject.insert(person) }.must_raise(
-          Repository::InvalidKeyError
+          InvalidKeyError
         )
       end
 
@@ -57,7 +57,7 @@ module Norm
         subject.insert(person1)
         person2 = person_record_class.new(:id => person1.id, :name => 'Bert')
         proc { subject.insert(person2) }.must_raise(
-          Repository::DuplicateKeyError
+          DuplicateKeyError
         )
       end
 
@@ -82,7 +82,7 @@ module Norm
         subject.insert(person)
         person.id = nil
         proc { subject.update(person) }.must_raise(
-          Repository::InvalidKeyError
+          InvalidKeyError
         )
       end
 
@@ -91,7 +91,7 @@ module Norm
         subject.insert(person)
         person.id = 42
         proc { subject.update(person) }.must_raise(
-          Repository::NotFoundError
+          NotFoundError
         )
       end
 

@@ -1,10 +1,6 @@
 module Norm
   class Repository
 
-    NotFoundError = Class.new(Norm::Error)
-    InvalidKeyError = Class.new(Norm::Error)
-    DuplicateKeyError = Class.new(Norm::Error)
-
     class << self
 
       def primary_keys=(key_or_keys)

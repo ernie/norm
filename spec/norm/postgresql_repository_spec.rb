@@ -34,6 +34,10 @@ module Norm
           Norm::Statement.update('people').returning('*')
         end
 
+        def delete_statement
+          Norm::Statement.delete('people').returning('*')
+        end
+
       }.new
     }
 

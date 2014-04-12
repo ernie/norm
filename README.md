@@ -20,7 +20,7 @@ Or install it yourself as:
 
 ## Usage
 
-Norm only expects you to understand three key concepts in order to use it
+Norm only expects you to understand four key concepts in order to use it
 effectively:
 
 1. `Norm::Record` - Extended on any Ruby class to make this class support a
@@ -29,13 +29,24 @@ effectively:
    respond to `#load`, receiving the object to be loaded and any special
    parameters that govern loading. Return value must be an object which returns
    a PostgreSQL literal string representation of itself on `#to_s`.
-2. `Norm::Statement` - Contains convenience methods for SELECT, INSERT, UPDATE,
-   and DELETE statements. Also the namespace under which all types of statements
+2. `Norm::SQL` - Contains convenience methods for SELECT, INSERT, UPDATE, and
+   DELETE statements. Also the namespace under which all types of statements
    (and statement fragments) live. These objects are composable. They respond to
    `#sql` and `#params`, returning SQL with placeholders in the form of `$?` and
    the corresponding parameters for this SQL. Like attributes, these parameters
-   must return a valid PostgreSQL literal string representation to `#to_s`.
-3. `Norm::ExecutionContext` - This is where statements get executed.
+   must return a valid PostgreSQL literal string representation on `#to_s`.
+3. `Norm::Repository` - These are where records are stored to and fetched from.
+   A repository knows how to identify records in its backend store based on
+   primary keys: one or more attributes that constitute a unique identifier for
+   a record. It's also associated with a specific record class, so that it knows
+   how to instantiate the records from the DB. Repositories have, at minimum,
+   these methods:
+   * `all` - Returns all records in the repository.
+   * `fetch(*keys)` - Returns a single record based on its primary key(s).
+   * `insert(*records)` - Inserts one or more records
+4. `TBD` - Context. Returns Norm::Connection instances on with_connection(s).
+   can be supplied to Repository methods in order to allow them to execute
+   queries in the context of an existing connection/transaction.
 
 ## Contributing
 

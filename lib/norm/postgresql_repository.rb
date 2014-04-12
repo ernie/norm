@@ -27,11 +27,8 @@ module Norm
     end
 
     def update_all(attrs, records)
-      timestamp = Hash[
-        (record_class.attribute_names & ['updated_at']).map { |a| [a, 'now()'] }
-      ]
       updating(
-        scope_to_records(records, update_statement.set(attrs.merge(timestamp))),
+        scope_to_records(records, update_statement.set(attrs)),
         records
       )
     end
@@ -81,13 +78,8 @@ module Norm
     end
 
     def build_insert(records)
-      timestamps = Hash[
-        (record_class.attribute_names & ['created_at', 'updated_at']).map { |a|
-          [a, 'now()']
-        }
-      ]
       records.inject(insert_statement) { |stmt, record|
-        attrs = record.initialized_attributes.merge(timestamps)
+        attrs = record.initialized_attributes
         params = []
         sql = record_class.attribute_names.map { |name|
           if attrs.key?(name)
