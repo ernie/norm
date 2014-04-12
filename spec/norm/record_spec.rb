@@ -332,10 +332,17 @@ module Norm
 
       describe 'stored!' do
 
-        it 'tells object to consider itself stored' do
+        it 'sets the record as stored' do
           subject.wont_be :stored?
           subject.stored!
           subject.must_be :stored?
+        end
+
+        it 'sets the record as non-deleted' do
+          subject.deleted!
+          subject.must_be :deleted?
+          subject.stored!
+          subject.wont_be :deleted?
         end
 
       end

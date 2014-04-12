@@ -123,7 +123,8 @@ module Norm
     end
 
     def stored!
-      @_stored = true
+      @_stored  = true
+      @_deleted = false
       self
     end
 
