@@ -32,8 +32,8 @@ module Norm
 
       describe 'Character()' do
 
-        it 'returns a Loader' do
-          Attribute::Character().must_be_kind_of Loader
+        it 'returns a Delegator' do
+          Attribute::Character().must_be_kind_of Delegator
         end
 
         it 'loads using Character with the passed in parameters' do

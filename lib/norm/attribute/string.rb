@@ -16,7 +16,7 @@ module Norm
     end
 
     def self.String(*args)
-      Loader.new(String, *args)
+      Delegator.new(String, *args)
     end
 
   end

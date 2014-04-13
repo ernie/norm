@@ -23,7 +23,7 @@ module Norm
     end
 
     def self.Decimal(*args)
-      Loader.new(Decimal, *args)
+      Delegator.new(Decimal, *args)
     end
 
   end

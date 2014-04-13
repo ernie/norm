@@ -32,8 +32,8 @@ module Norm
 
       describe 'String()' do
 
-        it 'returns a Loader' do
-          Attribute::String().must_be_kind_of Loader
+        it 'returns a Delegator' do
+          Attribute::String().must_be_kind_of Delegator
         end
 
         it 'loads using Character with the passed in parameters' do

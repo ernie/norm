@@ -35,8 +35,8 @@ module Norm
 
       describe 'Decimal()' do
 
-        it 'returns a Loader' do
-          Attribute::Decimal().must_be_kind_of Loader
+        it 'returns a Delegator' do
+          Attribute::Decimal().must_be_kind_of Delegator
         end
 
         it 'loads using Decimal with the passed in parameters' do

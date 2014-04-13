@@ -2,9 +2,9 @@ require 'spec_helper'
 
 module Norm
   module Attribute
-    describe Loader do
+    describe Delegator do
       let(:delegate) { Minitest::Mock.new }
-      subject { Loader.new(delegate, :some, :params, :here) }
+      subject { Delegator.new(delegate, :some, :params, :here) }
 
       it 'passes its args to the delegate' do
         delegate.expect(:load, 'loaded', ['object', :some, :params, :here])

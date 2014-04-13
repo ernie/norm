@@ -1,6 +1,6 @@
 module Norm
   module Attribute
-    class Loader
+    class Delegator
 
       def initialize(delegate, *args)
         @delegate, @args = delegate, args

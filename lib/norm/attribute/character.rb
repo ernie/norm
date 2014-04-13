@@ -16,7 +16,7 @@ module Norm
     end
 
     def self.Character(*args)
-      Loader.new(Character, *args)
+      Delegator.new(Character, *args)
     end
 
   end

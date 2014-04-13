@@ -1,5 +1,5 @@
 require 'norm/attribute/loading'
-require 'norm/attribute/loader'
+require 'norm/attribute/delegator'
 
 require 'norm/attribute/integer'
 require 'norm/attribute/decimal'
