@@ -1,5 +1,6 @@
 require 'norm/attribute/loading'
 require 'norm/attribute/delegator'
+require 'norm/attribute/loader'
 
 require 'norm/attribute/integer'
 require 'norm/attribute/decimal'
@@ -13,6 +14,10 @@ require 'norm/attribute/interval'
 
 module Norm
   module Attribute
+
+    Error = Class.new(::Norm::Error)
+    LoadingError = Class.new(Error)
+
   end
   Attr = Attribute
 end
