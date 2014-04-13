@@ -13,10 +13,7 @@ module Norm
       end
     }
     subject {
-      record_class = person_record_class
       Class.new(PostgreSQLRepository) {
-        self.record_class = record_class
-
         def select_statement
           Norm::Statement.select.from('people')
         end
@@ -34,7 +31,7 @@ module Norm
           Norm::Statement.delete('people').returning('*')
         end
 
-      }.new
+      }.new(person_record_class)
     }
 
     before {

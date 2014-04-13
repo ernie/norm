@@ -14,9 +14,7 @@ module Norm
     }
     subject {
       record_class = person_record_class
-      Class.new(MemoryRepository) {
-        self.record_class = record_class
-      }.new
+      Class.new(MemoryRepository).new(person_record_class)
     }
 
     describe '#all' do

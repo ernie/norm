@@ -3,33 +3,37 @@ require 'spec_helper'
 module Norm
   describe Repository do
     subject { Class.new(Repository) }
+    let(:record_class) { Class.new(Record) }
 
     it 'requires a record class be set' do
-      proc { subject.new.record_class }.must_raise NotImplementedError
+      proc { subject.new }.must_raise Repository::NoRecordClassError
+    end
+
+    it 'allows setting a default record class' do
+      subject.default_record_class = record_class
+      subject.new.record_class.must_be_same_as record_class
     end
 
     it 'defaults PKs to the identifying attribute names of the record class' do
-      record_class = Class.new(Record)
-      subject.record_class = record_class
-      subject.new.primary_keys.must_equal(
+      subject.new(record_class).primary_keys.must_equal(
         record_class.identifying_attribute_names
       )
     end
 
     it 'allows setting an alternate list of primary keys with .primary_keys=' do
       subject.primary_keys = [:name, :age]
-      subject.new.primary_keys.must_equal ['name', 'age']
+      subject.new(record_class).primary_keys.must_equal ['name', 'age']
     end
 
     it 'allows setting an alternate list of primary keys with .primary_key=' do
       subject.primary_key = :name
-      subject.new.primary_keys.must_equal ['name']
+      subject.new(record_class).primary_keys.must_equal ['name']
     end
 
     describe '#load_attributes' do
       subject {
         Class.new(Repository) {
-          self.record_class = Class.new(Record) {
+          self.default_record_class = Class.new(Record) {
             attribute :id, Attr::Integer
           }
         }.new
@@ -42,7 +46,7 @@ module Norm
     end
 
     describe 'storage methods' do
-      subject { Class.new(Repository).new }
+      subject { Class.new(Repository).new(Class.new(Record)) }
 
       it 'requires subclasses to implement #all' do
         proc { subject.all }.must_raise NotImplementedError

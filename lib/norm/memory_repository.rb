@@ -1,7 +1,8 @@
 module Norm
   class MemoryRepository < Repository
 
-    def initialize(store = {})
+    def initialize(record_class = nil, store = {})
+      super(record_class)
       @store = store
     end
 
