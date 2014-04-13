@@ -12,9 +12,25 @@ module Norm
         attribute :updated_at,  Attr::Timestamp
       end
     }
+
+    let(:person_store) {
+      Class.new(MemoryStore) {
+        def default_id
+          next_serial(:id)
+        end
+
+        def insert_triggers!(record)
+          record.created_at = record.updated_at = Attr::Timestamp.now
+        end
+
+        def update_triggers!(record)
+          record.updated_at = Attr::Timestamp.now
+        end
+      }.new(person_record_class, :id)
+    }
+
     subject {
-      record_class = person_record_class
-      Class.new(MemoryRepository).new(person_record_class)
+      Class.new(MemoryRepository).new(person_record_class, person_store)
     }
 
     describe '#all' do
@@ -75,24 +91,6 @@ module Norm
         person.updated_at.must_be :>, previous_updated_at
       end
 
-      it 'raises InvalidKeyError if the record has a nil value in its key' do
-        person = person_record_class.new(:name => 'Ernie', :age => 36)
-        subject.insert(person)
-        person.id = nil
-        proc { subject.update(person) }.must_raise(
-          InvalidKeyError
-        )
-      end
-
-      it 'raises NotFoundError if the record being updated is not present' do
-        person = person_record_class.new(:name => 'Ernie', :age => 36)
-        subject.insert(person)
-        person.id = 42
-        proc { subject.update(person) }.must_raise(
-          NotFoundError
-        )
-      end
-
     end
 
     describe '#fetch' do
@@ -126,13 +124,14 @@ module Norm
     describe '#store' do
 
       it 'updates and inserts records as appropriate' do
-        person1 = person_record_class.new(:name => 'Ernie', :age => 36)
-        person2 = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.insert(person1)
-        previous_updated_at = person1.updated_at
-        subject.store([person1, person2])
-        person1.updated_at.must_be :>, previous_updated_at
-        person2.must_be :stored?
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.insert(ernie)
+        previous_updated_at = ernie.updated_at
+        ernie.age = 37
+        subject.store([ernie, bert])
+        ernie.updated_at.must_be :>, previous_updated_at
+        bert.must_be :stored?
       end
 
     end

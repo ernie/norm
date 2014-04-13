@@ -1,13 +1,15 @@
+require 'norm/memory_store'
+
 module Norm
   class MemoryRepository < Repository
 
-    def initialize(record_class = nil, store = {})
+    def initialize(record_class = nil, store = nil)
       super(record_class)
-      @store = store
+      @store = store || MemoryStore.new(self.record_class, *primary_keys)
     end
 
     def all
-      @store.values.map { |tuple| record_class.from_repo(tuple) }
+      @store.select { true }.map { |tuple| record_class.from_repo(tuple) }
     end
 
     def store(record_or_records)
@@ -16,127 +18,62 @@ module Norm
     end
 
     def insert(record_or_records)
-      Array(record_or_records).map do |record|
-        attributes = record.initialized_attributes
-        set_defaults!(attributes)
-        key = attributes.values_at(*primary_keys)
-        require_insertable_key!(key)
-        timestamp_insert!(attributes, record)
-        store!(key, record.attributes.merge(attributes), record)
+      records = Array(record_or_records)
+      @store.insert(record_or_records).zip(records).map { |tuple, record|
+        record.set_attributes(tuple)
         record.inserted!
-      end
+      }
     end
 
     def update(record_or_records)
-      Array(record_or_records).map do |record|
-        attributes = record.updated_attributes
-        key = record.attribute_values(*primary_keys)
-        require_updateable_key!(key)
-        stored_record = fetch(*key)
-        timestamp_update!(attributes, record)
-        store!(key, stored_record.attributes.merge(attributes), record)
-        record.updated!
-      end
+      records = Array(record_or_records)
+      update_map = record_map(records)
+      records.group_by(&:updated_attributes).flat_map { |attrs, records|
+        if attrs.empty?
+          []
+        else
+          @store.update(attrs) { |record| records.detect { |r|
+              r.attribute_values(*primary_keys) ==
+                record.attribute_values(*primary_keys)
+            } }.
+            each { |tuple|
+            updated = record_class.from_repo(tuple)
+            if record = update_map[updated.attribute_values(*primary_keys)]
+              record.set_attributes(updated.initialized_attributes)
+              record.updated!
+            end
+          }
+        end
+      }
+      records
     end
 
     def fetch(*keys)
-      if tuple = @store[stringify_key(keys)]
+      attributes = load_attributes(Hash[primary_keys.zip(keys)])
+      if tuple = @store.fetch(keys)
         record_class.from_repo(tuple)
       end
     end
 
     def delete(record_or_records)
-      Array(record_or_records).map do |record|
-        @store.delete(stringify_key(record.attribute_values(*primary_keys)))
-        record.deleted!
-      end
+      records = Array(record_or_records)
+      delete_map = record_map(records)
+      @store.delete { |record| records.include?(record) }.each { |tuple|
+        deleted = record_class.from_repo(tuple)
+        if record = delete_map[deleted.attribute_values(*primary_keys)]
+          record.set_attributes(deleted.initialized_attributes)
+          record.deleted!
+        end
+      }
+      records
     end
 
     private
 
-    def store!(key, attributes, record)
-      @store[stringify_key(key)] = stringify_values(attributes)
-      record.set_attributes(attributes)
-    end
-
-    def require_insertable_key!(key)
-      require_non_nil_key!(key)
-      require_absent_key!(key)
-    end
-
-    def require_updateable_key!(key)
-      require_non_nil_key!(key)
-      require_present_key!(key)
-    end
-
-    def require_non_nil_key!(key)
-      if key.any?(&:nil?)
-        raise InvalidKeyError, "A primary key is nil: #{key.join('-')}"
-      end
-    end
-
-    def require_absent_key!(key)
-      if fetch(*key)
-        raise DuplicateKeyError, "Duplicate primary key: #{key.join('-')}"
-      end
-    end
-
-    def require_present_key!(key)
-      unless fetch(*key)
-        raise NotFoundError, "No result found for key: #{key.join('-')}"
-      end
-    end
-
-    def timestamp_insert!(attrs, record)
-      if record.attribute?(:created_at)
-        attrs['created_at'] = Attr::Timestamp.now
-      end
-      timestamp_update!(attrs, record)
-    end
-
-    def timestamp_update!(attrs, record)
-      if record.attribute?(:updated_at)
-        attrs['updated_at'] = Attr::Timestamp.now
-      end
-    end
-
-    def default_id
-      id_sequence.next
-    end
-
-    def id_sequence
-      @id_sequence ||= (
-        (max_int_attribute_value('id') + 1)..Float::INFINITY
-      ).to_enum
-    end
-
-    def max_int_attribute_value(key)
-      @store.values.map { |v| v[key].to_i }.max || 0
-    end
-
-    def set_defaults!(attrs)
-      (record_class.attribute_names - attrs.keys).each do |attr|
-        if respond_to?("default_#{attr}", true)
-          attrs[attr] = send("default_#{attr}")
-        end
-      end
-    end
-
-    def timestamp!(attrs, keys)
-      timestamp = Attr::Timestamp.now.to_s
-      keys.each { |key| attrs[key] = timestamp }
-    end
-
-    def stringify_values(attributes)
-      Hash[ attributes.map { |k, v| [k, stringify(v)] } ]
-    end
-
-    def stringify_key(key)
-      key.map { |k| stringify(k) }
-    end
-
-    def stringify(obj)
-      obj.nil? ? nil : obj.to_s
+    def record_map(records)
+      Hash[records.map { |record|
+        [record.attribute_values(*primary_keys), record]
+      }]
     end
 
   end
