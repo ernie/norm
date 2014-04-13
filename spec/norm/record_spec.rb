@@ -89,6 +89,19 @@ module Norm
 
     end
 
+    describe '.load_attribute' do
+
+      it 'loads the attribute using the class attribute loader' do
+        loader = MiniTest::Mock.new
+        loader.expect(:load, 'ZOMG LOADED', [1])
+        subject.attribute :my_attr, loader
+        value = subject.load_attribute 'my_attr', 1
+        value.must_equal 'ZOMG LOADED'
+        loader.verify
+      end
+
+    end
+
     describe '.identity' do
       subject {
         Class.new(Record) {

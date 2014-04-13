@@ -26,6 +26,21 @@ module Norm
       subject.new.primary_keys.must_equal ['name']
     end
 
+    describe '#load_attributes' do
+      subject {
+        Class.new(Repository) {
+          self.record_class = Class.new(Record) {
+            attribute :id, Attr::Integer
+          }
+        }.new
+      }
+
+      it 'casts the attributes in a hash' do
+        subject.load_attributes('id' => '42').must_equal('id' => 42)
+      end
+
+    end
+
     describe 'storage methods' do
       subject { Class.new(Repository).new }
 

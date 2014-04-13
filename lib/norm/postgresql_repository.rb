@@ -6,7 +6,8 @@ module Norm
     end
 
     def fetch(*keys)
-      selecting(select_statement.where(Hash[primary_keys.zip(keys)])).first
+      attributes = load_attributes(Hash[primary_keys.zip(keys)])
+      selecting(select_statement.where(attributes)).first
     end
 
     def store(record_or_records)
@@ -22,11 +23,11 @@ module Norm
     def update(record_or_records)
       records = Array(record_or_records)
       records.group_by(&:updated_attributes).flat_map { |attrs, records|
-        attrs.empty? ? [] : update_all(attrs, records)
+        attrs.empty? ? [] : update_all(records, attrs)
       }
     end
 
-    def update_all(attrs, records)
+    def update_all(records, attrs)
       updating(
         scope_to_records(records, update_statement.set(attrs)),
         records

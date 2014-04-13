@@ -38,6 +38,10 @@ module Norm
         @local_attribute_loaders[name.to_s] = loader
       end
 
+      def load_attribute(name, value)
+        attribute_loaders[name].load(value)
+      end
+
       def identity(*attribute_names)
         super
         attribute_names.map!(&:to_s)
@@ -173,7 +177,7 @@ module Norm
     end
 
     def load_attribute(name, value)
-      attribute_loaders[name].load(value)
+      self.class.load_attribute(name, value)
     end
 
     def write_attribute(name, value)
