@@ -1,25 +1,17 @@
 require 'spec_helper'
 
-NormRecordSpecClass = Class.new(Norm::Record)
-
-class NormRecordSpecLoader
-  def self.load(object, *args)
-    object
-  end
-end
-
 module Norm
   describe Record do
 
     let(:simple_record_class) {
       Class.new(Record) do
-        attribute :id,   NormRecordSpecLoader
-        attribute :name, NormRecordSpecLoader
-        attribute :age,  NormRecordSpecLoader
+        attribute :id,   Attr::Integer
+        attribute :name, Attr::String
+        attribute :age,  Attr::Integer
       end
     }
 
-    subject { NormRecordSpecClass }
+    subject { Class.new(Norm::Record) }
 
     it 'creates an AttributeMethods module inside the inheriting class' do
       subject.ancestors.must_include subject::AttributeMethods
@@ -42,21 +34,21 @@ module Norm
       subject { Class.new(Record) }
 
       it 'adds the attribute name to .attribute_names as a string' do
-        subject.attribute :my_attr, NormRecordSpecLoader
+        subject.attribute :my_attr, Attr::String
         subject.attribute_names.must_equal ['my_attr']
       end
 
       it 'adds the attribute name to #attribute_names as a string' do
-        subject.attribute :my_attr, NormRecordSpecLoader
+        subject.attribute :my_attr, Attr::String
         subject.new.attribute_names.must_equal ['my_attr']
       end
 
       it 'alters only the locally-defined attribute names in a subclass' do
-        subject.attribute :my_attr, NormRecordSpecLoader
+        subject.attribute :my_attr, Attr::String
         subclass = Class.new(subject)
-        subclass.attribute :my_other_attr, NormRecordSpecLoader
+        subclass.attribute :my_other_attr, Attr::String
         subclass_of_subclass = Class.new(subclass)
-        subclass_of_subclass.attribute :yet_another_attr, NormRecordSpecLoader
+        subclass_of_subclass.attribute :yet_another_attr, Attr::String
         subject.attribute_names.must_equal ['my_attr']
         subclass.attribute_names.must_equal ['my_attr', 'my_other_attr']
         subclass_of_subclass.attribute_names.must_equal(
@@ -66,14 +58,14 @@ module Norm
 
       it 'allows for later addition of parent class attributes' do
         subclass = Class.new(subject)
-        subclass.attribute :my_attr, NormRecordSpecLoader
+        subclass.attribute :my_attr, Attr::String
         subclass.attribute_names.must_equal ['my_attr']
-        subject.attribute :parent_attr, NormRecordSpecLoader
+        subject.attribute :parent_attr, Attr::String
         subclass.attribute_names.must_equal ['parent_attr', 'my_attr']
       end
 
       it 'creates an attribute reader' do
-        subject.attribute :my_attr, NormRecordSpecLoader
+        subject.attribute :my_attr, Attr::String
         subject.new.must_respond_to :my_attr
       end
 
