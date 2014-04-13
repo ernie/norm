@@ -17,7 +17,7 @@ module Norm
 
     def load_attributes(attributes)
       attributes.each do |name, value|
-        attributes[name] = record_class.attribute_loaders[name].load(value)
+        attributes[name] = record_class.load_attribute(name, value)
       end
       attributes
     end

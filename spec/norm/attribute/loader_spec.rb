@@ -5,7 +5,7 @@ module Norm
     describe Loader do
 
       subject { Loader.new }
-      let(:fallback) {
+      let(:inherited) {
         Loader.new.tap { |loader|
           loader.set_loader(:id, Integer)
         }
@@ -20,7 +20,7 @@ module Norm
 
       end
 
-      describe 'without fallback loader' do
+      describe 'without inherited loader' do
 
         describe '#load' do
 
@@ -38,10 +38,10 @@ module Norm
 
       end
 
-      describe 'with fallback loader' do
-        subject { Loader.new(fallback) }
+      describe 'with inherited loader' do
+        subject { Loader.new(inherited) }
 
-        it 'loads using fallback loader when nothing local is defined' do
+        it 'loads using inherited loader when nothing local is defined' do
           subject.load(:id, '42').must_equal 42
         end
       end

@@ -2,8 +2,8 @@ module Norm
   module Attribute
     class Loader
 
-      def initialize(fallback = nil)
-        @fallback = fallback
+      def initialize(inherited = nil)
+        @inherited = inherited
         @loaders  = {}
       end
 
@@ -16,11 +16,11 @@ module Norm
       end
 
       def loader_for(key, value, *args)
-        @loaders[key] || fallback_loader_for(key, value, *args)
+        @loaders[key] || inherited_loader_for(key, value, *args)
       end
 
       def loader_missing(key, value, *args)
-        fallback_loader_missing(key, value, *args)
+        inherited_loader_missing(key, value, *args)
       end
 
       private
@@ -29,13 +29,13 @@ module Norm
         loader_for(key, value, *args) || loader_missing(key, value, *args)
       end
 
-      def fallback_loader_for(key, value, *args)
-        @fallback.loader_for(key, value, *args) if @fallback
+      def inherited_loader_for(key, value, *args)
+        @inherited.loader_for(key, value, *args) if @inherited
       end
 
-      def fallback_loader_missing(key, value, *args)
-        if @fallback
-          @fallback.loader_missing(key, value, *args)
+      def inherited_loader_missing(key, value, *args)
+        if @inherited
+          @inherited.loader_missing(key, value, *args)
         else
           raise LoadingError, "No loader for \"#{key}\" is defined"
         end

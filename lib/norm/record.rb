@@ -6,21 +6,27 @@ module Norm
 
     class << self
 
+      @attribute_loader = Attribute::Loader.new
+      attr_reader :attribute_loader
+      protected :attribute_loader
+
       def inherited(klass)
-        klass.local_attribute_loaders
+        klass.inherit_attribute_loader(attribute_loader)
         klass.attribute_methods_module
-        klass.extend SubclassExtensions
+      end
+
+      def attribute_names
+        []
+      end
+
+      def inherit_attribute_loader(inherited)
+        @attribute_loader = Attribute::Loader.new(inherited)
       end
 
       def local_attribute_loaders
         @local_attribute_loaders ||= {}
       end
       alias :attribute_loaders :local_attribute_loaders
-
-      def local_attribute_names
-        local_attribute_loaders.keys
-      end
-      alias :attribute_names :local_attribute_names
 
       def attribute_methods_module
         @attribute_methods_module ||= const_set(
@@ -35,11 +41,16 @@ module Norm
             write_attribute(name, value)
           end
         }
-        @local_attribute_loaders[name.to_s] = loader
+        name = name.to_s
+        current_attribute_names = attribute_names | [name]
+        define_singleton_method(:attribute_names) {
+          super() | current_attribute_names
+        }
+        attribute_loader.set_loader(name, loader)
       end
 
       def load_attribute(name, value)
-        attribute_loaders[name].load(value)
+        attribute_loader.load(name, value)
       end
 
       def identity(*attribute_names)
@@ -202,18 +213,6 @@ module Norm
 
     def normalize_attributes(attributes)
       attributes.each_with_object({}) { |(k, v), h| h[k.to_s] = v }
-    end
-
-    module SubclassExtensions
-
-      def attribute_names
-        superclass.attribute_names | local_attribute_names
-      end
-
-      def attribute_loaders
-        superclass.attribute_loaders.merge local_attribute_loaders
-      end
-
     end
 
   end
