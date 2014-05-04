@@ -145,7 +145,7 @@ module Norm
       else
         preds = records.map { |record| record.read_attributes(*primary_keys) }.
           map { |attrs|
-            Statement::Grouping.new(Statement::PredicateFragment.new(attrs))
+            SQL::Grouping.new(SQL::PredicateFragment.new(attrs))
           }
         statement.where(
           preds.map(&:sql).join(' OR '),

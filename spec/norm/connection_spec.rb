@@ -81,7 +81,7 @@ module Norm
 
     describe '#exec_statement' do
       let(:statement) {
-        Statement.sql(
+        SQL.statement(
           'insert into items values ($?, $?)',
           'A lovely item', 42
         )

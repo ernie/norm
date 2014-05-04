@@ -15,20 +15,20 @@ module Norm
     subject {
       Class.new(PostgreSQLRepository) {
         def select_statement
-          Norm::Statement.select.from('people')
+          Norm::SQL.select.from('people')
         end
 
         def insert_statement
           column_list = record_class.attribute_names.join(', ')
-          Norm::Statement.insert("people (#{column_list})").returning('*')
+          Norm::SQL.insert("people (#{column_list})").returning('*')
         end
 
         def update_statement
-          Norm::Statement.update('people').returning('*')
+          Norm::SQL.update('people').returning('*')
         end
 
         def delete_statement
-          Norm::Statement.delete('people').returning('*')
+          Norm::SQL.delete('people').returning('*')
         end
       }.new(person_record_class)
     }
