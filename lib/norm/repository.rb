@@ -73,5 +73,4 @@ module Norm
   end
 end
 
-require 'norm/memory_repository'
 require 'norm/postgresql_repository'
