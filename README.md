@@ -41,9 +41,14 @@ effectively:
    a record. It's also associated with a specific record class, so that it knows
    how to instantiate the records from the DB. Repositories have, at minimum,
    these methods:
-   * `all` - Returns all records in the repository.
-   * `fetch(*keys)` - Returns a single record based on its primary key(s).
-   * `insert(*records)` - Inserts one or more records
+     * `all` - Returns all records in the repository.
+     * `fetch(*keys)` - Returns a single record based on its primary key(s).
+     * `insert(*records)` - Inserts one or more records
+     * `update(*records)` - Updates one or more records
+     * `delete(*records)` - Deletes one or more records  
+   All other queries are separate methods on the repository, with a specific
+   method signature that determines how they should be used and shows their
+   intent.
 4. `TBD` - Context. Returns Norm::Connection instances on with_connection(s).
    can be supplied to Repository methods in order to allow them to execute
    queries in the context of an existing connection/transaction.
