@@ -45,20 +45,36 @@ module Norm
       raise NotImplementedError, 'Repositories must implement #fetch'
     end
 
-    def store(record_or_records)
+    def store(record)
       raise NotImplementedError, 'Repositories must implement #store'
     end
 
-    def insert(record_or_records)
+    def mass_store(records)
+      raise NotImplementedError, 'Repositories must implement #mass_store'
+    end
+
+    def insert(record)
       raise NotImplementedError, 'Repositories must implement #insert'
     end
 
-    def update(record_or_records)
+    def mass_insert(records)
+      raise NotImplementedError, 'Repositories must implement #mass_insert'
+    end
+
+    def update(record)
       raise NotImplementedError, 'Repositories must implement #update'
     end
 
-    def delete(record_or_records)
+    def mass_update(records, attrs = nil)
+      raise NotImplementedError, 'Repositories must implement #mass_update'
+    end
+
+    def delete(record)
       raise NotImplementedError, 'Repositories must implement #delete'
+    end
+
+    def mass_delete(records)
+      raise NotImplementedError, 'Repositories must implement #mass_delete'
     end
 
     private

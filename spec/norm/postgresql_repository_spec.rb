@@ -30,7 +30,6 @@ module Norm
         def delete_statement
           Norm::Statement.delete('people').returning('*')
         end
-
       }.new(person_record_class)
     }
 
@@ -51,6 +50,20 @@ module Norm
 
     end
 
+    describe '#fetch' do
+
+      it 'fetches a stored record' do
+        person = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(person)
+        person = subject.fetch(person.id)
+        person.name.must_equal 'Ernie'
+        person.age.must_equal 36
+        person.created_at.must_be_kind_of Attr::Timestamp
+        person.updated_at.must_be_kind_of Attr::Timestamp
+      end
+
+    end
+
     describe '#insert' do
 
       it 'inserts a new record' do
@@ -66,18 +79,31 @@ module Norm
         person.updated_at.must_be_kind_of Attr::Timestamp
       end
 
-      it 'raises PG::NotNullViolation if a nil value is supplied for a key' do
-        skip 'what do we really want to do here?'
-        person = person_record_class.new(:id => nil, :name => 'Ernie')
-        proc { subject.insert(person) }.must_raise(PG::NotNullViolation)
+      it 'returns true on success' do
+        person = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(person).must_equal true
       end
 
-      it 'raises PG::UniqueViolation if a record with that key exists' do
-        skip 'what do we really want to do here?'
-        person1 = person_record_class.new(:name => 'Ernie', :age => 36)
-        subject.insert(person1)
-        person2 = person_record_class.new(:id => person1.id, :name => 'Bert')
-        proc { subject.insert(person2) }.must_raise(PG::UniqueViolation)
+    end
+
+    describe '#mass_insert' do
+
+      it 'inserts multiple records' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert  = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.mass_insert([ernie, bert])
+        records = subject.all
+        records.size.must_equal 2
+        ernie = records.detect { |r| r.name == 'Ernie' }
+        bert = records.detect { |r| r.name == 'Bert' }
+        ernie.age.must_equal 36
+        bert.age.must_equal 37
+      end
+
+      it 'returns true on success' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert  = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.mass_insert([ernie, bert]).must_equal true
       end
 
     end
@@ -96,18 +122,13 @@ module Norm
         person.updated_at.must_be :>, previous_updated_at
       end
 
-      it 'sets updated attributes on the passed-in records' do
-        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
-        bert  = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.insert([ernie, bert])
-        ernie_updated = ernie.updated_at
-        bert_updated  = bert.updated_at
-        ernie.name, bert.name = bert.name, ernie.name
-        subject.update([ernie, bert])
-        ernie.updated_at.must_be :>, ernie_updated
-        bert.updated_at.must_be :>, bert_updated
-        ernie.name.must_equal 'Bert'
-        bert.name.must_equal 'Ernie'
+      it 'returns true on success' do
+        person = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(person)
+        person = subject.fetch(person.id)
+        person.name = 'Bert'
+        previous_updated_at = person.updated_at
+        subject.update(person).must_equal true
       end
 
       it 'does nothing if the record has not been updated' do
@@ -118,38 +139,39 @@ module Norm
         ernie.updated_at.must_equal updated_at
       end
 
-      it 'raises InvalidKeyError if the record has a nil value in its key' do
-        skip 'what do we really want to do here?'
-        person = person_record_class.new(:name => 'Ernie', :age => 36)
-        subject.insert(person)
-        person.id = nil
-        proc { subject.update(person) }.must_raise(
-          InvalidKeyError
-        )
-      end
-
-      it 'raises NotFoundError if the record being updated is not present' do
-        skip 'what do we really want to do here?'
-        person = person_record_class.new(:name => 'Ernie', :age => 36)
-        subject.insert(person)
-        person.id = 42
-        proc { subject.update(person) }.must_raise(
-          NotFoundError
-        )
+      it 'returns true if no update was needed' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(ernie)
+        updated_at = ernie.updated_at
+        subject.update(ernie).must_equal true
       end
 
     end
 
-    describe '#fetch' do
+    describe '#mass_update' do
 
-      it 'fetches a stored record' do
-        person = person_record_class.new(:name => 'Ernie', :age => 36)
-        subject.insert(person)
-        person = subject.fetch(person.id)
-        person.name.must_equal 'Ernie'
-        person.age.must_equal 36
-        person.created_at.must_be_kind_of Attr::Timestamp
-        person.updated_at.must_be_kind_of Attr::Timestamp
+      it 'sets updated attributes on passed-in records' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert  = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.mass_insert([ernie, bert])
+        ernie_updated = ernie.updated_at
+        bert_updated  = bert.updated_at
+        ernie.name, bert.name = bert.name, ernie.name
+        subject.mass_update([ernie, bert])
+        ernie.updated_at.must_be :>, ernie_updated
+        bert.updated_at.must_be :>, bert_updated
+        ernie.name.must_equal 'Bert'
+        bert.name.must_equal 'Ernie'
+      end
+
+      it 'returns true on success' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert  = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.mass_insert([ernie, bert])
+        ernie_updated = ernie.updated_at
+        bert_updated  = bert.updated_at
+        ernie.name, bert.name = bert.name, ernie.name
+        subject.mass_update([ernie, bert]).must_equal true
       end
 
     end
@@ -159,7 +181,7 @@ module Norm
       it 'deletes a stored record' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         bert = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.store([ernie, bert])
+        subject.mass_insert([ernie, bert])
         subject.delete(ernie)
         subject.fetch(ernie.id).must_be_nil
         bert = subject.fetch(bert.id)
@@ -169,19 +191,89 @@ module Norm
         bert.wont_be :deleted?
       end
 
+      it 'returns true on success' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(ernie)
+        subject.delete(ernie).must_equal true
+      end
+
+    end
+
+    describe '#mass_delete' do
+
+      it 'deletes multiple stored records' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.mass_insert([ernie, bert])
+        subject.mass_delete([ernie, bert])
+        subject.fetch(ernie.id).must_be_nil
+        subject.fetch(bert.id).must_be_nil
+        ernie.must_be :deleted?
+        ernie.wont_be :stored?
+        bert.must_be :deleted?
+        bert.wont_be :stored?
+      end
+
+      it 'returns true on success' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.mass_insert([ernie, bert])
+        subject.mass_delete([ernie, bert]).must_equal true
+      end
+
     end
 
     describe '#store' do
 
-      it 'updates and inserts records as appropriate' do
+      it 'inserts a record if it is not already stored' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.store(ernie)
+        subject.fetch(ernie.id).must_equal ernie
+        ernie.must_be :stored?
+      end
+
+      it 'updates an already-stored record' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(ernie)
+        previously_updated_at = ernie.updated_at
+        ernie.age = 37
+        subject.store(ernie)
+        ernie.updated_at.must_be :>, previously_updated_at
+      end
+
+      it 'returns true on successful insert' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.store(ernie).must_equal true
+      end
+
+      it 'returns true on successful update' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(ernie)
+        ernie.age = 37
+        subject.store(ernie).must_equal true
+      end
+
+    end
+
+    describe '#mass_store' do
+
+      it 'updates or inserts records as appropriate' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         bert = person_record_class.new(:name => 'Bert', :age => 37)
         subject.insert(ernie)
         ernie.age = 37
         previous_updated_at = ernie.updated_at
-        subject.store([ernie, bert])
+        subject.mass_store([ernie, bert])
         ernie.updated_at.must_be :>, previous_updated_at
         bert.must_be :stored?
+      end
+
+      it 'returns true on success' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.insert(ernie)
+        ernie.age = 37
+        subject.mass_store([ernie, bert]).must_equal true
       end
 
     end

@@ -2,36 +2,139 @@ module Norm
   class PostgreSQLRepository < Repository
 
     def all
-      selecting(select_statement)
+      select_records(select_statement)
     end
 
     def fetch(*keys)
       attributes = load_attributes(Hash[primary_keys.zip(keys)])
-      selecting(select_statement.where(attributes)).first
+      select_records(select_statement.where(attributes)).first
     end
 
-    def store(record_or_records)
-      to_update, to_insert = Array(record_or_records).partition(&:stored?)
-      insert(to_insert) + update(to_update)
+    def insert(record)
+      insert_records(add_values_clause(insert_statement, record), [record])
     end
 
-    def insert(record_or_records)
-      records = Array(record_or_records)
-      inserting(build_insert(records), records)
+    def mass_insert(records)
+      insert_records(
+        records.reduce(insert_statement) { |stmt, record|
+          add_values_clause(stmt, record)
+        },
+        records
+      )
     end
 
-    def update(record_or_records)
-      records = Array(record_or_records)
-      records.group_by(&:updated_attributes).flat_map { |attrs, records|
-        attrs.empty? ? [] : update_all(records, attrs)
-      }
+    def update(record)
+      if record.updated_attributes?
+        update_all([record], record.updated_attributes)
+      else
+        true
+      end
     end
+
+    def mass_update(records, attrs = nil)
+      if attrs
+        update_all(records, attrs)
+      else
+        records.group_by(&:updated_attributes).flat_map { |attrs, records|
+          attrs.empty? ? true : update_all(records, attrs)
+        }.all?
+      end
+    end
+
+    def store(record)
+      record.stored? ? update(record) : insert(record)
+    end
+
+    def mass_store(records)
+      to_update, to_insert = records.partition(&:stored?)
+      mass_insert(to_insert) && mass_update(to_update)
+    end
+
+    def delete(record)
+      delete_records(scope_to_records([record], delete_statement), [record])
+    end
+
+    def mass_delete(records)
+      delete_records(scope_to_records(records, delete_statement), records)
+    end
+
+    private
 
     def update_all(records, attrs)
-      updating(
+      update_records(
         scope_to_records(records, update_statement.set(attrs)),
         records
       )
+    end
+
+    def select_records(statement)
+      Norm.with_connection do |conn|
+        conn.exec_statement(statement) do |result|
+          result.map { |tuple| record_class.from_repo(tuple) }
+        end
+      end
+    end
+
+    def insert_records(statement, records)
+      Norm.with_connection do |conn|
+        conn.exec_statement(statement) do |result|
+          result.zip(records).each { |tuple, record|
+            record.set_attributes(tuple)
+            record.inserted!
+          }
+          true
+        end
+      end
+    end
+
+    def update_records(statement, records)
+      Norm.with_connection do |conn|
+        conn.exec_statement(statement) do |result|
+          update_map = record_map(records)
+          result.each { |tuple|
+            updated = record_class.from_repo(tuple)
+            if record = update_map[updated.values_at(*primary_keys)]
+              record.set_attributes(updated.initialized_attributes)
+              record.updated!
+            end
+          }
+          true
+        end
+      end
+    end
+
+    def delete_records(statement, records)
+      Norm.with_connection do |conn|
+        conn.exec_statement(statement) do |result|
+          delete_map = record_map(records)
+          result.each { |tuple|
+            deleted = record_class.from_repo(tuple)
+            if record = delete_map[deleted.values_at(*primary_keys)]
+              record.set_attributes(deleted.initialized_attributes)
+              record.deleted!
+            end
+          }
+          true
+        end
+      end
+    end
+
+    def record_map(records)
+      Hash[ records.map { |record| [record.values_at(*primary_keys), record] } ]
+    end
+
+    def add_values_clause(statement, record)
+      attrs = record.initialized_attributes
+      params = []
+      sql = record_class.attribute_names.map { |name|
+        if attrs.key?(name)
+          params << attrs[name]
+          '$?'
+        else
+          'DEFAULT'
+        end
+      }.join(', ')
+      statement.values_sql(sql, *params)
     end
 
     def scope_to_records(records, statement)
@@ -49,84 +152,6 @@ module Norm
           *preds.map(&:params).flatten!
         )
       end
-    end
-
-    def delete(record_or_records)
-      records = Array(record_or_records)
-      deleting(scope_to_records(records, delete_statement), records)
-    end
-
-    def selecting(statement)
-      Norm.with_connection do |conn|
-        conn.exec_statement(statement) do |result|
-          result.map { |tuple| record_class.from_repo(tuple) }
-        end
-      end
-    end
-
-    def inserting(statement, records)
-      Norm.with_connection do |conn|
-        conn.exec_statement(statement) do |result|
-          result.zip(records).map { |tuple, record|
-            record.set_attributes(tuple)
-            record.inserted!
-          }
-        end
-      end
-    end
-
-    def build_insert(records)
-      records.inject(insert_statement) { |stmt, record|
-        attrs = record.initialized_attributes
-        params = []
-        sql = record_class.attribute_names.map { |name|
-          if attrs.key?(name)
-            params << attrs[name]
-            '$?'
-          else
-            'DEFAULT'
-          end
-        }.join(', ')
-        stmt.values_sql(sql, *params)
-      }
-    end
-
-    def updating(statement, records)
-      Norm.with_connection do |conn|
-        conn.exec_statement(statement) do |result|
-          update_map = record_map(records)
-          result.each { |tuple|
-            updated = record_class.from_repo(tuple)
-            if record = update_map[updated.attribute_values(*primary_keys)]
-              record.set_attributes(updated.initialized_attributes)
-              record.updated!
-            end
-          }
-          records
-        end
-      end
-    end
-
-    def deleting(statement, records)
-      Norm.with_connection do |conn|
-        conn.exec_statement(statement) do |result|
-          delete_map = record_map(records)
-          result.each { |tuple|
-            deleted = record_class.from_repo(tuple)
-            if record = delete_map[deleted.attribute_values(*primary_keys)]
-              record.set_attributes(deleted.initialized_attributes)
-              record.deleted!
-            end
-          }
-          records
-        end
-      end
-    end
-
-    def record_map(records)
-      Hash[records.map { |record|
-        [record.attribute_values(*primary_keys), record]
-      }]
     end
 
   end

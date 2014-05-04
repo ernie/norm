@@ -95,10 +95,10 @@ module Norm
     end
 
     def identifying_attribute_values
-      attribute_values(*identifying_attribute_names)
+      values_at(*identifying_attribute_names)
     end
 
-    def attribute_values(*attribute_names)
+    def values_at(*attribute_names)
       attribute_names.map! { |name| send(name) }
     end
 
@@ -124,6 +124,10 @@ module Norm
 
     def updated_attributes
       read_attributes(*updated_attribute_names)
+    end
+
+    def updated_attributes?
+      updated_attribute_names.any?
     end
 
     def read_attributes(*attribute_names)

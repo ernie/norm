@@ -202,11 +202,11 @@ module Norm
 
       end
 
-      describe '#attribute_values' do
+      describe '#values_at' do
 
         it 'returns an array of values in the specified order' do
           record = simple_record_class.new(:name => 'Ernie', :age => 36)
-          record.attribute_values(:age, :name).must_equal [36, 'Ernie']
+          record.values_at(:age, :name).must_equal [36, 'Ernie']
         end
 
       end
@@ -285,6 +285,20 @@ module Norm
           subject.name = original_name
           subject.updated_attributes.must_equal Hash.new
         end
+      end
+
+      describe '#updated_attributes?' do
+        subject { simple_record_class.new(:name => 'Ernie Miller', :age => 36) }
+
+        it 'returns false if no attributes have been updated' do
+          subject.wont_be :updated_attributes?
+        end
+
+        it 'returns true if an attribute has been updated' do
+          subject.name = 'Bert'
+          subject.must_be :updated_attributes?
+        end
+
       end
 
       describe '#read_attributes' do
