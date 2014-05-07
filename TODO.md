@@ -20,6 +20,22 @@ the controller level in a Rails app. If the user wants to do some work in their
 repos to enable something different, they would be welcome to, of course, but
 that would be an API design decision they would make.
 
+## Context/Transaction support
+
+Would this work?
+
+Add ConnectionManager#with_transaction, which will return a context that is tied
+to the specific connections supplied to with_transaction. If a PG::Error is
+raised inside the block, any connections on which a transaction was started will
+be rolled back, and the error re-raised unless it's a Rollback error (similar to
+ActiveRecord transactions). The object yielded to the with_transaction block
+would be composable -- should look essentially like a ConnectionManager to the
+block inside, meaning the "with_connection(s)" calls that map to an already-open
+connection would return that same connection, therefore performing their work
+in the connection with the open transaction. with_transaction calls on this
+object would result in savepoints for the connections referenced (if already
+in a transaction).
+
 ## Error handling
 
 So, we need to return records on the default repository select methods

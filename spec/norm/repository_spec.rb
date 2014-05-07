@@ -40,16 +40,36 @@ module Norm
         proc { subject.store(nil) }.must_raise NotImplementedError
       end
 
+      it 'requires subclasses to implement #mass_store' do
+        proc { subject.mass_store(nil) }.must_raise NotImplementedError
+      end
+
       it 'requires subclasses to implement #insert' do
         proc { subject.insert(nil) }.must_raise NotImplementedError
+      end
+
+      it 'requires subclasses to implement #mass_insert' do
+        proc { subject.mass_insert(nil) }.must_raise NotImplementedError
       end
 
       it 'requires subclasses to implement #update' do
         proc { subject.update(nil) }.must_raise NotImplementedError
       end
 
+      it 'requires subclasses to implement #mass_update' do
+        proc { subject.mass_update(nil) }.must_raise NotImplementedError
+      end
+
       it 'requires subclasses to implement #delete' do
         proc { subject.delete(nil) }.must_raise NotImplementedError
+      end
+
+      it 'requires subclasses to implement #mass_delete' do
+        proc { subject.mass_delete(nil) }.must_raise NotImplementedError
+      end
+
+      it 'requires subclasses to implement #returning_result' do
+        proc { subject.returning_result {} }.must_raise NotImplementedError
       end
 
     end
