@@ -14,6 +14,6 @@ task :console do
   require 'irb/completion'
   require 'norm'
   ARGV.clear
-  Norm.init!
+  Norm.init!('primary' => {:user=> 'norm_test'})
   IRB.start
 end
