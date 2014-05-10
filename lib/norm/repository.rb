@@ -73,10 +73,6 @@ module Norm
       raise NotImplementedError, 'Repositories must implement #mass_delete'
     end
 
-    def returning_result(&block)
-      raise NotImplementedError, 'Repositories must implement #returning_result'
-    end
-
   end
 end
 

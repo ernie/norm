@@ -58,13 +58,6 @@ module Norm
       delete_records(scope_to_records(records, delete_statement), records)
     end
 
-    def returning_result(&block)
-      yield
-      # return a successful result object
-    rescue PG::Error => e
-      # Return an unsuccessful result object
-    end
-
     private
 
     def update_all(records, attrs)

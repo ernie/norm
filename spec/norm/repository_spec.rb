@@ -126,10 +126,6 @@ module Norm
         proc { subject.mass_delete(nil) }.must_raise NotImplementedError
       end
 
-      it 'requires subclasses to implement #returning_result' do
-        proc { subject.returning_result {} }.must_raise NotImplementedError
-      end
-
     end
 
   end

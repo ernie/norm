@@ -1,40 +1,10 @@
 # Stuff left to do before release
 
-* Typecasting for repo/statement/???
-* More loaders
-* Context/Transaction support
-* Error handling/re-raising
+* More loaders, and possibly improved parsing support
+* Error handling
+* Sample application
 
 # Thoughts on remaining stuff
-
-## Typecasting for repo/statement
-
-I'm inclined to build a "generic" Loader that has a key for each attribute type
-inside the Norm::Attribute namespace, as a convenience for use in a repository.
-On the other hand, wouldn't an ideal situation for use in custom repo methods
-be to somehow specify the types in the method definitions? I wonder if we could
-use keyword arguments for this. Is this even the place for this type of work?
-
-Maybe we want this kind of work, like attribute sanitization, to be performed at
-the controller level in a Rails app. If the user wants to do some work in their
-repos to enable something different, they would be welcome to, of course, but
-that would be an API design decision they would make.
-
-## Context/Transaction support
-
-Would this work?
-
-Add ConnectionManager#with_transaction, which will return a context that is tied
-to the specific connections supplied to with_transaction. If a PG::Error is
-raised inside the block, any connections on which a transaction was started will
-be rolled back, and the error re-raised unless it's a Rollback error (similar to
-ActiveRecord transactions). The object yielded to the with_transaction block
-would be composable -- should look essentially like a ConnectionManager to the
-block inside, meaning the "with_connection(s)" calls that map to an already-open
-connection would return that same connection, therefore performing their work
-in the connection with the open transaction. with_transaction calls on this
-object would result in savepoints for the connections referenced (if already
-in a transaction).
 
 ## Error handling
 
@@ -68,38 +38,13 @@ all kinds of considerations if we expect repository methods to potentially
 rescue errors, not the least of which is that you can't effectively make the
 repository methods interact inside of transactions.
 
-## Notes on kinds of "expected" errors
-
-# PG::CheckViolation
-Norm.with_connection do |conn|
-  conn.exec_string "insert into users (username, email, first_name, last_name, encrypted_password) values ('er', 'erniemiller@me.com', 'Ernie', 'Miller', 'blah')"
-end
-
-# PG::UniqueViolation
-Norm.with_connection do |conn|
-  conn.exec_string "insert into users (username, email, first_name, last_name, encrypted_password) values ('ernie', 'erniemiller@me.com', 'Ernie', 'Miller', 'blah')"
-  conn.exec_string "insert into users (username, email, first_name, last_name, encrypted_password) values ('ernie', 'erniemiller@me.com', 'Ernie', 'Miller', 'blah')"
-end
-
-# PG::UniqueViolation
-Norm.with_connection do |conn|
-  conn.exec_string "insert into users (username, email, first_name, last_name, encrypted_password) values ('ernie', 'erniemiller@me.com', 'Ernie', 'Miller', 'blah')"
-  conn.exec_string "insert into users (id, username, email, first_name, last_name, encrypted_password) values (1, 'erniemiller', 'erniemiller@me.com', 'Ernie', 'Miller', 'blah')"
-end
-
-# PG::ForeignKeyViolation
-Norm.with_connection do |conn|
-  conn.exec_string "insert into posts (user_id, title, body) values (1, 'title', 'body')"
-end
-
-# PG::NotNullViolation
-Norm.with_connection do |conn|
-  conn.exec_string "insert into posts (title, body) values ('title', 'body')"
-end
-
-# PG::ExclusionViolation
-Norm.with_connection do |conn|
-  conn.exec_string "insert into users (username, email, first_name, last_name, encrypted_password) values ('ernie', 'erniemiller@me.com', 'Ernie', 'Miller', 'blah')"
-  conn.exec_string "insert into posts (user_id, title, body) values (1, 'title', 'body')"
-  conn.exec_string "insert into posts (id, user_id, title, body) values (1, 1, 'title', 'body')"
-end
+At this point I'm thinking what we want to do here is to allow the methods which
+modify data ([insert|update|delete]_records to start with) to rescue
+Norm::ConstraintError (raised when we encounter a
+PG::IntegrityConstraintViolation from the underlying PG connection) and return
+a result object appropriate to it. The ConstraintError itself should collect
+data from the PG::Result contained in the PG error and make it more accessible.
+Whether or not we do anything more than this to try to map it to attribute names
+and so on is up for debate but I'm leaning toward no. The idea should be that
+you can name your constraints appropriately enough that you can create mappings
+for them to usable error messages, or even (God forbid) ActiveModel::Errors.
