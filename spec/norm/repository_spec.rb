@@ -36,6 +36,18 @@ module Norm
       repo.connection_manager.must_be_same_as mgr
     end
 
+    it 'defaults reader and writer database to :primary' do
+      repo = subject.new
+      repo.reader.must_equal :primary
+      repo.writer.must_equal :primary
+    end
+
+    it 'allows specification of alternate reader and writer via keyword' do
+      repo = subject.new(reader: :zomg, writer: :bbq)
+      repo.reader.must_equal :zomg
+      repo.writer.must_equal :bbq
+    end
+
     describe 'connection convenience methods' do
       let(:connection_manager) { MiniTest::Mock.new }
       subject {
@@ -45,6 +57,15 @@ module Norm
       it 'delegates with_connection to connection manager' do
         connection_manager.expect(:with_connection, nil, [:primary])
         subject.with_connection(:primary) {}
+        connection_manager.verify
+      end
+
+      it 'defaults a parameterless call to with_connection to reader' do
+        repo = Class.new(Repository).new(
+          connection_manager: connection_manager, reader: :zomg
+        )
+        connection_manager.expect(:with_connection, nil, [:zomg])
+        repo.with_connection {}
         connection_manager.verify
       end
 

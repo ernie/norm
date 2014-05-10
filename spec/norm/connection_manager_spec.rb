@@ -85,11 +85,9 @@ module Norm
         end
       end
 
-      it 'defaults to "primary" when called as singular with no arguments' do
+      it 'requires a connection name when called as singular' do
         with_fake_db do
-          subject.with_connection do |conn|
-            conn.db.options['host'].must_equal 'zomg.bbq'
-          end
+          proc { subject.with_connection {} }.must_raise ArgumentError
         end
       end
 

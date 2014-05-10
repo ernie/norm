@@ -34,7 +34,7 @@ module Norm
     }
 
     before {
-      subject.with_connection do |conn|
+      subject.with_connection(:primary) do |conn|
         conn.exec_string('truncate table people restart identity')
       end
     }
