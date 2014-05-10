@@ -8,6 +8,7 @@ Norm.connection_manager.with_connection do |conn|
   conn.exec_string('drop table if exists posts')
   conn.exec_string('drop table if exists users')
   conn.exec_string <<-SQL
+    CREATE EXTENSION IF NOT EXISTS btree_gist;
     CREATE OR REPLACE FUNCTION timestamp_update() RETURNS TRIGGER AS $$
     BEGIN
       NEW.updated_at = now();
