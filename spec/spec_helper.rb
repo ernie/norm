@@ -3,7 +3,7 @@ require 'minitest/mock'
 require 'norm'
 
 Norm.init!('primary' => {:user=> 'norm_test'})
-Norm.with_connection do |conn|
+Norm.connection_manager.with_connection do |conn|
   conn.exec_string('drop table if exists people')
   conn.exec_string('drop table if exists posts')
   conn.exec_string('drop table if exists users')

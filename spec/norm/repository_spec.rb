@@ -25,6 +25,43 @@ module Norm
 
     end
 
+    it 'defaults connection manager to Norm.connection_manager' do
+      repo = subject.new
+      repo.connection_manager.must_be_same_as Norm.connection_manager
+    end
+
+    it 'allows specifying an alternate connection manager via keyword' do
+      mgr = Object.new
+      repo = subject.new(connection_manager: mgr)
+      repo.connection_manager.must_be_same_as mgr
+    end
+
+    describe 'connection convenience methods' do
+      let(:connection_manager) { MiniTest::Mock.new }
+      subject {
+        Class.new(Repository).new(connection_manager: connection_manager)
+      }
+
+      it 'delegates with_connection to connection manager' do
+        connection_manager.expect(:with_connection, nil, [:primary])
+        subject.with_connection(:primary) {}
+        connection_manager.verify
+      end
+
+      it 'delegates with_connections to connection manager' do
+        connection_manager.expect(:with_connections, nil, [:one, :two])
+        subject.with_connections(:one, :two) {}
+        connection_manager.verify
+      end
+
+      it 'delegates atomically_on to connection manager' do
+        connection_manager.expect(:atomically_on, nil, [:one, :two])
+        subject.atomically_on(:one, :two) {}
+        connection_manager.verify
+      end
+
+    end
+
     describe 'storage methods' do
       subject { Class.new(Repository).new(Class.new(Record)) }
 

@@ -12,16 +12,12 @@ require 'norm/record'
 
 module Norm
 
+  class << self
+    attr_reader :connection_manager
+  end
+
   def self.init!(connection_spec = {})
     @connection_manager = ConnectionManager.new(connection_spec)
-  end
-
-  def self.with_connections(*args, &block)
-    @connection_manager.with_connections(*args, &block)
-  end
-
-  def self.with_connection(*args, &block)
-    @connection_manager.with_connection(*args, &block)
   end
 
 end

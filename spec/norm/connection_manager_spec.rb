@@ -5,9 +5,14 @@ module Norm
     subject { ConnectionManager }
 
     class ConnectionManagerSpecDB
-      attr_reader :options
+      attr_reader :options, :execs
       def initialize(options = {})
         @options = options
+        @execs   = []
+      end
+
+      def exec(str)
+        @execs << str
       end
     end
 
@@ -84,6 +89,71 @@ module Norm
         with_fake_db do
           subject.with_connection do |conn|
             conn.db.options['host'].must_equal 'zomg.bbq'
+          end
+        end
+      end
+
+    end
+
+    describe '#atomically_on' do
+      let(:spec) { {
+        :primary => {'host' => 'zomg.bbq'},
+        :reader  => {'host' => 'foo.bar'},
+        :writer  => {'host' => 'mahna.mahna'}
+      } }
+      subject { ConnectionManager.new(spec) }
+
+      it 'creates transactions on each connection' do
+        with_fake_db do
+          subject.atomically_on(:primary, :reader, :writer) do |p, r, w|
+            p.must_be_kind_of Connection
+            r.must_be_kind_of Connection
+            w.must_be_kind_of Connection
+          end
+          subject.with_connections(:primary, :reader, :writer) do |p, r, w|
+            p.db.execs.must_equal ['BEGIN', 'COMMIT']
+            r.db.execs.must_equal ['BEGIN', 'COMMIT']
+            w.db.execs.must_equal ['BEGIN', 'COMMIT']
+          end
+        end
+      end
+
+      it 'creates savepoints on connections when needed' do
+        with_fake_db do
+          subject.atomically_on(:primary, :reader, :writer) do |p, r, w|
+            p.must_be_kind_of Connection
+            r.must_be_kind_of Connection
+            w.must_be_kind_of Connection
+            subject.atomically_on(:primary) {}
+          end
+          subject.with_connections(:primary, :reader, :writer) do |p, r, w|
+            p.db.execs.must_equal [
+              'BEGIN',
+              'SAVEPOINT primary_0',
+              'RELEASE SAVEPOINT primary_0',
+              'COMMIT'
+            ]
+            r.db.execs.must_equal ['BEGIN', 'COMMIT']
+            w.db.execs.must_equal ['BEGIN', 'COMMIT']
+          end
+        end
+      end
+
+      it 'rolls back all transactions on error' do
+        with_fake_db do
+          error = proc {
+            subject.atomically_on(:primary, :reader, :writer) do |p, r, w|
+              p.must_be_kind_of Connection
+              r.must_be_kind_of Connection
+              w.must_be_kind_of Connection
+              raise 'zomg'
+            end
+          }.must_raise RuntimeError
+          error.message.must_equal 'zomg'
+          subject.with_connections(:primary, :reader, :writer) do |p, r, w|
+            p.db.execs.must_equal ['BEGIN', 'ROLLBACK']
+            r.db.execs.must_equal ['BEGIN', 'ROLLBACK']
+            w.db.execs.must_equal ['BEGIN', 'ROLLBACK']
           end
         end
       end

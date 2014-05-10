@@ -36,5 +36,18 @@ module Norm
       with_connections(name, &block)
     end
 
+    def atomically_on(*conns_or_names, &block)
+      conns, names = conns_or_names.partition { |c| Connection === c }
+      if names.any?
+        pools[names.shift.to_sym].with do |conn|
+          conn.atomically do |conn|
+            atomically_on(*((conns << conn) + names), &block)
+          end
+        end
+      else
+        yield *conns
+      end
+    end
+
   end
 end

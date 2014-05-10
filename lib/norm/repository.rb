@@ -1,10 +1,23 @@
 module Norm
   class Repository
 
-    attr_reader :record_class
+    attr_reader :record_class, :connection_manager
 
-    def initialize(record_class = nil)
-      @record_class = record_class
+    def initialize(record_class = nil,
+                   connection_manager: Norm.connection_manager)
+      @record_class, @connection_manager = record_class, connection_manager
+    end
+
+    def with_connection(*args, &block)
+      connection_manager.with_connection(*args, &block)
+    end
+
+    def with_connections(*args, &block)
+      connection_manager.with_connections(*args, &block)
+    end
+
+    def atomically_on(*args, &block)
+      connection_manager.atomically_on(*args, &block)
     end
 
     def load_attributes(attributes)

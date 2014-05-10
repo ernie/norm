@@ -75,7 +75,7 @@ module Norm
     end
 
     def select_records(statement)
-      Norm.with_connection do |conn|
+      with_connection do |conn|
         conn.exec_statement(statement) do |result|
           result.map { |tuple| record_class.from_repo(tuple) }
         end
@@ -83,7 +83,7 @@ module Norm
     end
 
     def insert_records(statement, records)
-      Norm.with_connection do |conn|
+      with_connection do |conn|
         conn.exec_statement(statement) do |result|
           result.zip(records).each { |tuple, record|
             record.set_attributes(tuple)
@@ -95,7 +95,7 @@ module Norm
     end
 
     def update_records(statement, records)
-      Norm.with_connection do |conn|
+      with_connection do |conn|
         conn.exec_statement(statement) do |result|
           update_map = record_map(records)
           result.each { |tuple|
@@ -111,7 +111,7 @@ module Norm
     end
 
     def delete_records(statement, records)
-      Norm.with_connection do |conn|
+      with_connection do |conn|
         conn.exec_statement(statement) do |result|
           delete_map = record_map(records)
           result.each { |tuple|
