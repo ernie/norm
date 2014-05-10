@@ -49,9 +49,6 @@ effectively:
    All other queries are separate methods on the repository, with a specific
    method signature that determines how they should be used and shows their
    intent.
-4. `TBD` - Context. Returns Norm::Connection instances on with_connection(s).
-   can be supplied to Repository methods in order to allow them to execute
-   queries in the context of an existing connection/transaction.
 
 ## Contributing
 

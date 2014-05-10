@@ -48,6 +48,18 @@ module Norm
         mock_pg.verify
       end
 
+      it 'raises ConstraintError if PG::IntegrityConstraintViolation occurs' do
+        check_violation = PG::CheckViolation.new
+        mock_pg.expect(:exec, nil, &->(sql, &block) {
+          raise check_violation
+        })
+        error = proc { subject.exec_string('select 1') }.
+          must_raise ConstraintError
+        error.message.must_equal 'Constraint violation'
+        error.error.must_equal check_violation
+        error.backtrace.must_equal check_violation.backtrace
+      end
+
     end
 
     describe '#exec_params' do
@@ -75,6 +87,18 @@ module Norm
         })
         subject.exec_params('select $1', [1], 0)
         mock_pg.verify
+      end
+
+      it 'raises ConstraintError if PG::IntegrityConstraintViolation occurs' do
+        check_violation = PG::CheckViolation.new
+        mock_pg.expect(:exec_params, nil, &->(sql, params, format, &block) {
+          raise check_violation
+        })
+        error = proc { subject.exec_params('select $1', [1], 0) }.
+          must_raise ConstraintError
+        error.message.must_equal 'Constraint violation'
+        error.error.must_equal check_violation
+        error.backtrace.must_equal check_violation.backtrace
       end
 
     end
@@ -110,6 +134,110 @@ module Norm
         })
         subject.exec_statement(statement, 1)
         mock_pg.verify
+      end
+
+      it 'raises ConstraintError if PG::IntegrityConstraintViolation occurs' do
+        check_violation = PG::CheckViolation.new
+        mock_pg.expect(:exec_params, nil, &->(sql, params, format, &block) {
+          raise check_violation
+        })
+        error = proc { subject.exec_statement(statement, 1) }.
+          must_raise ConstraintError
+        error.message.must_equal 'Constraint violation'
+        error.error.must_equal check_violation
+        error.backtrace.must_equal check_violation.backtrace
+      end
+
+    end
+
+    describe '#atomically' do
+
+      it 'wraps its block in a transaction on first call' do
+        mock_pg.expect(:exec, nil, ['BEGIN'])
+        mock_pg.expect(:exec, nil, ['COMMIT'])
+        subject.atomically do |conn|
+          conn.must_be_same_as subject
+        end
+        mock_pg.verify
+      end
+
+      it 'executes a rollback and re-raises if the block raises an error' do
+        mock_pg.expect(:exec, nil, ['BEGIN'])
+        mock_pg.expect(:exec, nil, ['ROLLBACK'])
+        error = proc {
+          subject.atomically do |conn|
+            conn.must_be_same_as subject
+            raise 'zomg'
+          end
+        }.must_raise RuntimeError
+        error.message.must_equal 'zomg'
+        mock_pg.verify
+      end
+
+      it 'wraps its block in a savepoint on second call' do
+        mock_pg.expect(:exec, nil, ['BEGIN'])
+        mock_pg.expect(:exec, nil, ['SAVEPOINT primary_0'])
+        mock_pg.expect(:exec, nil, ['RELEASE SAVEPOINT primary_0'])
+        mock_pg.expect(:exec, nil, ['COMMIT'])
+        subject.atomically do |conn|
+          conn.atomically do |conn|
+            conn.must_be_same_as subject
+          end
+        end
+        mock_pg.verify
+      end
+
+      it 'rolls back to savepoint and re-raises if the block raises an error' do
+        mock_pg.expect(:exec, nil, ['BEGIN'])
+        mock_pg.expect(:exec, nil, ['SAVEPOINT primary_0'])
+        mock_pg.expect(:exec, nil, ['ROLLBACK TO SAVEPOINT primary_0'])
+        mock_pg.expect(:exec, nil, ['ROLLBACK'])
+        error = proc {
+          subject.atomically do |conn|
+            conn.atomically do |conn|
+              conn.must_be_same_as subject
+              raise 'zomg'
+            end
+          end
+        }.must_raise RuntimeError
+        error.message.must_equal 'zomg'
+        mock_pg.verify
+      end
+
+      it 'increments number in savepoint name on additional calls' do
+        mock_pg.expect(:exec, nil, ['BEGIN'])
+        mock_pg.expect(:exec, nil, ['SAVEPOINT primary_0'])
+        mock_pg.expect(:exec, nil, ['SAVEPOINT primary_1'])
+        mock_pg.expect(:exec, nil, ['RELEASE SAVEPOINT primary_1'])
+        mock_pg.expect(:exec, nil, ['RELEASE SAVEPOINT primary_0'])
+        mock_pg.expect(:exec, nil, ['COMMIT'])
+        subject.atomically do |conn|
+          conn.atomically do |conn|
+            conn.atomically do |conn|
+              conn.must_be_same_as subject
+            end
+          end
+        end
+      end
+
+      it 'allows rescue of specific errors to prevent cascading rollbacks' do
+        mock_pg.expect(:exec, nil, ['BEGIN'])
+        mock_pg.expect(:exec, nil, ['SAVEPOINT primary_0'])
+        mock_pg.expect(:exec, nil, ['SAVEPOINT primary_1'])
+        mock_pg.expect(:exec, nil, ['ROLLBACK TO SAVEPOINT primary_1'])
+        mock_pg.expect(:exec, nil, ['RELEASE SAVEPOINT primary_0'])
+        mock_pg.expect(:exec, nil, ['COMMIT'])
+        subject.atomically do |conn|
+          conn.atomically do |conn|
+            begin
+              conn.atomically do |conn|
+                conn.must_be_same_as subject
+                raise 'zomg'
+              end
+            rescue RuntimeError => e
+            end
+          end
+        end
       end
 
     end

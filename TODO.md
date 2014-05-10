@@ -61,3 +61,45 @@ else
   render :edit
 end
 ```
+
+On second thought, that's gonna conflate the responsibilities of the repository
+and the thing that is responsible for handling errors of various types. There's
+all kinds of considerations if we expect repository methods to potentially
+rescue errors, not the least of which is that you can't effectively make the
+repository methods interact inside of transactions.
+
+## Notes on kinds of "expected" errors
+
+# PG::CheckViolation
+Norm.with_connection do |conn|
+  conn.exec_string "insert into users (username, email, first_name, last_name, encrypted_password) values ('er', 'erniemiller@me.com', 'Ernie', 'Miller', 'blah')"
+end
+
+# PG::UniqueViolation
+Norm.with_connection do |conn|
+  conn.exec_string "insert into users (username, email, first_name, last_name, encrypted_password) values ('ernie', 'erniemiller@me.com', 'Ernie', 'Miller', 'blah')"
+  conn.exec_string "insert into users (username, email, first_name, last_name, encrypted_password) values ('ernie', 'erniemiller@me.com', 'Ernie', 'Miller', 'blah')"
+end
+
+# PG::UniqueViolation
+Norm.with_connection do |conn|
+  conn.exec_string "insert into users (username, email, first_name, last_name, encrypted_password) values ('ernie', 'erniemiller@me.com', 'Ernie', 'Miller', 'blah')"
+  conn.exec_string "insert into users (id, username, email, first_name, last_name, encrypted_password) values (1, 'erniemiller', 'erniemiller@me.com', 'Ernie', 'Miller', 'blah')"
+end
+
+# PG::ForeignKeyViolation
+Norm.with_connection do |conn|
+  conn.exec_string "insert into posts (user_id, title, body) values (1, 'title', 'body')"
+end
+
+# PG::NotNullViolation
+Norm.with_connection do |conn|
+  conn.exec_string "insert into posts (title, body) values ('title', 'body')"
+end
+
+# PG::ExclusionViolation
+Norm.with_connection do |conn|
+  conn.exec_string "insert into users (username, email, first_name, last_name, encrypted_password) values ('ernie', 'erniemiller@me.com', 'Ernie', 'Miller', 'blah')"
+  conn.exec_string "insert into posts (user_id, title, body) values (1, 'title', 'body')"
+  conn.exec_string "insert into posts (id, user_id, title, body) values (1, 1, 'title', 'body')"
+end

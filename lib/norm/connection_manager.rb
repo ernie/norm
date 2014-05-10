@@ -5,8 +5,10 @@ module Norm
     attr_reader :pools
 
     def initialize(spec = {})
+      spec = spec.each_with_object({:primary => {}}) { |(k, v), h|
+        h[k.to_sym] = v
+      }
       @pools = {}
-      spec = {'primary' => {}}.merge(spec)
       spec.each do |name, config|
         config = config.dup
         pool_config = {
@@ -20,9 +22,9 @@ module Norm
     end
 
     def with_connections(*conns_or_names, &block)
-      names, conns = conns_or_names.partition { |c| String === c }
+      conns, names = conns_or_names.partition { |c| Connection === c }
       if names.any?
-        pools[names.shift].with do |conn|
+        pools[names.shift.to_sym].with do |conn|
           with_connections(*((conns << conn) + names), &block)
         end
       else
@@ -30,7 +32,7 @@ module Norm
       end
     end
 
-    def with_connection(name = 'primary', &block)
+    def with_connection(name = :primary, &block)
       with_connections(name, &block)
     end
 
