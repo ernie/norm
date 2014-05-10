@@ -20,10 +20,10 @@ Or install it yourself as:
 
 ## Usage
 
-Norm only expects you to understand four key concepts in order to use it
+Norm only expects you to understand three key concepts in order to use it
 effectively:
 
-1. `Norm::Record` - Extended on any Ruby class to make this class support a
+1. `Norm::Record` - Subclass this class to make a class that supports setting a
    collection of attributes. Attributes are declared with the `attribute`
    keyword, requiring an attribute name and an attribute loader. Loaders must
    respond to `#load`, receiving the object to be loaded and any special
@@ -43,9 +43,10 @@ effectively:
    these methods:
      * `all` - Returns all records in the repository.
      * `fetch(*keys)` - Returns a single record based on its primary key(s).
-     * `insert(*records)` - Inserts one or more records
-     * `update(*records)` - Updates one or more records
-     * `delete(*records)` - Deletes one or more records  
+     * `insert(record)` - Inserts a single record
+     * `update(record)` - Updates a single record
+     * `delete(records)` - Deletes a single record
+     * `mass_[insert|update|delete](*records) - Multiple-record variants  
    All other queries are separate methods on the repository, with a specific
    method signature that determines how they should be used and shows their
    intent.
