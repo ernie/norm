@@ -92,7 +92,7 @@ module Norm
     end
 
     def insert_records(statement, records)
-      with_connection(writer) do |conn|
+      atomically_on(writer) do |conn|
         conn.exec_statement(statement) do |result|
           result.zip(records).each { |tuple, record|
             record.set_attributes(tuple)
@@ -104,7 +104,7 @@ module Norm
     end
 
     def update_records(statement, records)
-      with_connection(writer) do |conn|
+      atomically_on(writer) do |conn|
         conn.exec_statement(statement) do |result|
           update_map = record_map(records)
           result.each { |tuple|
@@ -120,7 +120,7 @@ module Norm
     end
 
     def delete_records(statement, records)
-      with_connection(writer) do |conn|
+      atomically_on(writer) do |conn|
         conn.exec_statement(statement) do |result|
           delete_map = record_map(records)
           result.each { |tuple|

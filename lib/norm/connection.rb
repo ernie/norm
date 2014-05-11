@@ -55,8 +55,9 @@ module Norm
       name = "#{@name}_#{@savepoints.size}"
       @savepoints << name
       exec_string("SAVEPOINT #{name}")
-      yield self
+      result = yield self
       exec_string("RELEASE SAVEPOINT #{name}")
+      result
     rescue Exception => e
       exec_string("ROLLBACK TO SAVEPOINT #{name}")
       raise e
@@ -67,8 +68,9 @@ module Norm
     def _with_transaction(&block)
       @transaction = true
       exec_string('BEGIN')
-      yield self
+      result = yield self
       exec_string('COMMIT')
+      result
     rescue Exception => e
       exec_string('ROLLBACK')
       raise e
