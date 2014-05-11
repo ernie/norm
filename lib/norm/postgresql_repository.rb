@@ -58,6 +58,22 @@ module Norm
       delete_records(scope_to_records(records, delete_statement), records)
     end
 
+    def select_statement
+      raise NotImplementedError, 'Subclasses must implement #select_statement'
+    end
+
+    def insert_statement
+      raise NotImplementedError, 'Subclasses must implement #insert_statement'
+    end
+
+    def update_statement
+      raise NotImplementedError, 'Subclasses must implement #update_statement'
+    end
+
+    def delete_statement
+      raise NotImplementedError, 'Subclasses must implement #delete_statement'
+    end
+
     private
 
     def update_all(records, attrs)

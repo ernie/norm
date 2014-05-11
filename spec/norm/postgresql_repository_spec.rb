@@ -12,6 +12,7 @@ module Norm
         attribute :updated_at,  Attr::Timestamp
       end
     }
+
     subject {
       Class.new(PostgreSQLRepository) {
         def select_statement
@@ -38,6 +39,27 @@ module Norm
         conn.exec_string('truncate table people restart identity')
       end
     }
+
+    describe 'abstract methods' do
+      subject { Class.new(PostgreSQLRepository).new(person_record_class) }
+
+      it 'requires subclasses implement #select_statement' do
+        proc { subject.select_statement }.must_raise NotImplementedError
+      end
+
+      it 'requires subclasses implement #insert_statement' do
+        proc { subject.insert_statement }.must_raise NotImplementedError
+      end
+
+      it 'requires subclasses implement #update_statement' do
+        proc { subject.update_statement }.must_raise NotImplementedError
+      end
+
+      it 'requires subclasses implement #delete_statement' do
+        proc { subject.delete_statement }.must_raise NotImplementedError
+      end
+
+    end
 
     describe '#all' do
 

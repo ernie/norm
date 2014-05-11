@@ -83,7 +83,7 @@ module Norm
 
     end
 
-    describe 'storage methods' do
+    describe 'abstract methods' do
       subject { Class.new(Repository).new(Class.new(Record)) }
 
       it 'requires subclasses to implement #all' do

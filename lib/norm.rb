@@ -1,5 +1,6 @@
 require 'pg'
 require 'norm/version'
+require 'norm/result'
 require 'norm/error'
 require 'norm/identity'
 require 'norm/parser'
