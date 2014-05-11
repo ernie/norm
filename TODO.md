@@ -2,6 +2,7 @@
 
 * More loaders, and possibly improved parsing support
 * Error handling
+* Refactor Result into SuccessfulResult and UnsuccessfulResult
 * Reconnect logic and setting client vars for consistency
 * Sample application
 

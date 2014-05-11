@@ -174,6 +174,18 @@ module Norm
         mock_pg.verify
       end
 
+      it 'returns an unsuccessful result on constraint errors if handling' do
+        mock_pg.expect(:exec, nil, ['BEGIN'])
+        mock_pg.expect(:exec, nil, ['ROLLBACK'])
+        result = subject.atomically handle_constraints: true do |conn|
+          conn.must_be_same_as subject
+          raise ConstraintError.new(PG::CheckViolation.new)
+        end
+        result.wont_be :success?
+        result.constraint_error.must_be_kind_of ConstraintError
+        mock_pg.verify
+      end
+
       it 'wraps its block in a savepoint on second call' do
         mock_pg.expect(:exec, nil, ['BEGIN'])
         mock_pg.expect(:exec, nil, ['SAVEPOINT primary_0'])

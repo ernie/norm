@@ -5,8 +5,8 @@ require 'norm'
 Norm.init!('primary' => {:user=> 'norm_test'})
 Norm.connection_manager.with_connection(:primary) do |conn|
   conn.exec_string('SET client_min_messages TO WARNING')
-  conn.exec_string('drop table if exists people')
   conn.exec_string('drop table if exists posts')
+  conn.exec_string('drop table if exists people')
   conn.exec_string('drop table if exists users')
   conn.exec_string <<-SQL
     CREATE EXTENSION IF NOT EXISTS btree_gist;
@@ -31,7 +31,8 @@ Norm.connection_manager.with_connection(:primary) do |conn|
       age integer,
       created_at timestamp with time zone NOT NULL,
       updated_at timestamp with time zone NOT NULL,
-      CONSTRAINT people_pkey PRIMARY KEY (id)
+      CONSTRAINT people_pkey PRIMARY KEY (id),
+      CONSTRAINT people_name_unique UNIQUE (name)
     );
     CREATE TRIGGER timestamp_update_people
       BEFORE UPDATE ON people FOR EACH ROW
@@ -64,13 +65,14 @@ Norm.connection_manager.with_connection(:primary) do |conn|
     CREATE TABLE posts
     (
       id serial NOT NULL,
-      user_id integer NOT NULL,
+      person_id integer NOT NULL,
       title character varying(255) NOT NULL,
       body text,
       created_at timestamp with time zone NOT NULL,
       updated_at timestamp with time zone NOT NULL,
       CONSTRAINT posts_unique_body EXCLUDE USING gist (body WITH =),
-      CONSTRAINT posts_owned_by_user FOREIGN KEY (user_id) REFERENCES users (id)
+      CONSTRAINT posts_owned_by_person
+        FOREIGN KEY (person_id) REFERENCES people (id)
     );
     CREATE TRIGGER timestamp_update_posts
       BEFORE UPDATE ON posts FOR EACH ROW

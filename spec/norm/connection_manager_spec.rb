@@ -116,6 +116,27 @@ module Norm
         end
       end
 
+      it 'returns an unsuccessful result on constraint errors if handling' do
+        with_fake_db do
+          result = subject.atomically_on(
+            :primary, :reader, :writer, handle_constraints: true
+          ) do |p, r, w|
+            p.must_be_kind_of Connection
+            r.must_be_kind_of Connection
+            w.must_be_kind_of Connection
+            raise ConstraintError.new(PG::CheckViolation.new)
+          end
+          subject.with_connections(:primary, :reader, :writer) do |p, r, w|
+            p.db.execs.must_equal ['BEGIN', 'ROLLBACK']
+            r.db.execs.must_equal ['BEGIN', 'ROLLBACK']
+            w.db.execs.must_equal ['BEGIN', 'ROLLBACK']
+          end
+
+          result.wont_be :success?
+          result.constraint_error.must_be_kind_of ConstraintError
+        end
+      end
+
       it 'creates savepoints on connections when needed' do
         with_fake_db do
           subject.atomically_on(:primary, :reader, :writer) do |p, r, w|

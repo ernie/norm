@@ -5,15 +5,15 @@ module Norm
 
     let(:person_record_class) {
       Class.new(Record) do
-        attribute :id,          Attr::Integer
-        attribute :name,        Attr::String
-        attribute :age,         Attr::Integer
-        attribute :created_at,  Attr::Timestamp
-        attribute :updated_at,  Attr::Timestamp
+        attribute :id,         Attr::Integer
+        attribute :name,       Attr::String
+        attribute :age,        Attr::Integer
+        attribute :created_at, Attr::Timestamp
+        attribute :updated_at, Attr::Timestamp
       end
     }
 
-    subject {
+    let(:person_repo) {
       Class.new(PostgreSQLRepository) {
         def select_statement
           Norm::SQL.select.from('people')
@@ -34,9 +34,43 @@ module Norm
       }.new(person_record_class)
     }
 
+    let(:post_record_class) {
+      Class.new(Record) do
+        attribute :id,         Attr::Integer
+        attribute :person_id,  Attr::Integer
+        attribute :title,      Attr::String
+        attribute :body,       Attr::String
+        attribute :created_at, Attr::Timestamp
+        attribute :updated_at, Attr::Timestamp
+      end
+    }
+
+    let(:post_repo) {
+      Class.new(PostgreSQLRepository) {
+        def select_statement
+          Norm::SQL.select.from('posts')
+        end
+
+        def insert_statement
+          column_list = record_class.attribute_names.join(', ')
+          Norm::SQL.insert("posts (#{column_list})").returning('*')
+        end
+
+        def update_statement
+          Norm::SQL.update('posts').returning('*')
+        end
+
+        def delete_statement
+          Norm::SQL.delete('posts').returning('*')
+        end
+      }.new(post_record_class)
+    }
+
+    subject { person_repo }
+
     before {
       subject.with_connection(:primary) do |conn|
-        conn.exec_string('truncate table people restart identity')
+        conn.exec_string('truncate table people, posts restart identity')
       end
     }
 
@@ -101,9 +135,20 @@ module Norm
         person.updated_at.must_be_kind_of Attr::Timestamp
       end
 
-      it 'returns true on success' do
+      it 'returns a successful result on success' do
         person = person_record_class.new(:name => 'Ernie', :age => 36)
-        subject.insert(person).must_equal true
+        result = subject.insert(person)
+        result.must_be :success?
+        result.affected_rows.must_equal 1
+      end
+
+      it 'returns an unsuccessful result on constraint error' do
+        person = person_record_class.new(
+          :id => nil, :name => 'Ernie', :age => 36
+        )
+        result = subject.insert(person)
+        result.wont_be :success?
+        result.constraint_error.must_be_kind_of ConstraintError
       end
 
     end
@@ -122,10 +167,20 @@ module Norm
         bert.age.must_equal 37
       end
 
-      it 'returns true on success' do
+      it 'returns a successful result on success' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         bert  = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.mass_insert([ernie, bert]).must_equal true
+        result = subject.mass_insert([ernie, bert])
+        result.must_be :success?
+        result.affected_rows.must_equal 2
+      end
+
+      it 'returns an unsuccessful result on constraint error' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        duplicate = person_record_class.new(:name => 'Ernie', :age => 36)
+        result = subject.mass_insert([ernie, duplicate])
+        result.wont_be :success?
+        result.constraint_error.must_be_kind_of ConstraintError
       end
 
     end
@@ -144,13 +199,25 @@ module Norm
         person.updated_at.must_be :>, previous_updated_at
       end
 
-      it 'returns true on success' do
+      it 'returns a successful result on success' do
         person = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(person)
         person = subject.fetch(person.id)
         person.name = 'Bert'
         previous_updated_at = person.updated_at
-        subject.update(person).must_equal true
+        result = subject.update(person)
+        result.must_be :success?
+        result.affected_rows.must_equal 1
+      end
+
+      it 'returns an unsuccessful result on constraint error' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert  = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.mass_insert([ernie, bert])
+        ernie.name = 'Bert'
+        result = subject.update(ernie)
+        result.wont_be :success?
+        result.constraint_error.must_be_kind_of ConstraintError
       end
 
       it 'does nothing if the record has not been updated' do
@@ -161,11 +228,13 @@ module Norm
         ernie.updated_at.must_equal updated_at
       end
 
-      it 'returns true if no update was needed' do
+      it 'returns a successful result if no update was needed' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(ernie)
         updated_at = ernie.updated_at
-        subject.update(ernie).must_equal true
+        result = subject.update(ernie)
+        result.must_be :success?
+        result.affected_rows.must_equal 0
       end
 
     end
@@ -178,22 +247,36 @@ module Norm
         subject.mass_insert([ernie, bert])
         ernie_updated = ernie.updated_at
         bert_updated  = bert.updated_at
-        ernie.name, bert.name = bert.name, ernie.name
+        ernie.name, bert.name = 'Ernest', 'Herbert'
         subject.mass_update([ernie, bert])
         ernie.updated_at.must_be :>, ernie_updated
         bert.updated_at.must_be :>, bert_updated
-        ernie.name.must_equal 'Bert'
-        bert.name.must_equal 'Ernie'
+        ernie.name.must_equal 'Ernest'
+        bert.name.must_equal 'Herbert'
       end
 
-      it 'returns true on success' do
+      it 'returns a successful result on success' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert  = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.mass_insert([ernie, bert])
+        ernie_updated = ernie.updated_at
+        bert_updated  = bert.updated_at
+        ernie.name, bert.name = 'Ernest', 'Herbert'
+        result = subject.mass_update([ernie, bert])
+        result.must_be :success?
+        result.affected_rows.must_equal 2
+      end
+
+      it 'returns an unsuccessful result on constraint error' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         bert  = person_record_class.new(:name => 'Bert', :age => 37)
         subject.mass_insert([ernie, bert])
         ernie_updated = ernie.updated_at
         bert_updated  = bert.updated_at
         ernie.name, bert.name = bert.name, ernie.name
-        subject.mass_update([ernie, bert]).must_equal true
+        result = subject.mass_update([ernie, bert])
+        result.wont_be :success?
+        result.constraint_error.must_be_kind_of ConstraintError
       end
 
     end
@@ -213,10 +296,24 @@ module Norm
         bert.wont_be :deleted?
       end
 
-      it 'returns true on success' do
+      it 'returns a successful result on success' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(ernie)
-        subject.delete(ernie).must_equal true
+        result = subject.delete(ernie)
+        result.must_be :success?
+        result.affected_rows.must_equal 1
+      end
+
+      it 'returns unsuccessful result on constraint error' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(ernie)
+        post = post_record_class.new(
+          :person_id => ernie.id, :title => 'zomg', :body => 'zomg'
+        )
+        post_repo.insert(post)
+        result = subject.delete(ernie)
+        result.wont_be :success?
+        result.constraint_error.must_be_kind_of ConstraintError
       end
 
     end
@@ -236,11 +333,26 @@ module Norm
         bert.wont_be :stored?
       end
 
-      it 'returns true on success' do
+      it 'returns a successful result on success' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         bert = person_record_class.new(:name => 'Bert', :age => 37)
         subject.mass_insert([ernie, bert])
-        subject.mass_delete([ernie, bert]).must_equal true
+        result = subject.mass_delete([ernie, bert])
+        result.must_be :success?
+        result.affected_rows.must_equal 2
+      end
+
+      it 'returns unsuccessful result on constraint error' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.mass_insert([ernie, bert])
+        post = post_record_class.new(
+          :person_id => ernie.id, :title => 'zomg', :body => 'zomg'
+        )
+        post_repo.insert(post)
+        result = subject.mass_delete([ernie, bert])
+        result.wont_be :success?
+        result.constraint_error.must_be_kind_of ConstraintError
       end
 
     end
@@ -263,16 +375,31 @@ module Norm
         ernie.updated_at.must_be :>, previously_updated_at
       end
 
-      it 'returns true on successful insert' do
+      it 'returns a successful result on successful insert' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
-        subject.store(ernie).must_equal true
+        result = subject.store(ernie)
+        result.must_be :success?
+        result.affected_rows.must_equal 1
       end
 
-      it 'returns true on successful update' do
+      it 'returns successful result on successful update' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(ernie)
         ernie.age = 37
-        subject.store(ernie).must_equal true
+        result = subject.store(ernie)
+        result.must_be :success?
+        result.affected_rows.must_equal 1
+      end
+
+      it 'returns unsuccessful result on constraint error' do
+        ernie = person_record_class.new(
+          :id => nil, :name => 'Ernie', :age => 36
+        )
+        subject.insert(ernie)
+        ernie.age = 37
+        result = subject.store(ernie)
+        result.wont_be :success?
+        result.constraint_error.must_be_kind_of ConstraintError
       end
 
     end
@@ -290,12 +417,24 @@ module Norm
         bert.must_be :stored?
       end
 
-      it 'returns true on success' do
+      it 'returns successful result on success' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         bert = person_record_class.new(:name => 'Bert', :age => 37)
         subject.insert(ernie)
         ernie.age = 37
-        subject.mass_store([ernie, bert]).must_equal true
+        result = subject.mass_store([ernie, bert])
+        result.must_be :success?
+        result.affected_rows.must_equal 2
+      end
+
+      it 'returns unsuccessful result on constraint error' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert = person_record_class.new(:id => nil, :name => 'Bert', :age => 37)
+        subject.insert(ernie)
+        ernie.age = 37
+        result = subject.mass_store([ernie, bert])
+        result.wont_be :success?
+        result.constraint_error.must_be_kind_of ConstraintError
       end
 
     end

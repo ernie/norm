@@ -11,51 +11,56 @@ module Norm
     end
 
     def insert(record)
-      insert_records(add_values_clause(insert_statement, record), [record])
+      atomically_on(writer, handle_constraints: true) do
+        insert_records(add_values_clause(insert_statement, record), [record])
+      end
     end
 
     def mass_insert(records)
-      insert_records(
-        records.reduce(insert_statement) { |stmt, record|
-          add_values_clause(stmt, record)
-        },
-        records
-      )
+      atomically_on(writer, handle_constraints: true) do
+        do_mass_insert(records)
+      end
     end
 
     def update(record)
-      if record.updated_attributes?
-        update_all([record], record.updated_attributes)
-      else
-        true
+      atomically_on(writer, handle_constraints: true) do
+        if record.updated_attributes?
+          update_all([record], record.updated_attributes)
+        else
+          Result.new(true)
+        end
       end
     end
 
     def mass_update(records, attrs = nil)
-      if attrs
-        update_all(records, attrs)
-      else
-        records.group_by(&:updated_attributes).flat_map { |attrs, records|
-          attrs.empty? ? true : update_all(records, attrs)
-        }.all?
+      atomically_on(writer, handle_constraints: true) do
+        do_mass_update(records, attrs)
       end
     end
 
     def store(record)
-      record.stored? ? update(record) : insert(record)
+      atomically_on(writer, handle_constraints: true) do
+        record.stored? ? update(record) : insert(record)
+      end
     end
 
     def mass_store(records)
-      to_update, to_insert = records.partition(&:stored?)
-      mass_insert(to_insert) && mass_update(to_update)
+      atomically_on(writer, handle_constraints: true) do
+        to_update, to_insert = records.partition(&:stored?)
+        do_mass_insert(to_insert) + do_mass_update(to_update)
+      end
     end
 
     def delete(record)
-      delete_records(scope_to_records([record], delete_statement), [record])
+      atomically_on(writer, handle_constraints: true) do
+        delete_records(scope_to_records([record], delete_statement), [record])
+      end
     end
 
     def mass_delete(records)
-      delete_records(scope_to_records(records, delete_statement), records)
+      atomically_on(writer, handle_constraints: true) do
+        delete_records(scope_to_records(records, delete_statement), records)
+      end
     end
 
     def select_statement
@@ -76,6 +81,25 @@ module Norm
 
     private
 
+    def do_mass_insert(records)
+      insert_records(
+        records.reduce(insert_statement) { |stmt, record|
+          add_values_clause(stmt, record)
+        },
+        records
+      )
+    end
+
+    def do_mass_update(records, attrs = nil)
+      if attrs
+        update_all(records, attrs)
+      else
+        records.group_by(&:updated_attributes).flat_map { |attrs, records|
+          attrs.empty? ? Result.new(true) : update_all(records, attrs)
+        }.inject(&:+)
+      end
+    end
+
     def update_all(records, attrs)
       update_records(
         scope_to_records(records, update_statement.set(attrs)),
@@ -92,19 +116,19 @@ module Norm
     end
 
     def insert_records(statement, records)
-      atomically_on(writer) do |conn|
+      with_connection(writer) do |conn|
         conn.exec_statement(statement) do |result|
           result.zip(records).each { |tuple, record|
             record.set_attributes(tuple)
             record.inserted!
           }
-          true
+          Result.new(true, affected_rows: result.cmd_tuples)
         end
       end
     end
 
     def update_records(statement, records)
-      atomically_on(writer) do |conn|
+      with_connection(writer) do |conn|
         conn.exec_statement(statement) do |result|
           update_map = record_map(records)
           result.each { |tuple|
@@ -114,13 +138,13 @@ module Norm
               record.updated!
             end
           }
-          true
+          Result.new(true, affected_rows: result.cmd_tuples)
         end
       end
     end
 
     def delete_records(statement, records)
-      atomically_on(writer) do |conn|
+      with_connection(writer) do |conn|
         conn.exec_statement(statement) do |result|
           delete_map = record_map(records)
           result.each { |tuple|
@@ -130,7 +154,7 @@ module Norm
               record.deleted!
             end
           }
-          true
+          Result.new(true, affected_rows: result.cmd_tuples)
         end
       end
     end

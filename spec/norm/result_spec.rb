@@ -34,13 +34,25 @@ module Norm
 
     end
 
-    describe 'array-like behavior' do
+    describe 'addition' do
 
-      it 'sets success and error object on multiple assignment' do
-        result = Result.new(false, constraint_error: 'zomg')
-        success, error = result
-        success.must_equal false
-        error.must_equal 'zomg'
+      it 'returns a new result with sum of affected_rows' do
+        result1 = Result.new(true, affected_rows: 1)
+        result2 = Result.new(true, affected_rows: 1)
+        sum = result1 + result2
+        sum.affected_rows.must_equal 2
+      end
+
+      it 'will not sum an unsuccessful result on right' do
+        result1 = Result.new(true, affected_rows: 1)
+        result2 = Result.new(false)
+        proc { result1 + result2 }.must_raise ArgumentError
+      end
+
+      it 'will not sum an unsuccessful result on left' do
+        result1 = Result.new(false)
+        result2 = Result.new(true, affected_rows: 1)
+        proc { result1 + result2 }.must_raise ArgumentError
       end
 
     end

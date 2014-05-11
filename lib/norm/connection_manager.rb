@@ -37,7 +37,7 @@ module Norm
       with_connections(name, &block)
     end
 
-    def atomically_on(first, *rest, &block)
+    def atomically_on(first, *rest, handle_constraints: false, &block)
       rest.unshift first
       conns, names = rest.partition { |c| Connection === c }
       if names.any?
@@ -49,6 +49,8 @@ module Norm
       else
         yield *conns
       end
+    rescue ConstraintError => e
+      handle_constraints ? Result.new(false, constraint_error: e) : raise(e)
     end
 
   end
