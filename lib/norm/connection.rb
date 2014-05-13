@@ -41,14 +41,15 @@ module Norm
       raise Norm::ConstraintError.new(e), 'Constraint violation', e.backtrace
     end
 
-    def atomically(handle_constraints: false, &block)
-      if transaction?
+    def atomically(result: false, &block)
+      res = if transaction?
         _with_savepoint(&block)
       else
         _with_transaction(&block)
       end
+      result ? Result.new(true, res) : res
     rescue ConstraintError => e
-      handle_constraints ? Result.new(false, e) : raise(e)
+      result ? Result.new(false, e) : raise(e)
     end
 
     private

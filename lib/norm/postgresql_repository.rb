@@ -11,13 +11,13 @@ module Norm
     end
 
     def insert(record)
-      atomically_on(writer, handle_constraints: true) do
+      atomically_on(writer, result: true) do
         insert_records(add_values_clause(insert_statement, record), [record])
       end
     end
 
     def mass_insert(records)
-      atomically_on(writer, handle_constraints: true) do
+      atomically_on(writer, result: true) do
         do_mass_insert(records)
       end
     end
@@ -25,25 +25,25 @@ module Norm
     def update(record)
       return success! unless record.updated_attributes?
 
-      atomically_on(writer, handle_constraints: true) do
+      atomically_on(writer, result: true) do
         update_all([record], record.updated_attributes)
       end
     end
 
     def mass_update(records, attrs = nil)
-      atomically_on(writer, handle_constraints: true) do
+      atomically_on(writer, result: true) do
         do_mass_update(records, attrs)
       end
     end
 
     def store(record)
-      atomically_on(writer, handle_constraints: true) do
+      atomically_on(writer, result: true) do
         record.stored? ? update(record) : insert(record)
       end
     end
 
     def mass_store(records)
-      atomically_on(writer, handle_constraints: true) do
+      atomically_on(writer, result: true) do
         to_update, to_insert = records.partition(&:stored?)
         do_mass_update(to_update)
         do_mass_insert(to_insert)
@@ -51,13 +51,13 @@ module Norm
     end
 
     def delete(record)
-      atomically_on(writer, handle_constraints: true) do
+      atomically_on(writer, result: true) do
         delete_records(scope_to_records([record], delete_statement), [record])
       end
     end
 
     def mass_delete(records)
-      atomically_on(writer, handle_constraints: true) do
+      atomically_on(writer, result: true) do
         delete_records(scope_to_records(records, delete_statement), records)
       end
     end
@@ -123,7 +123,6 @@ module Norm
             record.set_attributes(tuple)
             record.inserted!
           }
-          success!
         end
       end
     end
@@ -139,7 +138,6 @@ module Norm
               record.updated!
             end
           }
-          success!
         end
       end
     end

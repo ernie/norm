@@ -174,15 +174,27 @@ module Norm
         mock_pg.verify
       end
 
-      it 'returns an unsuccessful result on constraint errors if handling' do
+      it 'returns successful result if no errors when result: true' do
+        mock_pg.expect(:exec, nil, ['BEGIN'])
+        mock_pg.expect(:exec, nil, ['COMMIT'])
+        result = subject.atomically result: true do |conn|
+          conn.must_be_same_as subject
+          'zomg'
+        end
+        result.must_be :success?
+        result.value.must_equal 'zomg'
+        mock_pg.verify
+      end
+
+      it 'returns unsuccessful result on constraint errors when result: true' do
         mock_pg.expect(:exec, nil, ['BEGIN'])
         mock_pg.expect(:exec, nil, ['ROLLBACK'])
-        result = subject.atomically handle_constraints: true do |conn|
+        result = subject.atomically result: true do |conn|
           conn.must_be_same_as subject
           raise ConstraintError.new(PG::CheckViolation.new)
         end
-        result.wont_be :success?
-        result.error.must_be_kind_of ConstraintError
+        result.must_be :error?
+        result.value.must_be_kind_of ConstraintError
         mock_pg.verify
       end
 

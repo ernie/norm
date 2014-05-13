@@ -116,10 +116,31 @@ module Norm
         end
       end
 
-      it 'returns an unsuccessful result on constraint errors if handling' do
+      it 'returns successful result if no errors and result: true' do
         with_fake_db do
           result = subject.atomically_on(
-            :primary, :reader, :writer, handle_constraints: true
+            :primary, :reader, :writer, result: true
+          ) do |p, r, w|
+            p.must_be_kind_of Connection
+            r.must_be_kind_of Connection
+            w.must_be_kind_of Connection
+            'zomg'
+          end
+          subject.with_connections(:primary, :reader, :writer) do |p, r, w|
+            p.db.execs.must_equal ['BEGIN', 'COMMIT']
+            r.db.execs.must_equal ['BEGIN', 'COMMIT']
+            w.db.execs.must_equal ['BEGIN', 'COMMIT']
+          end
+
+          result.must_be :success?
+          result.value.must_equal 'zomg'
+        end
+      end
+
+      it 'returns unsuccessful result on constraint errors if result: true' do
+        with_fake_db do
+          result = subject.atomically_on(
+            :primary, :reader, :writer, result: true
           ) do |p, r, w|
             p.must_be_kind_of Connection
             r.must_be_kind_of Connection
@@ -132,8 +153,8 @@ module Norm
             w.db.execs.must_equal ['BEGIN', 'ROLLBACK']
           end
 
-          result.wont_be :success?
-          result.error.must_be_kind_of ConstraintError
+          result.must_be :error?
+          result.value.must_be_kind_of ConstraintError
         end
       end
 
