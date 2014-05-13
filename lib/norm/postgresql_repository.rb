@@ -23,12 +23,10 @@ module Norm
     end
 
     def update(record)
+      return success! unless record.updated_attributes?
+
       atomically_on(writer, handle_constraints: true) do
-        if record.updated_attributes?
-          update_all([record], record.updated_attributes)
-        else
-          Result.new(true)
-        end
+        update_all([record], record.updated_attributes)
       end
     end
 
@@ -47,7 +45,8 @@ module Norm
     def mass_store(records)
       atomically_on(writer, handle_constraints: true) do
         to_update, to_insert = records.partition(&:stored?)
-        do_mass_insert(to_insert) + do_mass_update(to_update)
+        do_mass_update(to_update)
+        do_mass_insert(to_insert)
       end
     end
 
@@ -94,13 +93,15 @@ module Norm
       if attrs
         update_all(records, attrs)
       else
-        records.group_by(&:updated_attributes).flat_map { |attrs, records|
-          attrs.empty? ? Result.new(true) : update_all(records, attrs)
-        }.inject(&:+)
+        records.group_by(&:updated_attributes).
+          flat_map { |attrs, records| update_all(records, attrs) }
       end
+      success!
     end
 
     def update_all(records, attrs)
+      return success! if records.empty?
+
       update_records(
         scope_to_records(records, update_statement.set(attrs)),
         records
@@ -122,7 +123,7 @@ module Norm
             record.set_attributes(tuple)
             record.inserted!
           }
-          Result.new(true, affected_rows: result.cmd_tuples)
+          success!
         end
       end
     end
@@ -138,7 +139,7 @@ module Norm
               record.updated!
             end
           }
-          Result.new(true, affected_rows: result.cmd_tuples)
+          success!
         end
       end
     end
@@ -154,7 +155,7 @@ module Norm
               record.deleted!
             end
           }
-          Result.new(true, affected_rows: result.cmd_tuples)
+          success!
         end
       end
     end
@@ -178,6 +179,8 @@ module Norm
     end
 
     def scope_to_records(records, statement)
+      return statement.where('FALSE') if records.empty?
+
       if primary_keys.size == 1
         key = primary_keys.first
         values = records.map(&key.to_sym)

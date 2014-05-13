@@ -9,7 +9,6 @@ Norm.connection_manager.with_connection(:primary) do |conn|
   conn.exec_string('drop table if exists people')
   conn.exec_string('drop table if exists users')
   conn.exec_string <<-SQL
-    CREATE EXTENSION IF NOT EXISTS btree_gist;
     CREATE OR REPLACE FUNCTION timestamp_update() RETURNS TRIGGER AS $$
     BEGIN
       NEW.updated_at = now();
@@ -70,7 +69,6 @@ Norm.connection_manager.with_connection(:primary) do |conn|
       body text,
       created_at timestamp with time zone NOT NULL,
       updated_at timestamp with time zone NOT NULL,
-      CONSTRAINT posts_unique_body EXCLUDE USING gist (body WITH =),
       CONSTRAINT posts_owned_by_person
         FOREIGN KEY (person_id) REFERENCES people (id)
     );

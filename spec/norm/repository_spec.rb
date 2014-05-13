@@ -48,6 +48,15 @@ module Norm
       repo.writer.must_equal :bbq
     end
 
+    describe '#success!' do
+
+      it 'returns a successful result' do
+        result = subject.new.success!
+        result.must_be :success?
+      end
+
+    end
+
     describe 'connection convenience methods' do
       let(:connection_manager) { MiniTest::Mock.new }
       subject {

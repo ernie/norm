@@ -133,7 +133,7 @@ module Norm
           end
 
           result.wont_be :success?
-          result.constraint_error.must_be_kind_of ConstraintError
+          result.error.must_be_kind_of ConstraintError
         end
       end
 

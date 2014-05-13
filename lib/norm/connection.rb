@@ -48,7 +48,7 @@ module Norm
         _with_transaction(&block)
       end
     rescue ConstraintError => e
-      handle_constraints ? Result.new(false, constraint_error: e) : raise(e)
+      handle_constraints ? Result.new(false, e) : raise(e)
     end
 
     private

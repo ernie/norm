@@ -182,7 +182,7 @@ module Norm
           raise ConstraintError.new(PG::CheckViolation.new)
         end
         result.wont_be :success?
-        result.constraint_error.must_be_kind_of ConstraintError
+        result.error.must_be_kind_of ConstraintError
         mock_pg.verify
       end
 

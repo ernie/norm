@@ -29,6 +29,10 @@ module Norm
       attributes
     end
 
+    def success!
+      Result.new(true)
+    end
+
     def primary_keys
       record_class.identifying_attribute_names
     end

@@ -139,7 +139,6 @@ module Norm
         person = person_record_class.new(:name => 'Ernie', :age => 36)
         result = subject.insert(person)
         result.must_be :success?
-        result.affected_rows.must_equal 1
       end
 
       it 'returns an unsuccessful result on constraint error' do
@@ -148,7 +147,7 @@ module Norm
         )
         result = subject.insert(person)
         result.wont_be :success?
-        result.constraint_error.must_be_kind_of ConstraintError
+        result.error.must_be_kind_of ConstraintError
       end
 
     end
@@ -172,7 +171,6 @@ module Norm
         bert  = person_record_class.new(:name => 'Bert', :age => 37)
         result = subject.mass_insert([ernie, bert])
         result.must_be :success?
-        result.affected_rows.must_equal 2
       end
 
       it 'returns an unsuccessful result on constraint error' do
@@ -180,7 +178,7 @@ module Norm
         duplicate = person_record_class.new(:name => 'Ernie', :age => 36)
         result = subject.mass_insert([ernie, duplicate])
         result.wont_be :success?
-        result.constraint_error.must_be_kind_of ConstraintError
+        result.error.must_be_kind_of ConstraintError
       end
 
     end
@@ -207,7 +205,6 @@ module Norm
         previous_updated_at = person.updated_at
         result = subject.update(person)
         result.must_be :success?
-        result.affected_rows.must_equal 1
       end
 
       it 'returns an unsuccessful result on constraint error' do
@@ -217,7 +214,7 @@ module Norm
         ernie.name = 'Bert'
         result = subject.update(ernie)
         result.wont_be :success?
-        result.constraint_error.must_be_kind_of ConstraintError
+        result.error.must_be_kind_of ConstraintError
       end
 
       it 'does nothing if the record has not been updated' do
@@ -234,7 +231,6 @@ module Norm
         updated_at = ernie.updated_at
         result = subject.update(ernie)
         result.must_be :success?
-        result.affected_rows.must_equal 0
       end
 
     end
@@ -264,7 +260,6 @@ module Norm
         ernie.name, bert.name = 'Ernest', 'Herbert'
         result = subject.mass_update([ernie, bert])
         result.must_be :success?
-        result.affected_rows.must_equal 2
       end
 
       it 'returns an unsuccessful result on constraint error' do
@@ -276,7 +271,7 @@ module Norm
         ernie.name, bert.name = bert.name, ernie.name
         result = subject.mass_update([ernie, bert])
         result.wont_be :success?
-        result.constraint_error.must_be_kind_of ConstraintError
+        result.error.must_be_kind_of ConstraintError
       end
 
     end
@@ -301,7 +296,6 @@ module Norm
         subject.insert(ernie)
         result = subject.delete(ernie)
         result.must_be :success?
-        result.affected_rows.must_equal 1
       end
 
       it 'returns unsuccessful result on constraint error' do
@@ -313,7 +307,7 @@ module Norm
         post_repo.insert(post)
         result = subject.delete(ernie)
         result.wont_be :success?
-        result.constraint_error.must_be_kind_of ConstraintError
+        result.error.must_be_kind_of ConstraintError
       end
 
     end
@@ -339,7 +333,6 @@ module Norm
         subject.mass_insert([ernie, bert])
         result = subject.mass_delete([ernie, bert])
         result.must_be :success?
-        result.affected_rows.must_equal 2
       end
 
       it 'returns unsuccessful result on constraint error' do
@@ -352,7 +345,7 @@ module Norm
         post_repo.insert(post)
         result = subject.mass_delete([ernie, bert])
         result.wont_be :success?
-        result.constraint_error.must_be_kind_of ConstraintError
+        result.error.must_be_kind_of ConstraintError
       end
 
     end
@@ -379,7 +372,6 @@ module Norm
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         result = subject.store(ernie)
         result.must_be :success?
-        result.affected_rows.must_equal 1
       end
 
       it 'returns successful result on successful update' do
@@ -388,7 +380,6 @@ module Norm
         ernie.age = 37
         result = subject.store(ernie)
         result.must_be :success?
-        result.affected_rows.must_equal 1
       end
 
       it 'returns unsuccessful result on constraint error' do
@@ -399,7 +390,7 @@ module Norm
         ernie.age = 37
         result = subject.store(ernie)
         result.wont_be :success?
-        result.constraint_error.must_be_kind_of ConstraintError
+        result.error.must_be_kind_of ConstraintError
       end
 
     end
@@ -424,7 +415,6 @@ module Norm
         ernie.age = 37
         result = subject.mass_store([ernie, bert])
         result.must_be :success?
-        result.affected_rows.must_equal 2
       end
 
       it 'returns unsuccessful result on constraint error' do
@@ -434,7 +424,7 @@ module Norm
         ernie.age = 37
         result = subject.mass_store([ernie, bert])
         result.wont_be :success?
-        result.constraint_error.must_be_kind_of ConstraintError
+        result.error.must_be_kind_of ConstraintError
       end
 
     end
