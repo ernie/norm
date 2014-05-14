@@ -37,9 +37,7 @@ module Norm
     end
 
     def store(record)
-      atomically_on(writer, result: true) do
-        record.stored? ? update(record) : insert(record)
-      end
+      record.stored? ? update(record) : insert(record)
     end
 
     def mass_store(records)
