@@ -327,11 +327,23 @@ module Norm
 
       describe '#set_attributes' do
 
-        it 'updates only attributes common between the record and hash' do
+        it 'updates attributes common between the record and hash' do
           record = simple_record_class.new(:name => 'Ernie Miller', :age => 36)
           record.set_attributes(:age => 37)
           record.name.must_equal 'Ernie Miller'
           record.age.must_equal 37
+        end
+
+        it 'sets attributes that have a setter' do
+          record = simple_record_class.new(:name => 'Ernie Miller', :age => 36)
+          def record.zomg=(zomg)
+            @zomg = zomg
+          end
+          def record.zomg
+            @zomg
+          end
+          record.set_attributes(:zomg => 'zomg!')
+          record.zomg.must_equal 'zomg!'
         end
 
       end

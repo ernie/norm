@@ -136,8 +136,8 @@ module Norm
 
     def set_attributes(attributes)
       attributes = normalize_attributes(attributes)
-      (attribute_names & attributes.keys).each do |attr_name|
-        send("#{attr_name}=", attributes[attr_name])
+      attributes.each do |name, value|
+        send("#{name}=", value) if respond_to?("#{name}=")
       end
     end
 
