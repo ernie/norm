@@ -52,23 +52,23 @@ module Norm
       with_fake_db do
         mgr = subject.new(:primary => {'pool' => 3, 'foo' => 'bar'})
         mgr.pools[:primary].with do |primary|
-          primary.db.options.must_equal 'foo' => 'bar'
+          primary.db.options.must_equal :foo => 'bar'
         end
       end
     end
 
     describe '#with_connection(s)' do
       let(:spec) { {
-        :primary => {'host' => 'zomg.bbq'},
-        :reader  => {'host' => 'foo.bar'},
-        :writer  => {'host' => 'mahna.mahna'}
+        :primary => {:host => 'zomg.bbq'},
+        :reader  => {:host => 'foo.bar'},
+        :writer  => {:host => 'mahna.mahna'}
       } }
       subject { ConnectionManager.new(spec) }
 
       it 'yields a single connection' do
         with_fake_db do
           subject.with_connections(:primary) do |primary|
-            primary.db.options['host'].must_equal 'zomg.bbq'
+            primary.db.options[:host].must_equal 'zomg.bbq'
           end
         end
       end
@@ -78,9 +78,9 @@ module Norm
           subject.with_connections(
             :primary, :reader, :writer
           ) do |primary, reader, writer|
-            primary.db.options['host'].must_equal 'zomg.bbq'
-            reader.db.options['host'].must_equal 'foo.bar'
-            writer.db.options['host'].must_equal 'mahna.mahna'
+            primary.db.options[:host].must_equal 'zomg.bbq'
+            reader.db.options[:host].must_equal 'foo.bar'
+            writer.db.options[:host].must_equal 'mahna.mahna'
           end
         end
       end
@@ -95,9 +95,9 @@ module Norm
 
     describe '#atomically_on' do
       let(:spec) { {
-        :primary => {'host' => 'zomg.bbq'},
-        :reader  => {'host' => 'foo.bar'},
-        :writer  => {'host' => 'mahna.mahna'}
+        :primary => {'host' => 'zomg.bbq', :setup => ->(db) {}},
+        :reader  => {'host' => 'foo.bar', :setup => ->(db) {}},
+        :writer  => {'host' => 'mahna.mahna', :setup => ->(db) {}}
       } }
       subject { ConnectionManager.new(spec) }
 

@@ -10,4 +10,12 @@ module Norm
 
   end
 
+  describe ConnectionResetError do
+
+    it 'is an Error' do
+      ConnectionResetError.new.must_be_kind_of Error
+    end
+
+  end
+
 end

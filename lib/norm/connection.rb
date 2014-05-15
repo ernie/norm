@@ -6,39 +6,47 @@ module Norm
     attr_reader :name, :db
 
     def initialize(name, opts = {})
+      opts = opts.each_with_object({}) { |(k, v), h| h[k.to_sym] = v }
+      @setup       = opts.delete(:setup) { method(:default_setup) }
       @name        = name
       @db          = PG::Connection.new(opts)
       @transaction = false
       @savepoints  = []
+      @setup.call(@db)
     end
 
     def transaction?
       @transaction
     end
 
+    def reset
+      @db.reset
+      @setup.call(@db)
+    end
+
     def exec_string(*args, &block)
-      @db.exec(*args) do |result|
-        yield result, self if block_given?
+      handling_errors do
+        @db.exec(*args) do |result|
+          yield result, self if block_given?
+        end
       end
-    rescue PG::IntegrityConstraintViolation => e
-      raise Norm::ConstraintError.new(e), 'Constraint violation', e.backtrace
     end
 
     def exec_params(*args, &block)
-      @db.exec_params(*args) do |result|
-        yield result, self if block_given?
+      handling_errors do
+        @db.exec_params(*args) do |result|
+          yield result, self if block_given?
+        end
       end
-    rescue PG::IntegrityConstraintViolation => e
-      raise Norm::ConstraintError.new(e), 'Constraint violation', e.backtrace
     end
 
     def exec_statement(stmt, result_format = 0, &block)
-      sql = finalize_placeholders(stmt.sql)
-      @db.exec_params(sql, stmt.params, result_format) do |result|
-        yield result, self if block_given?
+      handling_errors do
+        sql = finalize_placeholders(stmt.sql)
+        @db.exec_params(sql, stmt.params, result_format) do |result|
+          yield result, self if block_given?
+        end
       end
-    rescue PG::IntegrityConstraintViolation => e
-      raise Norm::ConstraintError.new(e), 'Constraint violation', e.backtrace
     end
 
     def atomically(result: false, &block)
@@ -53,6 +61,22 @@ module Norm
     end
 
     private
+
+    def default_setup(db)
+      db.exec('SET application_name = "norm"')
+      db.exec('SET bytea_output = "hex"')
+      db.exec('SET backslash_quote = "safe_encoding"')
+    end
+
+    def handling_errors(&block)
+      yield
+    rescue PG::UnableToSend => e
+      reset
+      raise ConnectionResetError, 'The DB connection was reset',
+        e.backtrace
+    rescue PG::IntegrityConstraintViolation => e
+      raise Norm::ConstraintError.new(e), 'Constraint violation', e.backtrace
+    end
 
     def _with_savepoint(&block)
       name = "#{@name}_#{@savepoints.size}"

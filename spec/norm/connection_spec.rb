@@ -2,7 +2,13 @@ require 'spec_helper'
 
 module Norm
   describe Connection do
-    let(:mock_pg) { MiniTest::Mock.new }
+    let(:mock_pg) {
+      mock = MiniTest::Mock.new
+      mock.expect(:exec, nil, ['SET application_name = "norm"'])
+      mock.expect(:exec, nil, ['SET bytea_output = "hex"'])
+      mock.expect(:exec, nil, ['SET backslash_quote = "safe_encoding"'])
+      mock
+    }
     subject {
       PG::Connection.stub(:new, mock_pg) do
         Connection.new('primary')
@@ -21,6 +27,18 @@ module Norm
       mock_pg.expect(:new, mock_pg, [{:host => 'zomg.lol'}])
       PG::Connection.stub(:new, proc { |*args| mock_pg.new(*args) }) do
         Connection.new('primary', :host => 'zomg.lol')
+      end
+      mock_pg.verify
+    end
+
+    it 'sets up the DB connection with an alternate callable if given' do
+      mock_pg = MiniTest::Mock.new
+      mock_pg.expect(:new, mock_pg, [{:host => 'zomg.lol'}])
+      mock_pg.expect(:exec, mock_pg, ['select "zomg"'])
+      PG::Connection.stub(:new, proc { |*args| mock_pg.new(*args) }) do
+        Connection.new(:primary,
+         :host => 'zomg.lol', :setup => ->(db) { db.exec('select "zomg"') }
+        )
       end
       mock_pg.verify
     end
@@ -58,6 +76,25 @@ module Norm
         error.message.must_equal 'Constraint violation'
         error.error.must_equal check_violation
         error.backtrace.must_equal check_violation.backtrace
+      end
+
+      it 'resets and raises ConnectionResetError if connection dies' do
+        unable_to_send = PG::UnableToSend.new
+        mock_pg.expect(:exec, nil, &->(sql, &block) {
+          if sql == 'select 1'
+            raise unable_to_send
+          else
+            true # Matches the first setup query so we can skip
+          end
+        })
+        mock_pg.expect(:reset, nil)
+        mock_pg.expect(:exec, nil, ['SET bytea_output = "hex"'])
+        mock_pg.expect(:exec, nil, ['SET backslash_quote = "safe_encoding"'])
+        error = proc { subject.exec_string('select 1') }.
+          must_raise ConnectionResetError
+        error.message.must_equal 'The DB connection was reset'
+        error.backtrace.must_equal unable_to_send.backtrace
+        mock_pg.verify
       end
 
     end
@@ -99,6 +136,20 @@ module Norm
         error.message.must_equal 'Constraint violation'
         error.error.must_equal check_violation
         error.backtrace.must_equal check_violation.backtrace
+      end
+
+      it 'resets and raises ConnectionResetError if connection dies' do
+        def mock_pg.exec_params(*args)
+          raise PG::UnableToSend
+        end
+        mock_pg.expect(:reset, nil)
+        mock_pg.expect(:exec, nil, ['SET application_name = "norm"'])
+        mock_pg.expect(:exec, nil, ['SET bytea_output = "hex"'])
+        mock_pg.expect(:exec, nil, ['SET backslash_quote = "safe_encoding"'])
+        error = proc { subject.exec_params('select $1', [1], 0) }.
+          must_raise ConnectionResetError
+        error.message.must_equal 'The DB connection was reset'
+        mock_pg.verify
       end
 
     end
@@ -146,6 +197,20 @@ module Norm
         error.message.must_equal 'Constraint violation'
         error.error.must_equal check_violation
         error.backtrace.must_equal check_violation.backtrace
+      end
+
+      it 'resets and raises ConnectionResetError if connection dies' do
+        def mock_pg.exec_params(*args)
+          raise PG::UnableToSend
+        end
+        mock_pg.expect(:reset, nil)
+        mock_pg.expect(:exec, nil, ['SET application_name = "norm"'])
+        mock_pg.expect(:exec, nil, ['SET bytea_output = "hex"'])
+        mock_pg.expect(:exec, nil, ['SET backslash_quote = "safe_encoding"'])
+        error = proc { subject.exec_statement(statement, 1) }.
+          must_raise ConnectionResetError
+        error.message.must_equal 'The DB connection was reset'
+        mock_pg.verify
       end
 
     end
