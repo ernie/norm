@@ -10,6 +10,7 @@ require 'norm/connection_manager'
 require 'norm/attribute'
 require 'norm/repository'
 require 'norm/record'
+require 'norm/record_wrapper'
 
 module Norm
 
