@@ -94,35 +94,10 @@ module Norm
 
     end
 
-    describe '.identity' do
-      subject {
-        Class.new(Record) {
-          attribute :id,   Attr::Integer
-          attribute :name, Attr::String
-          attribute :age,  Attr::Integer
-        }
-      }
-
-      it 'requires at least one attribute name' do
-        proc { subject.identity }.must_raise ArgumentError
-      end
-
-      it 'sets .identifying_attribute_names to stringified params' do
-        subject.identity :name, :age
-        subject.identifying_attribute_names.must_equal ['name', 'age']
-      end
-
-      it 'is available as .identifier' do
-        subject.identity :id
-        subject.identifying_attribute_names.must_equal ['id']
-      end
-
-    end
-
-    describe '.identifying_attribute_names' do
+    describe '#identifying_attribute_names' do
 
       it 'defaults to id' do
-        subject.identifying_attribute_names.must_equal ['id']
+        subject.new.identifying_attribute_names.must_equal ['id']
       end
 
     end
@@ -169,16 +144,6 @@ module Norm
         it 'delegates to the class implementation by default' do
           simple_record_class.stub(:attribute_names, ['zomg']) do
             subject.attribute_names.must_equal ['zomg']
-          end
-        end
-
-      end
-
-      describe '#identifying_attribute_names' do
-
-        it 'delegates to the class implementation by default' do
-          simple_record_class.stub(:identifying_attribute_names, ['zomg']) do
-            subject.identifying_attribute_names.must_equal ['zomg']
           end
         end
 

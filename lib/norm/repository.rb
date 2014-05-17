@@ -3,7 +3,7 @@ module Norm
 
     attr_reader :record_class, :connection_manager, :reader, :writer
 
-    def initialize(record_class = nil,
+    def initialize(record_class,
                    connection_manager: Norm.connection_manager,
                    reader: :primary, writer: :primary)
       @record_class, @connection_manager = record_class, connection_manager
@@ -34,7 +34,7 @@ module Norm
     end
 
     def primary_keys
-      record_class.identifying_attribute_names
+      @primary_keys ||= record_class.new.identifying_attribute_names
     end
 
     def all

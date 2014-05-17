@@ -163,7 +163,7 @@ module Norm
     def add_values_clause(statement, record)
       attrs = record.initialized_attributes
       params = []
-      sql = record_class.attribute_names.map { |name|
+      sql = record.attribute_names.map { |name|
         if attrs.key?(name)
           params << attrs[name]
           '$?'

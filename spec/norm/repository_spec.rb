@@ -5,9 +5,14 @@ module Norm
     subject { Class.new(Repository) }
     let(:record_class) { Class.new(Record) }
 
+    it 'requires a record class' do
+      proc { subject.new }.must_raise ArgumentError
+      subject.new(record_class).must_be_kind_of Repository
+    end
+
     it 'defaults PKs to the identifying attribute names of the record class' do
       subject.new(record_class).primary_keys.must_equal(
-        record_class.identifying_attribute_names
+        record_class.new.identifying_attribute_names
       )
     end
 
@@ -16,7 +21,7 @@ module Norm
         record_class = Class.new(Record) { attribute :id, Attr::Integer }
         Class.new(Repository) {
           define_method(:record_class) { record_class }
-        }.new
+        }.new(record_class)
       }
 
       it 'casts the attributes in a hash' do
@@ -26,24 +31,24 @@ module Norm
     end
 
     it 'defaults connection manager to Norm.connection_manager' do
-      repo = subject.new
+      repo = subject.new(record_class)
       repo.connection_manager.must_be_same_as Norm.connection_manager
     end
 
     it 'allows specifying an alternate connection manager via keyword' do
       mgr = Object.new
-      repo = subject.new(connection_manager: mgr)
+      repo = subject.new(record_class, connection_manager: mgr)
       repo.connection_manager.must_be_same_as mgr
     end
 
     it 'defaults reader and writer database to :primary' do
-      repo = subject.new
+      repo = subject.new(record_class)
       repo.reader.must_equal :primary
       repo.writer.must_equal :primary
     end
 
     it 'allows specification of alternate reader and writer via keyword' do
-      repo = subject.new(reader: :zomg, writer: :bbq)
+      repo = subject.new(record_class, reader: :zomg, writer: :bbq)
       repo.reader.must_equal :zomg
       repo.writer.must_equal :bbq
     end
@@ -51,7 +56,7 @@ module Norm
     describe '#success!' do
 
       it 'returns a successful result' do
-        result = subject.new.success!
+        result = subject.new(record_class).success!
         result.must_be :success?
       end
 
@@ -60,7 +65,10 @@ module Norm
     describe 'connection convenience methods' do
       let(:connection_manager) { MiniTest::Mock.new }
       subject {
-        Class.new(Repository).new(connection_manager: connection_manager)
+        Class.new(Repository).new(
+          record_class,
+          connection_manager: connection_manager
+        )
       }
 
       it 'delegates with_connection to connection manager' do
@@ -71,6 +79,7 @@ module Norm
 
       it 'defaults a parameterless call to with_connection to reader' do
         repo = Class.new(Repository).new(
+          record_class,
           connection_manager: connection_manager, reader: :zomg
         )
         connection_manager.expect(:with_connection, nil, [:zomg])

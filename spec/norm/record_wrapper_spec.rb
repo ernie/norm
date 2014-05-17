@@ -39,14 +39,6 @@ module Norm
         subject.load_attribute(:id, '1').must_equal 1
       end
 
-      it 'has the record class attribute names' do
-        subject.attribute_names.must_equal ['id', 'name']
-      end
-
-      it 'has the record class identifying attribute names' do
-        subject.identifying_attribute_names.must_equal ['id']
-      end
-
       it 'returns a wrapped record via new' do
         wrapped = subject.new(:id => 1, :name => 'Ernie')
         wrapped.must_be_kind_of wrapper_class

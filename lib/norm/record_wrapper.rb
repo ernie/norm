@@ -11,14 +11,6 @@ module Norm
       @record_class.load_attribute(name, value)
     end
 
-    def attribute_names
-      @record_class.attribute_names
-    end
-
-    def identifying_attribute_names
-      @record_class.identifying_attribute_names
-    end
-
     def new(attributes = {})
       @wrapper.new(@record_class.new(attributes), *@args)
     end
