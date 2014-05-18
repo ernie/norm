@@ -39,10 +39,10 @@ module Norm
         attributes_class.attribute(name, loader)
         attribute_methods_module.module_eval {
           define_method("#{name}") do |default: false|
-            @attributes.get(name, default: default)
+            attributes.get(name, default: default)
           end
           define_method("#{name}=") do |value|
-            @attributes.set(name, value)
+            attributes.set(name, value)
           end
         }
       end
@@ -60,11 +60,11 @@ module Norm
     end
 
     def inspect
-      "#<#{self.class} #{@attributes.inspect}>"
+      "#<#{self.class} #{attributes.inspect}>"
     end
 
     def attribute_names
-      @attribute_names ||= @attributes.names
+      @attribute_names ||= attributes.names
     end
 
     def values_at(*names, default: false)
