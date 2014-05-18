@@ -67,8 +67,8 @@ module Norm
       @attribute_names ||= @attributes.names
     end
 
-    def values_at(*attribute_names)
-      attribute_names.map! { |name| send(name) }
+    def values_at(*names, default: false)
+      attributes.values_at(*names, default: false)
     end
 
     def initialized_attributes
