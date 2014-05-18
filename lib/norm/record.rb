@@ -26,7 +26,7 @@ module Norm
       end
 
       def inherit_attributes_class(klass)
-        @attributes_class = const_set(:Attributes, Class.new(klass))
+        @attributes_class ||= const_set(:Attributes, Class.new(klass))
       end
 
       def attribute_methods_module
