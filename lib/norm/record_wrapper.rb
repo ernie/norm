@@ -7,10 +7,6 @@ module Norm
       @args         = args
     end
 
-    def load_attribute(name, value)
-      @record_class.load_attribute(name, value)
-    end
-
     def new(attributes = {})
       @wrapper.new(@record_class.new(attributes), *@args)
     end

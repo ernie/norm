@@ -23,10 +23,7 @@ module Norm
     end
 
     def load_attributes(attributes)
-      attributes.each do |name, value|
-        attributes[name] = record_class.load_attribute(name, value)
-      end
-      attributes
+      record_class.new(attributes).get_attributes(*attributes.keys)
     end
 
     def success!
@@ -34,7 +31,7 @@ module Norm
     end
 
     def primary_keys
-      @primary_keys ||= record_class.new.identifying_attribute_names
+      @primary_keys ||= record_class.new.identifying_attributes.keys
     end
 
     def all

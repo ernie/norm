@@ -2,6 +2,7 @@ require 'norm/attribute/loading'
 require 'norm/attribute/delegator'
 require 'norm/attribute/loader'
 
+require 'norm/attribute/default'
 require 'norm/attribute/integer'
 require 'norm/attribute/decimal'
 require 'norm/attribute/character'

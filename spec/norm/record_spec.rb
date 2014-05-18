@@ -81,27 +81,6 @@ module Norm
 
     end
 
-    describe '.load_attribute' do
-
-      it 'loads the attribute using the class attribute loader' do
-        loader = MiniTest::Mock.new
-        loader.expect(:load, 'ZOMG LOADED', [1])
-        subject.attribute :my_attr, loader
-        value = subject.load_attribute 'my_attr', 1
-        value.must_equal 'ZOMG LOADED'
-        loader.verify
-      end
-
-    end
-
-    describe '#identifying_attribute_names' do
-
-      it 'defaults to id' do
-        subject.new.identifying_attribute_names.must_equal ['id']
-      end
-
-    end
-
     describe 'initialization' do
       subject { simple_record_class }
 
@@ -133,7 +112,7 @@ module Norm
         it 'returns a legible string listing object attributes' do
           subject.name, subject.age = 'Ernie', 36
           subject.inspect.must_match(
-            /\A#<#<Class:.*?> id: nil, name: "Ernie", age: 36>\z/
+            /\A#<#<Class:.*?> #<#<Class:.*?> id: <DEFAULT>, name: "Ernie", age: 36>>\z/
           )
         end
 
@@ -141,8 +120,8 @@ module Norm
 
       describe '#attribute_names' do
 
-        it 'delegates to the class implementation by default' do
-          simple_record_class.stub(:attribute_names, ['zomg']) do
+        it 'delegates to its attribute class by default' do
+          simple_record_class.send(:attributes_class).stub(:names, ['zomg']) do
             subject.attribute_names.must_equal ['zomg']
           end
         end
@@ -158,15 +137,6 @@ module Norm
 
       end
 
-      describe '#identifying_attribute_values' do
-
-        it 'returns an array of identifying attribute values' do
-          subject.id = 42
-          subject.identifying_attribute_values.must_equal [42]
-        end
-
-      end
-
       describe '#values_at' do
 
         it 'returns an array of values in the specified order' do
@@ -176,33 +146,16 @@ module Norm
 
       end
 
-      describe '#attribute?' do
-
-        it 'tells if the record contains this attribute' do
-          subject.attribute?(:name).must_equal true
-          subject.attribute?(:foo).must_equal false
-        end
-
-      end
-
       describe '#attributes' do
 
-        it 'returns a hash of all record attribute names and values' do
-          record = simple_record_class.new(:name => 'Ernie Miller')
+        it 'returns an attributes object' do
+          record = simple_record_class.new(:id => 1, :name => 'Ernie Miller')
           record.attributes.must_equal(
-            'id'   => nil,
-            'name' => 'Ernie Miller',
-            'age'  => nil
+            simple_record_class::Attributes.new(
+              :id => 1,
+              :name => 'Ernie Miller'
+            )
           )
-        end
-
-      end
-
-      describe '#initialized_attribute_names' do
-
-        it 'tells all attributes that have had a value set' do
-          record = simple_record_class.new(:name => 'Ernie Miller')
-          record.initialized_attribute_names.must_equal ['name']
         end
 
       end
@@ -214,15 +167,6 @@ module Norm
           record.initialized_attributes.must_equal(
             'name' => 'Ernie Miller'
           )
-        end
-
-      end
-
-      describe '#updated_attribute_names' do
-
-        it 'tells all attributes that have been updated from initial value' do
-          subject.name = 'Bob'
-          subject.updated_attribute_names.must_equal ['name']
         end
 
       end
@@ -266,26 +210,26 @@ module Norm
 
       end
 
-      describe '#read_attributes' do
+      describe '#get_attributes' do
 
         it 'returns a hash of requested attributes using symbols' do
           record = simple_record_class.new(:name => 'Ernie')
-          record.read_attributes(:name, :age).must_equal(
+          record.get_attributes(:name, :age).must_equal(
             :name => 'Ernie', :age => nil
           )
         end
 
         it 'returns a hash of requested attributes using strings' do
           record = simple_record_class.new(:name => 'Ernie')
-          record.read_attributes('name', 'age').must_equal(
+          record.get_attributes('name', 'age').must_equal(
             'name' => 'Ernie', 'age' => nil
           )
         end
 
         it 'does not filter list of requested attributes' do
           record = simple_record_class.new(:name => 'Ernie', :age => 36)
-          proc { record.read_attributes(:name, :age, :favorite_color) }.
-            must_raise NoMethodError
+          proc { record.get_attributes(:name, :age, :favorite_color) }.
+            must_raise Attributes::NonexistentAttributeError
         end
 
       end
@@ -297,18 +241,6 @@ module Norm
           record.set_attributes(:age => 37)
           record.name.must_equal 'Ernie Miller'
           record.age.must_equal 37
-        end
-
-        it 'sets attributes that have a setter' do
-          record = simple_record_class.new(:name => 'Ernie Miller', :age => 36)
-          def record.zomg=(zomg)
-            @zomg = zomg
-          end
-          def record.zomg
-            @zomg
-          end
-          record.set_attributes(:zomg => 'zomg!')
-          record.zomg.must_equal 'zomg!'
         end
 
       end
@@ -353,9 +285,9 @@ module Norm
 
         it 'tells the record it no longer has updated attributes' do
           subject.name = 'Ernie'
-          subject.updated_attribute_names.must_equal ['name']
+          subject.updated_attributes.keys.must_include 'name'
           subject.inserted!
-          subject.updated_attribute_names.must_be :empty?
+          subject.updated_attributes.must_be :empty?
         end
 
       end
@@ -370,9 +302,9 @@ module Norm
 
         it 'tells the record it no longer has updated attributes' do
           subject.name = 'Ernie'
-          subject.updated_attribute_names.must_equal ['name']
+          subject.updated_attributes.keys.must_include 'name'
           subject.updated!
-          subject.updated_attribute_names.must_be :empty?
+          subject.updated_attributes.must_be :empty?
         end
 
       end

@@ -1,34 +1,33 @@
 module Norm
   class Record
-    include Identity
 
-    identity :id
+    attr_reader :attributes
 
     Attr = Attribute = Norm::Attribute
 
+    @attributes_class = Attributes = ::Norm::Attributes.dup
+
     class << self
 
-      @attribute_loader = Attribute::Loader.new
-      attr_reader :attribute_loader
-      protected :attribute_loader
+      attr_reader :attributes_class
+      private :attributes_class
+
+      def identity(*args)
+        attributes_class.identity(*args)
+      end
 
       def inherited(klass)
-        klass.inherit_attribute_loader(attribute_loader)
+        klass.inherit_attributes_class(attributes_class)
         klass.attribute_methods_module
       end
 
       def attribute_names
-        []
+        attributes_class.names
       end
 
-      def inherit_attribute_loader(inherited)
-        @attribute_loader = Attribute::Loader.new(inherited)
+      def inherit_attributes_class(klass)
+        @attributes_class = const_set(:Attributes, Class.new(klass))
       end
-
-      def local_attribute_loaders
-        @local_attribute_loaders ||= {}
-      end
-      alias :attribute_loaders :local_attribute_loaders
 
       def attribute_methods_module
         @attribute_methods_module ||= const_set(
@@ -37,22 +36,15 @@ module Norm
       end
 
       def attribute(name, loader)
+        attributes_class.attribute(name, loader)
         attribute_methods_module.module_eval {
-          attr_reader name
+          define_method("#{name}") do |default: false|
+            @attributes.get(name, default: default)
+          end
           define_method("#{name}=") do |value|
-            write_attribute(name, value)
+            @attributes.set(name, value)
           end
         }
-        name = name.to_s
-        current_attribute_names = attribute_names | [name]
-        define_singleton_method(:attribute_names) {
-          super() | current_attribute_names
-        }
-        attribute_loader.set_loader(name, loader)
-      end
-
-      def load_attribute(name, value)
-        attribute_loader.load(name, value)
       end
 
       def from_repo(attributes)
@@ -61,72 +53,46 @@ module Norm
 
     end
 
+    identity :id
+
     def initialize(attributes = {})
-      @_initialized_attributes = Hash.new { |h, k| h[k] = true }
-      reset_updated_attributes!
-      set_attributes(attributes)
-      track_attribute_updates!
+      @attributes = self.class::Attributes.new(attributes)
     end
 
     def inspect
-      "#<#{self.class} #{
-        attributes.map { |k, v| "#{k}: #{v.inspect}" }.join(', ')
-      }>"
+      "#<#{self.class} #{@attributes.inspect}>"
     end
 
     def attribute_names
-      self.class.attribute_names
-    end
-
-    def identifying_attributes
-      read_attributes(*identifying_attribute_names)
-    end
-
-    def identifying_attribute_values
-      values_at(*identifying_attribute_names)
+      @attribute_names ||= @attributes.names
     end
 
     def values_at(*attribute_names)
       attribute_names.map! { |name| send(name) }
     end
 
-    def attribute?(name)
-      attribute_names.include?(name.to_s)
-    end
-
-    def attributes
-      read_attributes(*attribute_names)
-    end
-
-    def initialized_attribute_names
-      attribute_names & @_initialized_attributes.keys
-    end
-
-    def updated_attribute_names
-      attribute_names & @_updated_attributes.keys
-    end
-
     def initialized_attributes
-      read_attributes(*initialized_attribute_names)
+      attributes.initialized
+    end
+
+    def identifying_attributes
+      attributes.identifiers
     end
 
     def updated_attributes
-      read_attributes(*updated_attribute_names)
+      attributes.updated
     end
 
     def updated_attributes?
-      updated_attribute_names.any?
+      attributes.updated?
     end
 
-    def read_attributes(*attribute_names)
-      attribute_names.each_with_object({}) { |k, h| h[k] = send(k) }
+    def get_attributes(*attribute_names, default: false)
+      attributes.get_attributes(*attribute_names, default: default)
     end
 
-    def set_attributes(attributes)
-      attributes = normalize_attributes(attributes)
-      attributes.each do |name, value|
-        send("#{name}=", value) if respond_to?("#{name}=")
-      end
+    def set_attributes(new_attributes)
+      attributes.set_attributes(new_attributes)
     end
 
     def stored!
@@ -141,13 +107,13 @@ module Norm
 
     def inserted!
       stored!
-      reset_updated_attributes!
+      attributes.clear_updates!
       self
     end
 
     def updated!
       stored!
-      reset_updated_attributes!
+      attributes.clear_updates!
       self
     end
 
@@ -161,50 +127,18 @@ module Norm
       @_deleted == true
     end
 
-    private
-
-    def reset_updated_attributes!
-      @_updated_attributes = Hash.new { |h, k| h[k] = [send(k), nil] }
+    def ==(other)
+      !!(self.class <=> other.class) &&
+        self.attributes == other.attributes
     end
 
-    def track_attribute_updates!
-      @_track_attribute_updates = true
+    def eql?(other)
+      self.class.eql?(other.class) &&
+        self.attributes.eql?(other.attributes)
     end
 
-    def tracking_attribute_updates?
-      @_track_attribute_updates == true
-    end
-
-    def attribute_loaders
-      @_attribute_loaders ||= self.class.attribute_loaders
-    end
-
-    def load_attribute(name, value)
-      self.class.load_attribute(name, value)
-    end
-
-    def write_attribute(name, value)
-      name = name.to_s
-      to_write = load_attribute(name, value)
-      attribute_initializing(name)
-      attribute_updating(name, to_write)
-      instance_variable_set("@#{name}", to_write)
-    end
-
-    def attribute_initializing(name)
-      @_initialized_attributes[name]
-    end
-
-    def attribute_updating(name, value)
-      if tracking_attribute_updates?
-        changes = @_updated_attributes[name]
-        changes[1] = value
-        @_updated_attributes.delete(name) if changes.first == changes.last
-      end
-    end
-
-    def normalize_attributes(attributes)
-      attributes.each_with_object({}) { |(k, v), h| h[k.to_s] = v }
+    def hash
+      self.class.hash ^ self.attributes.hash
     end
 
   end

@@ -3,7 +3,7 @@ require 'spec_helper'
 module Norm
   describe Repository do
     subject { Class.new(Repository) }
-    let(:record_class) { Class.new(Record) }
+    let(:record_class) { Class.new(Record) { attribute :id, Attr::Integer } }
 
     it 'requires a record class' do
       proc { subject.new }.must_raise ArgumentError
@@ -12,7 +12,7 @@ module Norm
 
     it 'defaults PKs to the identifying attribute names of the record class' do
       subject.new(record_class).primary_keys.must_equal(
-        record_class.new.identifying_attribute_names
+        record_class.new.identifying_attributes.keys
       )
     end
 

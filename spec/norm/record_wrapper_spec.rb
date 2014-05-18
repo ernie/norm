@@ -35,10 +35,6 @@ module Norm
 
     describe 'record class delegation' do
 
-      it 'loads attributes via the record class' do
-        subject.load_attribute(:id, '1').must_equal 1
-      end
-
       it 'returns a wrapped record via new' do
         wrapped = subject.new(:id => 1, :name => 'Ernie')
         wrapped.must_be_kind_of wrapper_class
