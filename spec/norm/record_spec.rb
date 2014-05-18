@@ -171,6 +171,54 @@ module Norm
 
       end
 
+      describe '#get' do
+
+        it 'uses the attribute readers to retrieve named attributes' do
+          record = simple_record_class.new(:name => 'Ernie Miller')
+          record.get(:name, :id).must_equal(:name => 'Ernie Miller', :id => nil)
+        end
+
+      end
+
+      describe '#set' do
+
+        it 'uses the attribute writers to set attributes' do
+          record = simple_record_class.new
+          def record.name=(val)
+            super('zomg')
+          end
+          record.set(:name => 'Ernie Miller')
+          record.name.must_equal 'zomg'
+        end
+
+        it 'skips attributes with no writer' do
+          record = simple_record_class.new
+          record.set(:name => 'Ernie', :favorite_color => 'blue')
+          record.name.must_equal 'Ernie'
+        end
+
+      end
+
+      describe '#all_attributes' do
+
+        it 'returns a hash of all attribute names and values' do
+          record = simple_record_class.new(:name => 'Ernie Miller')
+          record.all_attributes.must_equal(
+            'id' => nil, 'name' => 'Ernie Miller', 'age' => nil
+          )
+        end
+
+        it 'includes default values in hash if default: true' do
+          record = simple_record_class.new(:name => 'Ernie Miller')
+          record.all_attributes(default: true).must_equal(
+            'id'   => Attribute::Default.instance,
+            'name' => 'Ernie Miller',
+            'age'  => Attribute::Default.instance
+          )
+        end
+
+      end
+
       describe '#updated_attributes' do
         subject { simple_record_class.new(:name => 'Ernie Miller', :age => 36) }
 

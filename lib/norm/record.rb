@@ -63,12 +63,28 @@ module Norm
       "#<#{self.class} #{attributes.inspect}>"
     end
 
+    def get(*names)
+      names.each_with_object({}) { |name, hash|
+        hash[name] = send(name)
+      }
+    end
+
+    def set(attributes)
+      attributes.each do |name, value|
+        send("#{name}=", value) if respond_to?("#{name}=")
+      end
+    end
+
     def attribute_names
       @attribute_names ||= attributes.names
     end
 
     def values_at(*names, default: false)
       attributes.values_at(*names, default: false)
+    end
+
+    def all_attributes(default: false)
+      attributes.all(default: default)
     end
 
     def initialized_attributes

@@ -161,14 +161,13 @@ module Norm
     end
 
     def add_values_clause(statement, record)
-      attrs = record.initialized_attributes
       params = []
-      sql = record.attribute_names.map { |name|
-        if attrs.key?(name)
-          params << attrs[name]
-          '$?'
-        else
+      sql = record.all_attributes(default: true).map { |name, value|
+        if Attribute::Default === value
           'DEFAULT'
+        else
+          params << value
+          '$?'
         end
       }.join(', ')
       statement.values_sql(sql, *params)
