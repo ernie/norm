@@ -56,7 +56,14 @@ module Norm
     identity :id
 
     def initialize(attributes = {})
-      @attributes = self.class::Attributes.new(attributes)
+      if block_given?
+        self.class::Attributes.new(attributes) { |attrs|
+          @attributes = attrs
+          yield self
+        }
+      else
+        @attributes = self.class::Attributes.new(attributes)
+      end
     end
 
     def inspect

@@ -10,6 +10,7 @@ require 'norm/attribute'
 require 'norm/attributes'
 require 'norm/repository'
 require 'norm/record'
+require 'norm/record_delegator'
 
 module Norm
 

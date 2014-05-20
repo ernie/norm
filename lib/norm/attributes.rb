@@ -32,10 +32,11 @@ module Norm
 
     def initialize(attributes = {})
       @attributes = {}
-      clear_updates!
       attributes.each do |name, value|
         send("_set_#{name}", value) if has_key?(name)
       end
+      yield self if block_given?
+      initialized!
     end
 
     def names
@@ -43,6 +44,8 @@ module Norm
     end
 
     def set(name, value)
+      return send("_set_#{name}", value) unless initialized?
+
       name       = name.to_s
       changes    = @updates[name]
       new_value  = send("_set_#{name}", value)
@@ -50,7 +53,7 @@ module Norm
       @updates.delete(name) if changes.first == new_value
       new_value
     rescue NoMethodError => e
-      @updates.delete(name)
+      @updates.delete(name) if initialized?
       raise NonexistentAttributeError, "No such attribute: #{name}", e.backtrace
     end
     alias :[]= :set
@@ -64,6 +67,15 @@ module Norm
 
     def all(default: false)
       get_attributes(*names, default: default)
+    end
+
+    def initialized!
+      clear_updates!
+      @initialized = true
+    end
+
+    def initialized?
+      !!@initialized
     end
 
     def initialized

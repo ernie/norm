@@ -102,6 +102,14 @@ module Norm
         record.wont_be :deleted?
       end
 
+      it 'allows changes to the record via block' do
+        record = subject.new do |r|
+          r.name = 'Ernie'
+        end
+        record.name.must_equal 'Ernie'
+        record.updated_attributes.must_be :empty?
+      end
+
     end
 
     describe 'instance methods' do

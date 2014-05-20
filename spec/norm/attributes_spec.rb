@@ -55,6 +55,14 @@ module Norm
           instance.get(:name).must_be_nil
         end
 
+        it 'allows changes inside a block before init is complete' do
+          instance = subject.new do |attrs|
+            attrs.set(:name, 'Ernie')
+          end
+          instance.get(:name).must_equal 'Ernie'
+          instance.updates.must_be :empty?
+        end
+
       end
 
       describe '#names' do
