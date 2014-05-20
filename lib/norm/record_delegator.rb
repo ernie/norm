@@ -8,14 +8,14 @@ module Norm
     attr_reader :__record__
     alias       :record :__record__
 
-    def initialize(record_or_attributes = {})
-      if Hash === record_or_attributes
-        record_class.new(record_or_attributes) do |record|
+    def initialize(attributes = {})
+      if block_given?
+        record_class.new(attributes) do |record|
           @__record__ = record
           yield self
         end
       else
-        @__record__ = record_or_attributes
+        @__record__ = record_class.new(attributes)
       end
     end
 
