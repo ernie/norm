@@ -11,14 +11,14 @@ module Norm
       if names.empty?
         raise ArgumentError, 'Identity requires at least one attribute'
       end
-      names = names.map(&:to_s)
+      names = names.map(&:to_sym)
       define_method(:identifiers) { |default: false|
         get_attributes(*names, default: default)
       }
     end
 
     def self.attribute(name, loader)
-      name = name.to_s
+      name = name.to_sym
       my_names = names | [name]
       define_singleton_method(:names) { super() | my_names }
       define_method("_set_#{name}") { |obj|
@@ -44,24 +44,21 @@ module Norm
     end
 
     def set(name, value)
+      require_key!(name)
       return send("_set_#{name}", value) unless initialized?
 
-      name       = name.to_s
+      name       = name.to_sym
       changes    = @updates[name]
       new_value  = send("_set_#{name}", value)
       changes[1] = new_value
       @updates.delete(name) if changes.first == new_value
       new_value
-    rescue NoMethodError => e
-      @updates.delete(name) if initialized?
-      raise NonexistentAttributeError, "No such attribute: #{name}", e.backtrace
     end
     alias :[]= :set
 
     def get(name, default: false)
+      require_key!(name)
       send("_get_#{name}", default: default)
-    rescue NoMethodError => e
-      raise NonexistentAttributeError, "No such attribute: #{name}", e.backtrace
     end
     alias :[] :get
 
@@ -151,6 +148,12 @@ module Norm
     def identity?
       ids = identifiers
       ids.any? && ids.none? { |k, v| v.nil? }
+    end
+
+    def require_key!(name)
+      unless has_key?(name)
+        raise NonexistentAttributeError, "No such attribute: #{name}"
+      end
     end
 
   end

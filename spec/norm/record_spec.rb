@@ -33,14 +33,14 @@ module Norm
     describe '.attribute' do
       subject { Class.new(Record) }
 
-      it 'adds the attribute name to .attribute_names as a string' do
+      it 'adds the attribute name to .attribute_names as a symbol' do
         subject.attribute :my_attr, Attr::String
-        subject.attribute_names.must_equal ['my_attr']
+        subject.attribute_names.must_equal [:my_attr]
       end
 
       it 'adds the attribute name to #attribute_names as a string' do
-        subject.attribute :my_attr, Attr::String
-        subject.new.attribute_names.must_equal ['my_attr']
+        subject.attribute 'my_attr', Attr::String
+        subject.new.attribute_names.must_equal [:my_attr]
       end
 
       it 'alters only the locally-defined attribute names in a subclass' do
@@ -49,19 +49,19 @@ module Norm
         subclass.attribute :my_other_attr, Attr::String
         subclass_of_subclass = Class.new(subclass)
         subclass_of_subclass.attribute :yet_another_attr, Attr::String
-        subject.attribute_names.must_equal ['my_attr']
-        subclass.attribute_names.must_equal ['my_attr', 'my_other_attr']
+        subject.attribute_names.must_equal [:my_attr]
+        subclass.attribute_names.must_equal [:my_attr, :my_other_attr]
         subclass_of_subclass.attribute_names.must_equal(
-          ['my_attr', 'my_other_attr', 'yet_another_attr']
+          [:my_attr, :my_other_attr, :yet_another_attr]
         )
       end
 
       it 'allows for later addition of parent class attributes' do
         subclass = Class.new(subject)
         subclass.attribute :my_attr, Attr::String
-        subclass.attribute_names.must_equal ['my_attr']
+        subclass.attribute_names.must_equal [:my_attr]
         subject.attribute :parent_attr, Attr::String
-        subclass.attribute_names.must_equal ['parent_attr', 'my_attr']
+        subclass.attribute_names.must_equal [:parent_attr, :my_attr]
       end
 
       it 'creates an attribute reader' do
@@ -140,7 +140,7 @@ module Norm
 
         it 'returns a hash of identifying attribute keys and values' do
           subject.id = 42
-          subject.identifying_attributes.must_equal('id' => 42)
+          subject.identifying_attributes.must_equal(:id => 42)
         end
 
       end
@@ -173,7 +173,7 @@ module Norm
         it 'returns a hash of all set attribute names and values' do
           record = simple_record_class.new(:name => 'Ernie Miller')
           record.initialized_attributes.must_equal(
-            'name' => 'Ernie Miller'
+            :name => 'Ernie Miller'
           )
         end
 
@@ -212,16 +212,16 @@ module Norm
         it 'returns a hash of all attribute names and values' do
           record = simple_record_class.new(:name => 'Ernie Miller')
           record.all_attributes.must_equal(
-            'id' => nil, 'name' => 'Ernie Miller', 'age' => nil
+            :id => nil, :name => 'Ernie Miller', :age => nil
           )
         end
 
         it 'includes default values in hash if default: true' do
           record = simple_record_class.new(:name => 'Ernie Miller')
           record.all_attributes(default: true).must_equal(
-            'id'   => Attribute::Default.instance,
-            'name' => 'Ernie Miller',
-            'age'  => Attribute::Default.instance
+            :id   => Attribute::Default.instance,
+            :name => 'Ernie Miller',
+            :age  => Attribute::Default.instance
           )
         end
 
@@ -236,7 +236,7 @@ module Norm
 
         it 'captures changes' do
           subject.name = 'Bert Mueller'
-          subject.updated_attributes.must_equal('name' => 'Bert Mueller')
+          subject.updated_attributes.must_equal(:name => 'Bert Mueller')
         end
 
         it 'does not consider "changes" to the same value as updates' do
@@ -341,7 +341,7 @@ module Norm
 
         it 'tells the record it no longer has updated attributes' do
           subject.name = 'Ernie'
-          subject.updated_attributes.keys.must_include 'name'
+          subject.updated_attributes.keys.must_include :name
           subject.inserted!
           subject.updated_attributes.must_be :empty?
         end
@@ -358,7 +358,7 @@ module Norm
 
         it 'tells the record it no longer has updated attributes' do
           subject.name = 'Ernie'
-          subject.updated_attributes.keys.must_include 'name'
+          subject.updated_attributes.keys.must_include :name
           subject.updated!
           subject.updated_attributes.must_be :empty?
         end

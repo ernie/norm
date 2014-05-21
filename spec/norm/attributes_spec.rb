@@ -22,7 +22,7 @@ module Norm
 
       it 'adds attribute to .names' do
         subject.attribute(:zomg, 'loader')
-        subject.names.must_equal ['zomg']
+        subject.names.must_equal [:zomg]
       end
 
       it 'defines an attribute type' do
@@ -68,7 +68,7 @@ module Norm
       describe '#names' do
 
         it 'returns names of attributes defined on the class' do
-          subject.new.names.must_equal ['id', 'name']
+          subject.new.names.must_equal [:id, :name]
         end
 
       end
@@ -90,8 +90,8 @@ module Norm
         it 'flags the attribute as updated' do
           instance = subject.new(:name => 'Ernie')
           instance[:name] = 'Bert'
-          instance.updated.must_equal('name' => 'Bert')
-          instance.updates.must_equal('name' => ['Ernie', 'Bert'])
+          instance.updated.must_equal(:name => 'Bert')
+          instance.updates.must_equal(:name => ['Ernie', 'Bert'])
         end
 
         it 'raises NonexistentAttributeError if no such attribute' do
@@ -142,13 +142,13 @@ module Norm
 
         it 'returns all attributes in a hash' do
           instance = subject.new(:name => 'Ernie')
-          instance.all.must_equal('id' => nil, 'name' => 'Ernie')
+          instance.all.must_equal(:id => nil, :name => 'Ernie')
         end
 
         it 'returns Attribute::Default if default: true' do
           instance = subject.new(:name => 'Ernie')
           instance.all(default: true).
-            must_equal('id' => Attribute::Default.instance, 'name' => 'Ernie')
+            must_equal(:id => Attribute::Default.instance, :name => 'Ernie')
         end
 
       end
@@ -157,7 +157,7 @@ module Norm
 
         it 'returns any attributes which have been set' do
           instance = subject.new(:name => 'Ernie')
-          instance.initialized.must_equal('name' => 'Ernie')
+          instance.initialized.must_equal(:name => 'Ernie')
         end
 
       end
