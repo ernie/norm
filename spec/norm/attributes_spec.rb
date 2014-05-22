@@ -28,7 +28,7 @@ module Norm
       it 'defines an attribute type' do
         subject.attribute(:zomg, Norm::Attribute::Integer)
         instance = subject.new(:zomg => '42')
-        instance.get(:zomg).must_equal 42
+        instance[:zomg].must_equal 42
       end
 
     end
@@ -41,25 +41,40 @@ module Norm
         }
       }
 
+      describe '.identity' do
+
+        it 'requires at least one attribute' do
+          error = proc { subject.identity }.must_raise ArgumentError
+          error.message.must_equal 'Identity requires at least one attribute'
+        end
+
+        it 'gives instances an identifiers method returning the attributes' do
+          subject.identity :id, :name
+          instance = subject.new(:id => 1, :name => 'Ernie')
+          instance.identifiers.must_equal(:id => 1, :name => 'Ernie')
+        end
+
+      end
+
       describe 'initialization' do
 
         it 'sets attributes that are defined' do
           instance = subject.new(:id => '42', :name => 7)
-          instance.get(:id).must_equal 42
-          instance.get(:name).must_equal '7'
+          instance[:id].must_equal 42
+          instance[:name].must_equal '7'
         end
 
         it 'skips setting attributes that are not defined' do
           instance = subject.new(:zomg => 'bbq')
-          instance.get(:id).must_be_nil
-          instance.get(:name).must_be_nil
+          instance[:id].must_be_nil
+          instance[:name].must_be_nil
         end
 
         it 'allows changes inside a block before init is complete' do
           instance = subject.new do |attrs|
-            attrs.set(:name, 'Ernie')
+            attrs[:name] = 'Ernie'
           end
-          instance.get(:name).must_equal 'Ernie'
+          instance[:name].must_equal 'Ernie'
           instance.updates.must_be :empty?
         end
 
@@ -73,18 +88,12 @@ module Norm
 
       end
 
-      describe '#set' do
+      describe '#[]=' do
 
         it 'sets the value of the attribute' do
           instance = subject.new
-          instance.set(:name, 'zomg')
-          instance.get(:name).must_equal 'zomg'
-        end
-
-        it 'is aliased to []=' do
-          instance = subject.new
           instance[:name] = 'zomg'
-          instance.get(:name).must_equal 'zomg'
+          instance[:name].must_equal 'zomg'
         end
 
         it 'flags the attribute as updated' do
@@ -96,42 +105,37 @@ module Norm
 
         it 'raises NonexistentAttributeError if no such attribute' do
           instance = subject.new
-          error = proc { instance.set(:zomg, 123) }.
+          error = proc { instance[:zomg] = 123 }.
             must_raise Attributes::NonexistentAttributeError
           error.message.must_equal 'No such attribute: zomg'
         end
 
         it 'does not change updated hash if no such attribute' do
           instance = subject.new
-          proc { instance.set(:zomg, 123) }.
+          proc { instance[:zomg] = 123 }.
             must_raise Attributes::NonexistentAttributeError
           instance.updates.must_be :empty?
         end
 
       end
 
-      describe '#get' do
+      describe '#[]' do
 
-        it 'gets the value of the attribute' do
-          instance = subject.new(:name => 'zomg')
-          instance.get(:name).must_equal 'zomg'
-        end
-
-        it 'returns Attribute::Default if attribute unset and default:true' do
-          instance = subject.new(:name => 'zomg')
-          instance.get(:id, default: true).must_equal(
-            Attribute::Default.instance
-          )
-        end
-
-        it 'is aliased to []' do
+        it 'gets the value of the attributes' do
           instance = subject.new(:name => 'zomg')
           instance[:name].must_equal 'zomg'
         end
 
+        it 'returns Attribute::Default if attribute unset and default:true' do
+          instance = subject.new(:name => 'zomg')
+          instance[:id, default: true].must_equal(
+            Attribute::Default.instance
+          )
+        end
+
         it 'raises NonexistentAttributeError if no such attribute' do
           instance = subject.new
-          error = proc { instance.get(:zomg) }.
+          error = proc { instance[:zomg] }.
             must_raise Attributes::NonexistentAttributeError
           error.message.must_equal 'No such attribute: zomg'
         end
@@ -153,11 +157,87 @@ module Norm
 
       end
 
+      describe '#initialized?' do
+
+        it 'reflects whether the attributes object is finished initializing' do
+          instance = subject.new { |attrs|
+            attrs.wont_be :initialized?
+          }
+          instance.must_be :initialized?
+        end
+
+      end
+
       describe '#initialized' do
 
-        it 'returns any attributes which have been set' do
+        it 'returns a hash of set attribute names and their values' do
           instance = subject.new(:name => 'Ernie')
           instance.initialized.must_equal(:name => 'Ernie')
+        end
+
+      end
+
+      describe '#updated?' do
+
+        it 'reflects whether the attributes have been changed since init' do
+          instance = subject.new(:name => 'Ernie')
+          instance.wont_be :updated?
+          instance[:name] = 'Bert'
+          instance.must_be :updated?
+        end
+
+      end
+
+      describe '#updated' do
+
+        it 'returns a hash of updated attribute names and their values' do
+          instance = subject.new(:name => 'Ernie')
+          instance[:id] = 1
+          instance.updated.must_equal(:id => 1)
+        end
+
+      end
+
+      describe '#updates' do
+
+        it 'returns a hash of the updated attributes with before and after' do
+          instance = subject.new(:name => 'Ernie')
+          instance[:id] = 1
+          instance.updates.must_equal(:id => [Attribute::Default.instance, 1])
+        end
+
+      end
+
+      describe '#identity?' do
+
+        it 'is false when no identity was set on the class' do
+          subject.new.wont_be :identity?
+        end
+
+        it 'is false when an identity was set on the class but attr is nil' do
+          subject.identity :id, :name
+          subject.new(:id => nil, :name => 'Ernie').wont_be :identity?
+        end
+
+        it 'is true if all identifying attributes are non-nil' do
+          subject.identity :id, :name
+          subject.new(:id => 1, :name => 'Ernie').must_be :identity?
+        end
+
+      end
+
+      describe '#identifiers' do
+
+        it 'returns a hash of the identifying attributes and their values' do
+          subject.identity :id
+          subject.new.identifiers.must_equal(:id => nil)
+        end
+
+        it 'returns a value of Default if default: true' do
+          subject.identity :id
+          subject.new.identifiers(default: true).must_equal(
+            :id => Attribute::Default.instance
+          )
         end
 
       end

@@ -39,10 +39,10 @@ module Norm
         attributes_class.attribute(name, loader)
         attribute_methods_module.module_eval {
           define_method("#{name}") do |default: false|
-            attributes.get(name, default: default)
+            attributes[name, default: default]
           end
           define_method("#{name}=") do |value|
-            attributes.set(name, value)
+            attributes[name] = value
           end
         }
       end

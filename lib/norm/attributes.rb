@@ -43,7 +43,7 @@ module Norm
       self.class.names
     end
 
-    def set(name, value)
+    def []=(name, value)
       require_key!(name)
       return send("_set_#{name}", value) unless initialized?
 
@@ -54,21 +54,14 @@ module Norm
       @updates.delete(name) if changes.first == new_value
       new_value
     end
-    alias :[]= :set
 
-    def get(name, default: false)
+    def [](name, default: false)
       require_key!(name)
       send("_get_#{name}", default: default)
     end
-    alias :[] :get
 
     def all(default: false)
       get_attributes(*names, default: default)
-    end
-
-    def initialized!
-      clear_updates!
-      @initialized = true
     end
 
     def initialized?
@@ -79,25 +72,30 @@ module Norm
       get_attributes(*(names & @attributes.keys))
     end
 
-    def updated
-      get_attributes(*(names & @updates.keys))
-    end
-
     def updated?
       @updates.any?
     end
 
-    def identifiers(default: false)
-      {}
+    def updated
+      get_attributes(*(names & @updates.keys))
     end
 
     def updates
       @updates.dup.tap { |updates| updates.default_proc = nil }
     end
 
+    def identity?
+      ids = identifiers
+      ids.any? && ids.none? { |k, v| v.nil? }
+    end
+
+    def identifiers(default: false)
+      {}
+    end
+
     def get_attributes(*names, default: false)
       names.each_with_object({}) { |name, hash|
-        hash[name] = get(name, default: default)
+        hash[name] = self[name, default: default]
       }
     end
 
@@ -111,12 +109,12 @@ module Norm
 
     def set_attributes(attributes)
       attributes.each do |name, value|
-        set(name, value) if has_key?(name)
+        self[name] = value if has_key?(name)
       end
     end
 
     def clear_updates!
-      @updates = Hash.new { |h, k| h[k] = [get(k, default: true), nil] }
+      @updates = Hash.new { |h, k| h[k] = [self[k, default: true], nil] }
     end
 
     def inspect
@@ -145,9 +143,11 @@ module Norm
       end
     end
 
-    def identity?
-      ids = identifiers
-      ids.any? && ids.none? { |k, v| v.nil? }
+    private
+
+    def initialized!
+      clear_updates!
+      @initialized = true
     end
 
     def require_key!(name)
