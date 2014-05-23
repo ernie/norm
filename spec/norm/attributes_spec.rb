@@ -242,6 +242,105 @@ module Norm
 
       end
 
+      describe '#get_attributes' do
+
+        it 'gets multiple attributes by name' do
+          instance = subject.new(:id => 1, :name => 'Ernie')
+          instance.get_attributes(:id, :name).
+            must_equal(:id => 1, :name => 'Ernie')
+        end
+
+        it 'uses same key type as supplied args' do
+          instance = subject.new(:id => 1, :name => 'Ernie')
+          instance.get_attributes('id', :name).
+            must_equal('id' => 1, :name => 'Ernie')
+        end
+
+        it 'returns Default for missing attributes if default: true' do
+          instance = subject.new(:name => 'Ernie')
+          instance.get_attributes(:id, :name, default: true).must_equal(
+            :id => Attribute::Default.instance, :name => 'Ernie'
+          )
+        end
+
+      end
+
+      describe '#set_attributes' do
+
+        it 'sets values for existing attributes' do
+          instance = subject.new
+          instance.set_attributes(:id => 1, :name => 'Ernie')
+          instance[:id].must_equal 1
+          instance[:name].must_equal 'Ernie'
+        end
+
+        it 'skips setting values on nonexistent attributes' do
+          instance = subject.new
+          instance.set_attributes(:foo => 1, :name => 'Ernie')
+          instance[:name].must_equal 'Ernie'
+          proc { instance[:foo] }.must_raise(
+            Attributes::NonexistentAttributeError
+          )
+        end
+
+      end
+
+      describe '#values_at' do
+
+        it 'returns an array of values requested' do
+          instance = subject.new(:id => 1, :name => 'Ernie')
+          instance.values_at(:id, :name).must_equal([1, 'Ernie'])
+        end
+
+        it 'returns the values in the same order requested' do
+          instance = subject.new(:id => 1, :name => 'Ernie')
+          instance.values_at(:name, :id).must_equal(['Ernie', 1])
+        end
+
+        it 'returns Default for unset attributes when default: true' do
+          instance = subject.new(:name => 'Ernie')
+          instance.values_at(:id, :name, default: true).must_equal(
+            [Attribute::Default.instance, 'Ernie']
+          )
+        end
+
+      end
+
+      describe '#has_key?' do
+
+        it 'returns true for attributes that exist on the class' do
+          subject.new.must_be :has_key?, :id
+        end
+
+        it 'returns false for attributes that do not exist on the class' do
+          subject.new.wont_be :has_key?, :foo
+        end
+
+      end
+
+      describe '#clear_updates!' do
+
+        it 'resets the Attributes updated status' do
+          instance = subject.new
+          instance[:name] = 'Ernie'
+          instance.must_be :updated?
+          instance.clear_updates!
+          instance.wont_be :updated?
+        end
+
+      end
+
+      describe '#inspect' do
+
+        it 'prints a readable description of the Attributes object' do
+          instance = subject.new(:name => 'Ernie')
+          instance.inspect.must_match(
+            /\A#<#<Class:.*?> id: <DEFAULT>, name: "Ernie">\z/
+          )
+        end
+
+      end
+
     end
 
   end

@@ -99,18 +99,18 @@ module Norm
       }
     end
 
-    def values_at(*names, default: false)
-      get_attributes(*names, default: false).values
-    end
-
-    def has_key?(name)
-      respond_to?("_set_#{name}", true)
-    end
-
     def set_attributes(attributes)
       attributes.each do |name, value|
         self[name] = value if has_key?(name)
       end
+    end
+
+    def values_at(*names, default: false)
+      get_attributes(*names, default: default).values
+    end
+
+    def has_key?(name)
+      respond_to?("_set_#{name}", true)
     end
 
     def clear_updates!
