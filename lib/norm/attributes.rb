@@ -31,10 +31,10 @@ module Norm
         @attributes[name] = loader.load(obj)
       }
       define_method("_orig_#{name}") { |default: false|
-        @originals.fetch(name, default ? Attribute::Default.instance : nil)
+        @originals.fetch(name, default ? Attribute::DEFAULT : nil)
       }
       define_method("_get_#{name}") { |default: false|
-        @attributes.fetch(name, default ? Attribute::Default.instance : nil)
+        @attributes.fetch(name, default ? Attribute::DEFAULT : nil)
       }
       private "_set_#{name}", "_get_#{name}"
     end

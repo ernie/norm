@@ -162,10 +162,10 @@ module Norm
           record.attribute_values_at(:age, :name).must_equal [36, 'Ernie']
         end
 
-        it 'returns Default values for missing attributes when default: true' do
+        it 'returns DEFAULT values for missing attributes when default: true' do
           record = simple_record_class.new(:name => 'Ernie')
           record.attribute_values_at(:age, :name, default: true).must_equal(
-            [Attribute::Default.instance, 'Ernie']
+            [Attribute::DEFAULT, 'Ernie']
           )
         end
 
@@ -248,12 +248,12 @@ module Norm
           )
         end
 
-        it 'includes default values in hash if default: true' do
+        it 'includes DEFAULT values in hash if default: true' do
           record = simple_record_class.new(:name => 'Ernie Miller')
           record.all_attributes(default: true).must_equal(
-            :id   => Attribute::Default.instance,
+            :id   => Attribute::DEFAULT,
             :name => 'Ernie Miller',
-            :age  => Attribute::Default.instance
+            :age  => Attribute::DEFAULT
           )
         end
 

@@ -125,10 +125,10 @@ module Norm
           instance[:name].must_equal 'zomg'
         end
 
-        it 'returns Attribute::Default if attribute unset and default:true' do
+        it 'returns Attribute::DEFAULT if attribute unset and default:true' do
           instance = subject.new(:name => 'zomg')
           instance[:id, default: true].must_equal(
-            Attribute::Default.instance
+            Attribute::DEFAULT
           )
         end
 
@@ -149,11 +149,11 @@ module Norm
           instance.orig(:name).must_equal 'zomg'
         end
 
-        it 'returns Default if attribute originally unset and default:true' do
+        it 'returns DEFAULT if attribute originally unset and default:true' do
           instance = subject.new(:name => 'zomg')
           instance[:id] = 1
           instance.orig(:id, default: true).must_equal(
-            Attribute::Default.instance
+            Attribute::DEFAULT
           )
         end
 
@@ -173,10 +173,10 @@ module Norm
           instance.all.must_equal(:id => nil, :name => 'Ernie')
         end
 
-        it 'returns Attribute::Default if default: true' do
+        it 'returns Attribute::DEFAULT if default: true' do
           instance = subject.new(:name => 'Ernie')
           instance.all(default: true).
-            must_equal(:id => Attribute::Default.instance, :name => 'Ernie')
+            must_equal(:id => Attribute::DEFAULT, :name => 'Ernie')
         end
 
       end
@@ -247,10 +247,10 @@ module Norm
           subject.new.identifiers.must_equal(:id => nil)
         end
 
-        it 'returns a value of Default if default: true' do
+        it 'returns a value of Attribute::DEFAULT if default: true' do
           subject.identity :id
           subject.new.identifiers(default: true).must_equal(
-            :id => Attribute::Default.instance
+            :id => Attribute::DEFAULT
           )
         end
 
@@ -270,10 +270,10 @@ module Norm
             must_equal('id' => 1, :name => 'Ernie')
         end
 
-        it 'returns Default for missing attributes if default: true' do
+        it 'returns DEFAULT for missing attributes if default: true' do
           instance = subject.new(:name => 'Ernie')
           instance.get_attributes(:id, :name, default: true).must_equal(
-            :id => Attribute::Default.instance, :name => 'Ernie'
+            :id => Attribute::DEFAULT, :name => 'Ernie'
           )
         end
 
@@ -310,12 +310,12 @@ module Norm
           )
         end
 
-        it 'returns Default for missing originals if default: true' do
+        it 'returns DEFAULT for missing originals if default: true' do
           instance = subject.new(:name => 'Ernie')
           instance[:id]   = 1
           instance[:name] = 'Bert'
           instance.get_originals(:id, :name, default: true).must_equal(
-            :id => Attribute::Default.instance, :name => 'Ernie'
+            :id => Attribute::DEFAULT, :name => 'Ernie'
           )
         end
 
@@ -333,10 +333,10 @@ module Norm
           instance.values_at(:name, :id).must_equal(['Ernie', 1])
         end
 
-        it 'returns Default for unset attributes when default: true' do
+        it 'returns DEFAULT for unset attributes when default: true' do
           instance = subject.new(:name => 'Ernie')
           instance.values_at(:id, :name, default: true).must_equal(
-            [Attribute::Default.instance, 'Ernie']
+            [Attribute::DEFAULT, 'Ernie']
           )
         end
 
@@ -375,7 +375,7 @@ module Norm
           instance.reset!
           instance.wont_be :updated?
           instance[:name].must_equal 'Ernie'
-          instance[:id, default: true].must_equal Attribute::Default.instance
+          instance[:id, default: true].must_equal Attribute::DEFAULT
         end
 
       end

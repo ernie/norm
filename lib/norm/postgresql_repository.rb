@@ -153,7 +153,6 @@ module Norm
       end
     end
 
-
     def record_map(records)
       Hash[
         records.map { |record|
@@ -165,7 +164,7 @@ module Norm
     def add_values_clause(statement, record)
       params = []
       sql = record.all_attributes(default: true).map { |name, value|
-        if Attribute::Default === value
+        if value == Attribute::DEFAULT
           'DEFAULT'
         else
           params << value

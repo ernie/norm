@@ -13,5 +13,8 @@ module Norm
         '<DEFAULT>'
       end
     end
+
+    DEFAULT = Default.instance
+
   end
 end
