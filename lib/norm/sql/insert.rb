@@ -67,13 +67,6 @@ module Norm
 
       private
 
-      def compile!
-        clauses = non_empty_clauses
-        sql = clauses.map(&:sql).join("\n")
-        params = clauses.map(&:params).inject(&:+) || []
-        @sql, @params = sql, params
-      end
-
       def non_empty_clauses
         [@insert, @values, @returning].reject(&:empty?)
       end
