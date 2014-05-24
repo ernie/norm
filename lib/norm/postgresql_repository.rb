@@ -181,7 +181,7 @@ module Norm
         values = records.map(&key.to_sym)
         statement.where(key => records.map(&key.to_sym))
       else
-        preds = records.map { |record| record.read_attributes(*primary_keys) }.
+        preds = records.map { |record| record.get_attributes(*primary_keys) }.
           map { |attrs|
             SQL::Grouping.new(SQL::PredicateFragment.new(attrs))
           }
