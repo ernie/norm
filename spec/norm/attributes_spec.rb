@@ -341,6 +341,151 @@ module Norm
 
       end
 
+      describe 'equivalence' do
+        let(:attributes1) {
+          Class.new(Attributes) {
+            attribute :id,   Attr::Integer
+            attribute :name, Attr::String
+            identity  :id
+          }
+        }
+
+        let (:attributes1_subclass) {
+          Class.new(attributes1)
+        }
+
+        let(:attributes2) {
+          Class.new(Attributes) {
+            attribute :id,   Attr::Integer
+            attribute :name, Attr::String
+            identity  :id
+          }
+        }
+
+        subject { attributes1 }
+
+        describe '#==' do
+
+          it 'is true for attributes with matching identifiers' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = subject.new(:id => 1, :name => 'Bert')
+            attr1.must_equal attr2
+          end
+
+          it 'is false for attributes with different identifiers' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = subject.new(:id => 2, :name => 'Ernie')
+            attr1.wont_equal attr2
+          end
+
+          it 'is false if attributes are missing identity' do
+            attr1 = subject.new(:name => 'Ernie')
+            attr2 = subject.new(:name => 'Ernie')
+            attr1.wont_equal attr2
+          end
+
+          it 'is true for ancestor == child with matching identifiers' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = attributes1_subclass.new(:id => 1, :name => 'Ernie')
+            attr1.must_equal attr2
+          end
+
+          it 'is true for child == ancestor with matching identifiers' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = attributes1_subclass.new(:id => 1, :name => 'Ernie')
+            attr2.must_equal attr1
+          end
+
+          it 'is false for identical classes when not subclasses' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = attributes2.new(:id => 1, :name => 'Ernie')
+            attr1.wont_equal attr2
+          end
+
+        end
+
+        describe '#eql?' do
+
+          it 'is true for attributes with matching identifiers' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = subject.new(:id => 1, :name => 'Bert')
+            attr1.must_be :eql?, attr2
+          end
+
+          it 'is false for attributes with different identifiers' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = subject.new(:id => 2, :name => 'Ernie')
+            attr1.wont_be :eql?, attr2
+          end
+
+          it 'is false if attributes are missing identity' do
+            attr1 = subject.new(:name => 'Ernie')
+            attr2 = subject.new(:name => 'Ernie')
+            attr1.wont_be :eql?, attr2
+          end
+
+          it 'is false for ancestor == child with matching identifiers' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = attributes1_subclass.new(:id => 1, :name => 'Ernie')
+            attr1.wont_be :eql?, attr2
+          end
+
+          it 'is false for child == ancestor with matching identifiers' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = attributes1_subclass.new(:id => 1, :name => 'Ernie')
+            attr2.wont_be :eql?, attr1
+          end
+
+          it 'is false for identical classes when not subclasses' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = attributes2.new(:id => 1, :name => 'Ernie')
+            attr1.wont_be :eql?, attr2
+          end
+
+        end
+
+        describe '#hash' do
+
+          it 'implies eql? for attributes with matching identifiers' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = subject.new(:id => 1, :name => 'Bert')
+            attr1.hash.must_equal attr2.hash
+          end
+
+          it 'implies !eql? for attributes with different identifiers' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = subject.new(:id => 2, :name => 'Ernie')
+            attr1.hash.wont_equal attr2.hash
+          end
+
+          it 'implies !eql? if attributes are missing identity' do
+            attr1 = subject.new(:name => 'Ernie')
+            attr2 = subject.new(:name => 'Ernie')
+            attr1.hash.wont_equal attr2.hash
+          end
+
+          it 'implies !eql? for ancestor == child with matching identifiers' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = attributes1_subclass.new(:id => 1, :name => 'Ernie')
+            attr1.hash.wont_equal attr2.hash
+          end
+
+          it 'implies !eql? for child == ancestor with matching identifiers' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = attributes1_subclass.new(:id => 1, :name => 'Ernie')
+            attr2.hash.wont_equal attr1.hash
+          end
+
+          it 'implies !eql? for identically classes when not subclasses' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = attributes2.new(:id => 1, :name => 'Ernie')
+            attr1.hash.wont_equal attr2.hash
+          end
+
+        end
+
+      end
+
     end
 
   end
