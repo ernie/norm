@@ -72,13 +72,13 @@ module Norm
 
     def get(*names)
       names.each_with_object({}) { |name, hash|
-        hash[name] = send(name)
+        hash[name] = public_send(name)
       }
     end
 
     def set(attributes)
       attributes.each do |name, value|
-        send("#{name}=", value) if respond_to?("#{name}=")
+        public_send("#{name}=", value) if respond_to?("#{name}=")
       end
     end
 
@@ -86,8 +86,12 @@ module Norm
       @attribute_names ||= attributes.names
     end
 
-    def values_at(*names, default: false)
-      attributes.values_at(*names, default: false)
+    def attribute_values_at(*names, default: false)
+      attributes.values_at(*names, default: default)
+    end
+
+    def values_at(*names)
+      names.map { |name| public_send(name) }
     end
 
     def all_attributes(default: false)

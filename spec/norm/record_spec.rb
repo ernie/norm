@@ -145,14 +145,36 @@ module Norm
 
       end
 
-      describe '#values_at' do
+      describe '#attribute_values_at' do
 
         it 'returns an array of values in the specified order' do
           record = simple_record_class.new(:name => 'Ernie', :age => 36)
-          record.values_at(:age, :name).must_equal [36, 'Ernie']
+          record.attribute_values_at(:age, :name).must_equal [36, 'Ernie']
+        end
+
+        it 'returns Default values for missing attributes when default: true' do
+          record = simple_record_class.new(:name => 'Ernie')
+          record.attribute_values_at(:age, :name, default: true).must_equal(
+            [Attribute::Default.instance, 'Ernie']
+          )
         end
 
       end
+
+      describe '#values_at' do
+
+        it 'returns an array of values in the specified order using readers' do
+          simple_record_class.class_eval do
+            def age
+              super + 1
+            end
+          end
+          record = simple_record_class.new(:name => 'Ernie', :age => 36)
+          record.values_at(:age, :name).must_equal [37, 'Ernie']
+        end
+
+      end
+
 
       describe '#attributes' do
 
