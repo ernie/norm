@@ -127,34 +127,33 @@ module Norm
 
     def update_records(statement, records)
       with_connection(writer) do |conn|
-        conn.exec_statement(statement) do |result|
-          update_map = record_map(records)
-          result.each { |tuple|
-            updated = record_class.from_repo(tuple)
-            if record = update_map[updated.attribute_values_at(*primary_keys)]
-              record.set_attributes(updated.initialized_attributes)
-              record.updated!
-            end
-          }
+        exec_with_record_map(conn, statement, records) do |record|
+          record.updated!
         end
       end
     end
 
     def delete_records(statement, records)
       with_connection(writer) do |conn|
-        conn.exec_statement(statement) do |result|
-          delete_map = record_map(records)
-          result.each { |tuple|
-            deleted = record_class.from_repo(tuple)
-            if record = delete_map[deleted.attribute_values_at(*primary_keys)]
-              record.set_attributes(deleted.initialized_attributes)
-              record.deleted!
-            end
-          }
-          success!
+        exec_with_record_map(conn, statement, records) do |record|
+          record.deleted!
         end
       end
     end
+
+    def exec_with_record_map(conn, statement, records, &block)
+      conn.exec_statement(statement) do |result|
+        map = record_map(records)
+        result.each do |tuple|
+          repo_record = record_class.from_repo(tuple)
+          if record = map[repo_record.attribute_values_at(*primary_keys)]
+            record.set_attributes(repo_record.initialized_attributes)
+            yield record
+          end
+        end
+      end
+    end
+
 
     def record_map(records)
       Hash[
