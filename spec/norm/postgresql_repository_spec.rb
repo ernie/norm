@@ -66,11 +66,45 @@ module Norm
       }.new(post_record_class)
     }
 
+    let(:user_record_class) {
+      Class.new(Record) do
+        attribute :username,           Attr::String
+        attribute :email,              Attr::String
+        attribute :first_name,         Attr::String
+        attribute :last_name,          Attr::String
+        attribute :encrypted_password, Attr::String
+        attribute :created_at,         Attr::Timestamp
+        attribute :updated_at,         Attr::Timestamp
+        identity :first_name, :last_name
+      end
+    }
+
+    let(:user_repo) {
+      Class.new(PostgreSQLRepository) {
+        def select_statement
+          Norm::SQL.select.from('users')
+        end
+
+        def insert_statement
+          column_list = record_class.attribute_names.join(', ')
+          Norm::SQL.insert("users (#{column_list})").returning('*')
+        end
+
+        def update_statement
+          Norm::SQL.update('users').returning('*')
+        end
+
+        def delete_statement
+          Norm::SQL.delete('users').returning('*')
+        end
+      }.new(user_record_class)
+    }
+
     subject { person_repo }
 
     before {
       subject.with_connection(:primary) do |conn|
-        conn.exec_string('truncate table people, posts restart identity')
+        conn.exec_string('truncate table people, posts, users restart identity')
       end
     }
 
@@ -451,6 +485,48 @@ module Norm
         result = subject.mass_store([ernie, bert])
         result.must_be :error?
         result.value.must_be_kind_of ConstraintError
+      end
+
+    end
+
+    describe 'with a composite primary key' do
+      subject { user_repo }
+
+      it 'fetches with all keys' do
+        user = user_record_class.new(
+          :username => 'ernie', :email => 'ernie@erniemiller.org',
+          :first_name => 'Ernie', :last_name => 'Miller',
+          :encrypted_password => 'zomg'
+        )
+        subject.insert(user)
+        ernie = subject.fetch 'Ernie', 'Miller'
+        ernie.username.must_equal 'ernie'
+      end
+
+      it 'deletes with all keys' do
+        user = user_record_class.new(
+          :username => 'ernie', :email => 'ernie@erniemiller.org',
+          :first_name => 'ernie', :last_name => 'miller',
+          :encrypted_password => 'zomg'
+        )
+        subject.insert(user)
+        subject.delete(user)
+        ernie = subject.fetch 'Ernie', 'Miller'
+        ernie.must_be_nil
+      end
+
+      it 'updates with all keys' do
+        user = user_record_class.new(
+          :username => 'ernie', :email => 'ernie@erniemiller.org',
+          :first_name => 'ernie', :last_name => 'miller',
+          :encrypted_password => 'zomg'
+        )
+        subject.insert(user)
+        user.first_name = 'Ernest'
+        user.last_name  = 'Mueller'
+        subject.update(user)
+        ernie = subject.fetch 'Ernest', 'Mueller'
+        ernie.username.must_equal 'ernie'
       end
 
     end

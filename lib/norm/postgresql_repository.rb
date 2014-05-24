@@ -186,13 +186,13 @@ module Norm
         statement.where(key => values)
       else
         preds = records.map { |record|
-          record.get_original_attributes(*primary_keys)
-        }.map { |attrs|
-          SQL::Grouping.new(SQL::PredicateFragment.new(attrs))
+          SQL::Grouping.new(SQL::PredicateFragment.new(
+            record.get_original_attributes(*primary_keys)
+          ))
         }
         statement.where(
           preds.map(&:sql).join(' OR '),
-          *preds.map(&:params).flatten!
+          *preds.flat_map(&:params)
         )
       end
     end

@@ -42,7 +42,6 @@ Norm.connection_manager.with_connection(:primary) do |conn|
 
     CREATE TABLE users
     (
-      id serial NOT NULL,
       username character varying(32) NOT NULL,
       email character varying(255) NOT NULL,
       first_name character varying(255) NOT NULL,
@@ -52,7 +51,7 @@ Norm.connection_manager.with_connection(:primary) do |conn|
       updated_at timestamp with time zone NOT NULL,
       CONSTRAINT users_username_length CHECK (char_length(username) >= 3),
       CONSTRAINT users_username_unique UNIQUE (username),
-      CONSTRAINT users_pkey PRIMARY KEY (id)
+      CONSTRAINT users_pkey PRIMARY KEY (first_name, last_name)
     );
     CREATE TRIGGER timestamp_update_users
       BEFORE UPDATE ON users FOR EACH ROW
@@ -69,6 +68,7 @@ Norm.connection_manager.with_connection(:primary) do |conn|
       body text,
       created_at timestamp with time zone NOT NULL,
       updated_at timestamp with time zone NOT NULL,
+      CONSTRAINT posts_pkey PRIMARY KEY (id),
       CONSTRAINT posts_owned_by_person
         FOREIGN KEY (person_id) REFERENCES people (id)
     );
