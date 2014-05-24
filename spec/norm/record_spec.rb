@@ -81,6 +81,16 @@ module Norm
 
     end
 
+    describe '.identity' do
+      subject { simple_record_class }
+
+      it 'sets identifying attributes for the record' do
+        subject.identity :id
+        subject.new.identifying_attributes.must_equal(:id => nil)
+      end
+
+    end
+
     describe 'initialization' do
       subject { simple_record_class }
 
