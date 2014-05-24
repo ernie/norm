@@ -94,7 +94,6 @@ module Norm
         records.group_by(&:updated_attributes).
           flat_map { |attrs, records| update_all(records, attrs) }
       end
-      success!
     end
 
     def update_all(records, attrs)
@@ -181,19 +180,22 @@ module Norm
 
       if primary_keys.size == 1
         key = primary_keys.first
-        values = records.flat_map { |r| r.get_original_attributes(key).values }
-        statement.where(key => values)
+        statement.where(key => records.map { |r| r.attributes.orig(key) } )
       else
-        preds = records.map { |record|
-          SQL::Grouping.new(SQL::PredicateFragment.new(
-            record.get_original_attributes(*primary_keys)
-          ))
-        }
-        statement.where(
-          preds.map(&:sql).join(' OR '),
-          *preds.flat_map(&:params)
-        )
+        scope_with_composite_primary_keys(records, statement)
       end
+    end
+
+    def scope_with_composite_primary_keys(records, statement)
+      preds = records.map { |record|
+        SQL::Grouping.new(SQL::PredicateFragment.new(
+          record.get_original_attributes(*primary_keys)
+        ))
+      }
+      statement.where(
+        preds.map(&:sql).join(' OR '),
+        *preds.flat_map(&:params)
+      )
     end
 
   end
