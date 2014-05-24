@@ -1,4 +1,4 @@
-# Norm
+# Norm [![Code Climate](https://codeclimate.com/github/ernie/norm.png)](https://codeclimate.com/github/ernie/norm)
 
 Norm is Not an ORM.
 
