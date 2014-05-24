@@ -131,7 +131,7 @@ module Norm
           update_map = record_map(records)
           result.each { |tuple|
             updated = record_class.from_repo(tuple)
-            if record = update_map[updated.values_at(*primary_keys)]
+            if record = update_map[updated.attribute_values_at(*primary_keys)]
               record.set_attributes(updated.initialized_attributes)
               record.updated!
             end
@@ -146,7 +146,7 @@ module Norm
           delete_map = record_map(records)
           result.each { |tuple|
             deleted = record_class.from_repo(tuple)
-            if record = delete_map[deleted.values_at(*primary_keys)]
+            if record = delete_map[deleted.attribute_values_at(*primary_keys)]
               record.set_attributes(deleted.initialized_attributes)
               record.deleted!
             end
@@ -157,7 +157,11 @@ module Norm
     end
 
     def record_map(records)
-      Hash[ records.map { |record| [record.values_at(*primary_keys), record] } ]
+      Hash[
+        records.map { |record|
+          [record.attribute_values_at(*primary_keys), record]
+        }
+      ]
     end
 
     def add_values_clause(statement, record)
@@ -178,13 +182,14 @@ module Norm
 
       if primary_keys.size == 1
         key = primary_keys.first
-        values = records.map(&key.to_sym)
-        statement.where(key => records.map(&key.to_sym))
+        values = records.flat_map { |r| r.get_original_attributes(key).values }
+        statement.where(key => values)
       else
-        preds = records.map { |record| record.get_attributes(*primary_keys) }.
-          map { |attrs|
-            SQL::Grouping.new(SQL::PredicateFragment.new(attrs))
-          }
+        preds = records.map { |record|
+          record.get_original_attributes(*primary_keys)
+        }.map { |attrs|
+          SQL::Grouping.new(SQL::PredicateFragment.new(attrs))
+        }
         statement.where(
           preds.map(&:sql).join(' OR '),
           *preds.map(&:params).flatten!

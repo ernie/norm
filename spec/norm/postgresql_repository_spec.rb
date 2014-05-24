@@ -197,6 +197,17 @@ module Norm
         person.updated_at.must_be :>, previous_updated_at
       end
 
+      it 'allows updating primary keys' do
+        person = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(person)
+        new_id = person.id += 1
+        previous_updated_at = person.updated_at
+        subject.update(person)
+        person = subject.fetch(new_id)
+        person.wont_be_nil
+        person.updated_at.must_be :>, previous_updated_at
+      end
+
       it 'returns a successful result on success' do
         person = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(person)
@@ -272,6 +283,21 @@ module Norm
         result = subject.mass_update([ernie, bert])
         result.must_be :error?
         result.value.must_be_kind_of ConstraintError
+      end
+
+      it 'allows updating multiple primary keys' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert  = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.mass_insert([ernie, bert])
+        ernie_updated = ernie.updated_at
+        bert_updated  = bert.updated_at
+        new_ernie = ernie.id += 2
+        new_bert  = bert.id += 2
+        result = subject.mass_update([ernie, bert])
+        ernie = subject.fetch(new_ernie)
+        bert  = subject.fetch(new_bert)
+        ernie.updated_at.must_be :>, ernie_updated
+        bert.updated_at.must_be :>, bert_updated
       end
 
     end

@@ -322,6 +322,33 @@ module Norm
 
       end
 
+      describe '#get_original_attributes' do
+
+        it 'returns a hash of requested attributes using symbols' do
+          record = simple_record_class.new(:name => 'Ernie')
+          record.name = 'Bert'
+          record.get_original_attributes(:name, :age).must_equal(
+            :name => 'Ernie', :age => nil
+          )
+        end
+
+        it 'returns a hash of requested attributes using strings' do
+          record = simple_record_class.new(:name => 'Ernie')
+          record.name = 'Bert'
+          record.get_original_attributes('name', 'age').must_equal(
+            'name' => 'Ernie', 'age' => nil
+          )
+        end
+
+        it 'does not filter list of requested attributes' do
+          record = simple_record_class.new(:name => 'Ernie', :age => 36)
+          record.name = 'Bert'
+          proc { record.get_original_attributes(:name, :age, :favorite_color) }.
+            must_raise Attributes::NonexistentAttributeError
+        end
+
+      end
+
       describe '#set_attributes' do
 
         it 'updates attributes common between the record and hash' do

@@ -118,6 +118,10 @@ module Norm
       attributes.get_attributes(*attribute_names, default: default)
     end
 
+    def get_original_attributes(*attribute_names, default: false)
+      attributes.get_originals(*attribute_names, default: default)
+    end
+
     def set_attributes(new_attributes)
       attributes.set_attributes(new_attributes)
     end
@@ -134,13 +138,13 @@ module Norm
 
     def inserted!
       stored!
-      attributes.clear_updates!
+      attributes.commit!
       self
     end
 
     def updated!
       stored!
-      attributes.clear_updates!
+      attributes.commit!
       self
     end
 

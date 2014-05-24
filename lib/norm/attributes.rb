@@ -15,6 +15,12 @@ module Norm
       define_method(:identifiers) { |default: false|
         get_attributes(*names, default: default)
       }
+      define_method(:<=>) { |other|
+        unless self.class.eql?(other.class) && identity? && other.identity?
+          return nil
+        end
+        values_at(*names) <=> other.values_at(*names)
+      }
     end
 
     def self.attribute(name, loader)
@@ -24,6 +30,9 @@ module Norm
       define_method("_set_#{name}") { |obj|
         @attributes[name] = loader.load(obj)
       }
+      define_method("_orig_#{name}") { |default: false|
+        @originals.fetch(name, default ? Attribute::Default.instance : nil)
+      }
       define_method("_get_#{name}") { |default: false|
         @attributes.fetch(name, default ? Attribute::Default.instance : nil)
       }
@@ -32,9 +41,7 @@ module Norm
 
     def initialize(attributes = {})
       @attributes = {}
-      attributes.each do |name, value|
-        send("_set_#{name}", value) if has_key?(name)
-      end
+      set_attributes(attributes)
       yield self if block_given?
       initialized!
     end
@@ -45,19 +52,17 @@ module Norm
 
     def []=(name, value)
       require_key!(name)
-      return send("_set_#{name}", value) unless initialized?
-
-      name       = name.to_sym
-      changes    = @updates[name]
-      new_value  = send("_set_#{name}", value)
-      changes[1] = new_value
-      @updates.delete(name) if changes.first == new_value
-      new_value
+      send("_set_#{name}", value)
     end
 
     def [](name, default: false)
       require_key!(name)
       send("_get_#{name}", default: default)
+    end
+
+    def orig(name, default: false)
+      require_key!(name)
+      send("_orig_#{name}", default: default)
     end
 
     def all(default: false)
@@ -73,15 +78,23 @@ module Norm
     end
 
     def updated?
-      @updates.any?
+      updates.any?
     end
 
     def updated
-      get_attributes(*(names & @updates.keys))
+      get_attributes(*updated_names)
+    end
+
+    def updated_names
+      names.select { |name|
+        orig(name, default: true) != self[name, default: true]
+      }
     end
 
     def updates
-      @updates.dup.tap { |updates| updates.default_proc = nil }
+      updated_names.each_with_object({}) { |name, hash|
+        hash[name] = self[name]
+      }
     end
 
     def identity?
@@ -105,6 +118,12 @@ module Norm
       end
     end
 
+    def get_originals(*names, default: false)
+      names.each_with_object({}) { |name, hash|
+        hash[name] = orig(name, default: default)
+      }
+    end
+
     def values_at(*names, default: false)
       get_attributes(*names, default: default).values
     end
@@ -113,8 +132,12 @@ module Norm
       respond_to?("_set_#{name}", true)
     end
 
-    def clear_updates!
-      @updates = Hash.new { |h, k| h[k] = [self[k, default: true], nil] }
+    def commit!
+      @originals = @attributes.dup
+    end
+
+    def reset!
+      @attributes = @originals.dup
     end
 
     def inspect
@@ -143,10 +166,14 @@ module Norm
       end
     end
 
+    def <=>(other)
+      nil
+    end
+
     private
 
     def initialized!
-      clear_updates!
+      commit!
       @initialized = true
     end
 

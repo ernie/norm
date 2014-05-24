@@ -75,7 +75,7 @@ module Norm
             attrs[:name] = 'Ernie'
           end
           instance[:name].must_equal 'Ernie'
-          instance.updates.must_be :empty?
+          instance.wont_be :updated?
         end
 
       end
@@ -100,7 +100,6 @@ module Norm
           instance = subject.new(:name => 'Ernie')
           instance[:name] = 'Bert'
           instance.updated.must_equal(:name => 'Bert')
-          instance.updates.must_equal(:name => ['Ernie', 'Bert'])
         end
 
         it 'raises NonexistentAttributeError if no such attribute' do
@@ -110,11 +109,11 @@ module Norm
           error.message.must_equal 'No such attribute: zomg'
         end
 
-        it 'does not change updated hash if no such attribute' do
+        it 'does not changed updated if no such attribute' do
           instance = subject.new
           proc { instance[:zomg] = 123 }.
             must_raise Attributes::NonexistentAttributeError
-          instance.updates.must_be :empty?
+          instance.wont_be :updated?
         end
 
       end
@@ -136,6 +135,31 @@ module Norm
         it 'raises NonexistentAttributeError if no such attribute' do
           instance = subject.new
           error = proc { instance[:zomg] }.
+            must_raise Attributes::NonexistentAttributeError
+          error.message.must_equal 'No such attribute: zomg'
+        end
+
+      end
+
+      describe '#orig' do
+
+        it 'gets the original value of the attributes' do
+          instance = subject.new(:name => 'zomg')
+          instance[:name] = 'bbq'
+          instance.orig(:name).must_equal 'zomg'
+        end
+
+        it 'returns Default if attribute originally unset and default:true' do
+          instance = subject.new(:name => 'zomg')
+          instance[:id] = 1
+          instance.orig(:id, default: true).must_equal(
+            Attribute::Default.instance
+          )
+        end
+
+        it 'raises NonexistentAttributeError if no such attribute' do
+          instance = subject.new
+          error = proc { instance.orig(:zomg) }.
             must_raise Attributes::NonexistentAttributeError
           error.message.must_equal 'No such attribute: zomg'
         end
@@ -194,16 +218,6 @@ module Norm
           instance = subject.new(:name => 'Ernie')
           instance[:id] = 1
           instance.updated.must_equal(:id => 1)
-        end
-
-      end
-
-      describe '#updates' do
-
-        it 'returns a hash of the updated attributes with before and after' do
-          instance = subject.new(:name => 'Ernie')
-          instance[:id] = 1
-          instance.updates.must_equal(:id => [Attribute::Default.instance, 1])
         end
 
       end
@@ -285,6 +299,28 @@ module Norm
 
       end
 
+      describe '#get_originals' do
+
+        it 'returns values of attributes as originally set' do
+          instance = subject.new(:name => 'Ernie')
+          instance[:id]   = 1
+          instance[:name] = 'Bert'
+          instance.get_originals(:id, :name).must_equal(
+            :id => nil, :name => 'Ernie'
+          )
+        end
+
+        it 'returns Default for missing originals if default: true' do
+          instance = subject.new(:name => 'Ernie')
+          instance[:id]   = 1
+          instance[:name] = 'Bert'
+          instance.get_originals(:id, :name, default: true).must_equal(
+            :id => Attribute::Default.instance, :name => 'Ernie'
+          )
+        end
+
+      end
+
       describe '#values_at' do
 
         it 'returns an array of values requested' do
@@ -318,14 +354,28 @@ module Norm
 
       end
 
-      describe '#clear_updates!' do
+      describe '#commit!' do
 
         it 'resets the Attributes updated status' do
           instance = subject.new
           instance[:name] = 'Ernie'
           instance.must_be :updated?
-          instance.clear_updates!
+          instance.commit!
           instance.wont_be :updated?
+        end
+
+      end
+
+      describe '#reset!' do
+
+        it 'sets the Attributes to original values' do
+          instance = subject.new(:name => 'Ernie')
+          instance[:id]   = 1
+          instance[:name] = 'Bert'
+          instance.reset!
+          instance.wont_be :updated?
+          instance[:name].must_equal 'Ernie'
+          instance[:id, default: true].must_equal Attribute::Default.instance
         end
 
       end
@@ -341,7 +391,7 @@ module Norm
 
       end
 
-      describe 'equivalence' do
+      describe 'comparison' do
         let(:attributes1) {
           Class.new(Attributes) {
             attribute :id,   Attr::Integer
@@ -480,6 +530,64 @@ module Norm
             attr1 = subject.new(:id => 1, :name => 'Ernie')
             attr2 = attributes2.new(:id => 1, :name => 'Ernie')
             attr1.hash.wont_equal attr2.hash
+          end
+
+        end
+
+        describe '#<=>' do
+
+          it 'is 0 for attributes with matching identifiers' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = subject.new(:id => 1, :name => 'Bert')
+            (attr1 <=> attr2).must_equal 0
+          end
+
+          it 'is -1 for attr1 identifiers < attr2 identifiers' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = subject.new(:id => 2, :name => 'Ernie')
+            (attr1 <=> attr2).must_equal -1
+          end
+
+          it 'is 1 for attr1 identifiers > attr2 identifiers' do
+            attr1 = subject.new(:id => 2, :name => 'Ernie')
+            attr2 = subject.new(:id => 1, :name => 'Ernie')
+            (attr1 <=> attr2).must_equal 1
+          end
+
+          it 'is nil if attributes are missing identity' do
+            attr1 = subject.new(:name => 'Ernie')
+            attr2 = subject.new(:name => 'Ernie')
+            (attr1 <=> attr2).must_be_nil
+          end
+
+          it 'is nil for ancestor <=> child comparison' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = attributes1_subclass.new(:id => 1, :name => 'Ernie')
+            (attr1 <=> attr2).must_be_nil
+          end
+
+          it 'is nil for child <=> ancestor comparison' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = attributes1_subclass.new(:id => 1, :name => 'Ernie')
+            (attr2 <=> attr1).must_be_nil
+          end
+
+          it 'is nil for identical classes when not subclasses' do
+            attr1 = subject.new(:id => 1, :name => 'Ernie')
+            attr2 = attributes2.new(:id => 1, :name => 'Ernie')
+            (attr1 <=> attr2).must_be_nil
+          end
+
+          it 'sorts when all objects are comparable' do
+            attr1 = subject.new(:id => 2, :name => 'Bert')
+            attr2 = subject.new(:id => 1, :name => 'Ernie')
+            [attr1, attr2].sort.must_equal [attr2, attr1]
+          end
+
+          it 'raises ArgumentError on sort when an object is not comparable' do
+            attr1 = subject.new(:id => 2, :name => 'Bert')
+            attr2 = attributes2.new(:id => 1, :name => 'Ernie')
+            proc { [attr1, attr2].sort }.must_raise ArgumentError
           end
 
         end
