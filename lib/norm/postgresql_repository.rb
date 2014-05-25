@@ -142,23 +142,15 @@ module Norm
 
     def exec_with_record_map(conn, statement, records, &block)
       conn.exec_statement(statement) do |result|
-        map = record_map(records)
+        map = RecordMap.new(records, primary_keys)
         result.each do |tuple|
           repo_record = record_class.from_repo(tuple)
-          if record = map[repo_record.attribute_values_at(*primary_keys)]
+          if record = map.fetch(repo_record)
             record.set_attributes(repo_record.initialized_attributes)
             yield record
           end
         end
       end
-    end
-
-    def record_map(records)
-      Hash[
-        records.map { |record|
-          [record.attribute_values_at(*primary_keys), record]
-        }
-      ]
     end
 
     def add_values_clause(statement, record)

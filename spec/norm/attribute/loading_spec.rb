@@ -34,6 +34,10 @@ module Norm
           subject.load(nil).must_equal nil
         end
 
+        it 'loads DEFAULT as DEFAULT' do
+          subject.load(Attribute::DEFAULT).must_equal Attribute::DEFAULT
+        end
+
         it 'caches method dispatch information for subsequent calls' do
           subject.load(42)
           subject.instance_variable_get(:@dispatch)[Fixnum].must_equal(

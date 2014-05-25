@@ -16,6 +16,8 @@ module Norm
         hash.map { |attr, value|
           if value.nil?
             sql << "#{quote_identifier(attr)} = NULL"
+          elsif Attribute::DEFAULT == value
+            sql << "#{quote_identifier(attr)} = DEFAULT"
           else
             params << value
             sql << "#{quote_identifier(attr)} = $?"

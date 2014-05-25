@@ -228,9 +228,14 @@ module Norm
           subject.new.wont_be :identity?
         end
 
-        it 'is false when an identity was set on the class but attr is nil' do
+        it 'is false when an identity was set but attr is nil' do
           subject.identity :id, :name
           subject.new(:id => nil, :name => 'Ernie').wont_be :identity?
+        end
+
+        it 'is false when an identity was set but attr is DEFAULT' do
+          subject.identity :id, :name
+          subject.new(:id => Attr::DEFAULT, :name => 'Ernie').wont_be :identity?
         end
 
         it 'is true if all identifying attributes are non-nil' do

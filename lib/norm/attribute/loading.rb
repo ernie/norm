@@ -36,7 +36,8 @@ module Norm
         object
       end
 
-      alias :load_NilClass :noop
+      alias :load_NilClass               :noop
+      alias :load_Norm_Attribute_Default :noop
 
     end
   end

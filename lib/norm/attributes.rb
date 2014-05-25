@@ -99,7 +99,7 @@ module Norm
 
     def identity?
       ids = identifiers
-      ids.any? && ids.none? { |k, v| v.nil? }
+      ids.any? && ids.none? { |k, v| v.nil? || Attribute::DEFAULT == v }
     end
 
     def identifiers(default: false)
