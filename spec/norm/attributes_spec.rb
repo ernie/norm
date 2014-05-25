@@ -199,6 +199,18 @@ module Norm
           instance.initialized.must_equal(:name => 'Ernie')
         end
 
+        it 'returns DEFAULT values if default: true' do
+          instance = subject.new(:id => Attribute::DEFAULT, :name => 'Ernie')
+          instance.initialized(default: true).
+            must_equal(:id => Attribute::DEFAULT, :name => 'Ernie')
+        end
+
+        it 'returns nil for DEFAULT values if default: false' do
+          instance = subject.new(:id => Attribute::DEFAULT, :name => 'Ernie')
+          instance.initialized(default: false).
+            must_equal(:id => nil, :name => 'Ernie')
+        end
+
       end
 
       describe '#updated?' do
@@ -218,6 +230,18 @@ module Norm
           instance = subject.new(:name => 'Ernie')
           instance[:id] = 1
           instance.updated.must_equal(:id => 1)
+        end
+
+        it 'returns DEFAULT values if default: true' do
+          instance = subject.new(:id => 1, :name => 'Ernie')
+          instance[:id] = Attribute::DEFAULT
+          instance.updated(default: true).must_equal(:id => Attribute::DEFAULT)
+        end
+
+        it 'returns nil for DEFAULT values if default: false' do
+          instance = subject.new(:id => 1, :name => 'Ernie')
+          instance[:id] = Attribute::DEFAULT
+          instance.updated(default: false).must_equal(:id => nil)
         end
 
       end
@@ -279,6 +303,13 @@ module Norm
           instance = subject.new(:name => 'Ernie')
           instance.get_attributes(:id, :name, default: true).must_equal(
             :id => Attribute::DEFAULT, :name => 'Ernie'
+          )
+        end
+
+        it 'returns nil for DEFAULT attributes if default: false' do
+          instance = subject.new(:name => 'Ernie', :id => Attribute::DEFAULT)
+          instance.get_attributes(:id, :name, default: false).must_equal(
+            :id => nil, :name => 'Ernie'
           )
         end
 

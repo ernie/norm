@@ -31,10 +31,12 @@ module Norm
         @attributes[name] = loader.load(obj)
       }
       define_method("_orig_#{name}") { |default: false|
-        @originals.fetch(name, default ? Attribute::DEFAULT : nil)
+        val = @originals.fetch(name, default ? Attribute::DEFAULT : nil)
+        default ? val : (val unless Attribute::DEFAULT == val)
       }
       define_method("_get_#{name}") { |default: false|
-        @attributes.fetch(name, default ? Attribute::DEFAULT : nil)
+        val = @attributes.fetch(name, Attribute::DEFAULT)
+        default ? val : (val unless Attribute::DEFAULT == val)
       }
       private "_set_#{name}", "_get_#{name}"
     end
@@ -73,16 +75,16 @@ module Norm
       !!@initialized
     end
 
-    def initialized
-      get_attributes(*(names & @attributes.keys))
+    def initialized(default: false)
+      get_attributes(*(names & @attributes.keys), default: default)
     end
 
     def updated?
-      updates.any?
+      updated_names.any?
     end
 
-    def updated
-      get_attributes(*updated_names)
+    def updated(default: false)
+      get_attributes(*updated_names, default: default)
     end
 
     def updated_names
@@ -91,15 +93,9 @@ module Norm
       }
     end
 
-    def updates
-      updated_names.each_with_object({}) { |name, hash|
-        hash[name] = self[name]
-      }
-    end
-
     def identity?
       ids = identifiers
-      ids.any? && ids.none? { |k, v| v.nil? || Attribute::DEFAULT == v }
+      ids.any? && ids.none? { |k, v| v.nil? }
     end
 
     def identifiers(default: false)

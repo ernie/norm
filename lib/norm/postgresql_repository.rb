@@ -26,7 +26,7 @@ module Norm
       return success! unless record.updated_attributes?
 
       atomically_on(writer, result: true) do
-        update_all([record], record.updated_attributes)
+        update_all([record], record.updated_attributes(default: true))
       end
     end
 
@@ -91,7 +91,7 @@ module Norm
       if attrs
         update_all(records, attrs)
       else
-        records.group_by(&:updated_attributes).
+        records.group_by { |record| record.updated_attributes(default: true) }.
           flat_map { |attrs, records| update_all(records, attrs) }
       end
     end

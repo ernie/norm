@@ -242,6 +242,19 @@ module Norm
         person.updated_at.must_be :>, previous_updated_at
       end
 
+      it 'allows setting an attribute to DEFAULT' do
+        person = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(person)
+        person = subject.fetch(person.id)
+        person.age = Attribute::DEFAULT
+        previous_updated_at = person.updated_at
+        result = subject.update(person)
+        result.must_be :success?
+        person = subject.fetch(person.id)
+        person.age.must_be :zero?
+        person.updated_at.must_be :>, previous_updated_at
+      end
+
       it 'returns a successful result on success' do
         person = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(person)
@@ -294,6 +307,21 @@ module Norm
         bert.updated_at.must_be :>, bert_updated
         ernie.name.must_equal 'Ernest'
         bert.name.must_equal 'Herbert'
+      end
+
+      it 'allows setting attributes to DEFAULT' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert  = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.mass_insert([ernie, bert])
+        ernie_updated = ernie.updated_at
+        bert_updated  = bert.updated_at
+        ernie.age, bert.age = Attribute::DEFAULT, Attribute::DEFAULT
+        result = subject.mass_update([ernie, bert])
+        result.must_be :success?
+        ernie.updated_at.must_be :>, ernie_updated
+        bert.updated_at.must_be :>, bert_updated
+        ernie.age.must_be :zero?
+        bert.age.must_be :zero?
       end
 
       it 'returns a successful result on success' do

@@ -209,6 +209,26 @@ module Norm
           )
         end
 
+        it 'includes DEFAULT values in hash if default: true' do
+          record = simple_record_class.new(
+            :id => Attribute::DEFAULT, :name => 'Ernie Miller'
+          )
+          record.initialized_attributes(default: true).must_equal(
+            :id   => Attribute::DEFAULT,
+            :name => 'Ernie Miller'
+          )
+        end
+
+        it 'replaces DEFAULT values in hash with nil if default: false' do
+          record = simple_record_class.new(
+            :id => Attribute::DEFAULT, :name => 'Ernie Miller'
+          )
+          record.initialized_attributes(default: false).must_equal(
+            :id   => nil,
+            :name => 'Ernie Miller'
+          )
+        end
+
       end
 
       describe '#get' do
@@ -282,6 +302,21 @@ module Norm
           subject.name = original_name
           subject.updated_attributes.must_equal Hash.new
         end
+
+        it 'includes DEFAULT values in hash if default: true' do
+          subject.age = Attribute::DEFAULT
+          subject.updated_attributes(default: true).must_equal(
+            :age => Attribute::DEFAULT
+          )
+        end
+
+        it 'replaces DEFAULT values in hash with nil if default: false' do
+          subject.age = Attribute::DEFAULT
+          subject.updated_attributes(default: false).must_equal(
+            :age => nil
+          )
+        end
+
       end
 
       describe '#updated_attributes?' do

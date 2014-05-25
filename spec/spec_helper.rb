@@ -27,7 +27,7 @@ Norm.connection_manager.with_connection(:primary) do |conn|
     (
       id serial NOT NULL,
       name character varying(255),
-      age integer,
+      age integer NOT NULL DEFAULT 0,
       created_at timestamp with time zone NOT NULL,
       updated_at timestamp with time zone NOT NULL,
       CONSTRAINT people_pkey PRIMARY KEY (id),

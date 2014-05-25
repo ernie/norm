@@ -98,16 +98,16 @@ module Norm
       attributes.all(default: default)
     end
 
-    def initialized_attributes
-      attributes.initialized
+    def initialized_attributes(default: false)
+      attributes.initialized(default: default)
     end
 
     def identifying_attributes
       attributes.identifiers
     end
 
-    def updated_attributes
-      attributes.updated
+    def updated_attributes(default: false)
+      attributes.updated(default: default)
     end
 
     def updated_attributes?
