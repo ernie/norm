@@ -41,6 +41,12 @@ module Norm
       attributes.each do |name, value|
         send("#{name}=", value) if respond_to?("#{name}=")
       end
+      self
+    end
+
+    def set_attributes(attributes)
+      __record__.set_attributes(attributes)
+      self
     end
 
     def ==(other)

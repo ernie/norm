@@ -80,6 +80,7 @@ module Norm
       attributes.each do |name, value|
         public_send("#{name}=", value) if respond_to?("#{name}=")
       end
+      self
     end
 
     def attribute_names
@@ -124,6 +125,7 @@ module Norm
 
     def set_attributes(new_attributes)
       attributes.set_attributes(new_attributes)
+      self
     end
 
     def stored!

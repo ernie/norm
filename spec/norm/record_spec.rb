@@ -257,6 +257,11 @@ module Norm
           record.name.must_equal 'Ernie'
         end
 
+        it 'returns self after setting' do
+          record = simple_record_class.new
+          record.set(:name => 'Ernie').must_be_same_as record
+        end
+
       end
 
       describe '#all_attributes' do
@@ -391,6 +396,11 @@ module Norm
           record.set_attributes(:age => 37)
           record.name.must_equal 'Ernie Miller'
           record.age.must_equal 37
+        end
+
+        it 'returns self after updating' do
+          record = simple_record_class.new(:name => 'Ernie Miller', :age => 36)
+          record.set_attributes(:age => 37).must_be_same_as record
         end
 
       end
