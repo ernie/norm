@@ -11,11 +11,24 @@ module Norm
       end
     end
 
+    TYPES = {
+      PG::RestrictViolation   => :restrict,
+      PG::NotNullViolation    => :not_null,
+      PG::ForeignKeyViolation => :foreign_key,
+      PG::UniqueViolation     => :unique,
+      PG::CheckViolation      => :check,
+      PG::ExclusionViolation  => :exclusion
+    }
+
     attr_reader :error, :result
 
     def initialize(error, message = 'Norm::ConstraintError')
       @error, @result = error, error.result || NullResult.new
       super(message)
+    end
+
+    def type
+      TYPES[error.class]
     end
 
     def respond_to_missing?(method_id, include_private = false)

@@ -105,6 +105,40 @@ module Norm
       end
     end
 
+    describe '#type' do
+
+      it 'is :restrict for RestrictViolation' do
+        ConstraintError.new(PG::RestrictViolation.new).type.
+          must_equal :restrict
+      end
+
+      it 'is :not_null for NotNullViolation' do
+        ConstraintError.new(PG::NotNullViolation.new).type.
+          must_equal :not_null
+      end
+
+      it 'is :foreign_key for ForeignKeyViolation' do
+        ConstraintError.new(PG::ForeignKeyViolation.new).type.
+          must_equal :foreign_key
+      end
+
+      it 'is :unique for UniqueViolation' do
+        ConstraintError.new(PG::UniqueViolation.new).type.
+          must_equal :unique
+      end
+
+      it 'is :check for CheckViolation' do
+        ConstraintError.new(PG::CheckViolation.new).type.
+          must_equal :check
+      end
+
+      it 'is :exclusion for ExclusionViolation' do
+        ConstraintError.new(PG::ExclusionViolation.new).type.
+          must_equal :exclusion
+      end
+
+    end
+
   end
 
 end
