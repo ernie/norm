@@ -16,6 +16,12 @@ module Norm
       )
     end
 
+    it 'defaults attribute names to the attribute names of the record class' do
+      subject.new(record_class).attribute_names.must_equal(
+        record_class.attribute_names
+      )
+    end
+
     describe '#load_attributes' do
       subject {
         record_class = Class.new(Record) { attribute :id, Attr::Integer }

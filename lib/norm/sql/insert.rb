@@ -29,13 +29,30 @@ module Norm
         @params
       end
 
-      def insert!(*args)
-        @insert.value = Fragment.new(*args)
+      def insert(*args)
+        dup.insert!(*args)
+      end
+
+      def insert!(table_name, column_names)
+        column_names = Array(column_names)
+        if column_names.empty?
+          @insert.value = Fragment.new(quote_identifier(table_name))
+        else
+          table, *cols = [table_name, *column_names].map { |name|
+            quote_identifier(name)
+          }
+          @insert.value = Fragment.new("#{table} (#{cols.join(', ')})")
+        end
         self
       end
 
-      def insert(*args)
-        dup.insert!(*args)
+      def insert_sql(*args)
+        dup.insert_sql!(*args)
+      end
+
+      def insert_sql!(*args)
+        @insert.value = Fragment.new(*args)
+        self
       end
 
       def values(*args)

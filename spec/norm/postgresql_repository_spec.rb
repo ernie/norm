@@ -20,8 +20,7 @@ module Norm
         end
 
         def insert_statement
-          column_list = record_class.attribute_names.join(', ')
-          Norm::SQL.insert("people (#{column_list})").returning('*')
+          Norm::SQL.insert(:people, attribute_names).returning('*')
         end
 
         def update_statement
@@ -52,8 +51,7 @@ module Norm
         end
 
         def insert_statement
-          column_list = record_class.attribute_names.join(', ')
-          Norm::SQL.insert("posts (#{column_list})").returning('*')
+          Norm::SQL.insert(:posts, attribute_names).returning('*')
         end
 
         def update_statement
@@ -86,8 +84,7 @@ module Norm
         end
 
         def insert_statement
-          column_list = record_class.attribute_names.join(', ')
-          Norm::SQL.insert("users (#{column_list})").returning('*')
+          Norm::SQL.insert(:users, attribute_names).returning('*')
         end
 
         def update_statement

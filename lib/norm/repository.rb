@@ -34,6 +34,10 @@ module Norm
       @primary_keys ||= record_class.new.identifying_attributes.keys
     end
 
+    def attribute_names
+      record_class.attribute_names
+    end
+
     def all
       raise NotImplementedError, 'Repositories must implement #all'
     end

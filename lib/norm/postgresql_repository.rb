@@ -12,7 +12,11 @@ module Norm
 
     def insert(record)
       atomically_on(writer, result: true) do
-        insert_records(add_values_clause(insert_statement, record), [record])
+        exec_for_record(
+          writer, add_values_clause(insert_statement, record), record
+        ) do |record|
+          record.inserted!
+        end
       end
     end
 
@@ -26,7 +30,13 @@ module Norm
       return success! unless record.updated_attributes?
 
       atomically_on(writer, result: true) do
-        update_all([record], record.updated_attributes(default: true))
+        update_record(
+          scope_to_record(
+            update_statement.set(record.updated_attributes(default: true)),
+            record
+          ),
+          record
+        )
       end
     end
 
@@ -50,13 +60,13 @@ module Norm
 
     def delete(record)
       atomically_on(writer, result: true) do
-        delete_records(scope_to_records([record], delete_statement), [record])
+        delete_record(scope_to_record(delete_statement, record), record)
       end
     end
 
     def mass_delete(records)
       atomically_on(writer, result: true) do
-        delete_records(scope_to_records(records, delete_statement), records)
+        delete_records(scope_to_records(delete_statement, records), records)
       end
     end
 
@@ -100,7 +110,7 @@ module Norm
       return success! if records.empty?
 
       update_records(
-        scope_to_records(records, update_statement.set(attrs)),
+        scope_to_records(update_statement.set(attrs), records),
         records
       )
     end
@@ -110,6 +120,12 @@ module Norm
         conn.exec_statement(statement) do |result|
           result.map { |tuple| record_class.from_repo(tuple) }
         end
+      end
+    end
+
+    def insert_record(statement, record)
+      exec_for_record(writer, statement, record) do |record|
+        record.inserted!
       end
     end
 
@@ -124,30 +140,51 @@ module Norm
       end
     end
 
+    def update_record(statement, record)
+      exec_for_record(writer, statement, record) do |record|
+        record.updated!
+      end
+    end
+
     def update_records(statement, records)
-      with_connection(writer) do |conn|
-        exec_with_record_map(conn, statement, records) do |record|
-          record.updated!
-        end
+      exec_for_records(writer, statement, records) do |record|
+        record.updated!
+      end
+    end
+
+    def delete_record(statement, record)
+      exec_for_record(writer, statement, record) do |record|
+        record.deleted!
       end
     end
 
     def delete_records(statement, records)
-      with_connection(writer) do |conn|
-        exec_with_record_map(conn, statement, records) do |record|
-          record.deleted!
+      exec_for_records(writer, statement, records) do |record|
+        record.deleted!
+      end
+    end
+
+    def exec_for_record(connection_name, statement, record, &block)
+      with_connection(connection_name) do |conn|
+        conn.exec_statement(statement) do |result|
+          if tuple = result.first
+            record.set_attributes(tuple)
+            yield record
+          end
         end
       end
     end
 
-    def exec_with_record_map(conn, statement, records, &block)
-      conn.exec_statement(statement) do |result|
-        map = RecordMap.new(records, primary_keys)
-        result.each do |tuple|
-          repo_record = record_class.from_repo(tuple)
-          if record = map.fetch(repo_record)
-            record.set_attributes(repo_record.initialized_attributes)
-            yield record
+    def exec_for_records(connection_name, statement, records, &block)
+      with_connection(connection_name) do |conn|
+        conn.exec_statement(statement) do |result|
+          map = RecordMap.new(records, primary_keys)
+          result.each do |tuple|
+            repo_record = record_class.from_repo(tuple)
+            if record = map.fetch(repo_record)
+              record.set_attributes(repo_record.initialized_attributes)
+              yield record
+            end
           end
         end
       end
@@ -155,18 +192,23 @@ module Norm
 
     def add_values_clause(statement, record)
       params = []
-      sql = record.all_attributes(default: true).map { |name, value|
-        if value == Attribute::DEFAULT
-          'DEFAULT'
-        else
-          params << value
-          '$?'
-        end
-      }.join(', ')
+      sql = record.get_attributes(*attribute_names, default: true).
+        map { |name, value|
+          if value == Attribute::DEFAULT
+            'DEFAULT'
+          else
+            params << value
+            '$?'
+          end
+        }.join(', ')
       statement.values_sql(sql, *params)
     end
 
-    def scope_to_records(records, statement)
+    def scope_to_record(statement, record)
+      statement.where(record.get_original_attributes(*primary_keys))
+    end
+
+    def scope_to_records(statement, records)
       return statement.where('FALSE') if records.empty?
 
       if primary_keys.size == 1

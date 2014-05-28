@@ -8,16 +8,17 @@ module Norm
         Insert.new.sql.must_equal ''
       end
 
-      it 'allows specification of a custom INSERT SQL fragment on init' do
-        Insert.new('people (name)').sql.must_equal 'INSERT INTO people (name)'
+      it 'allows specification of table and column(s) on init' do
+        Insert.new(:people, [:id, :name]).sql.
+          must_equal 'INSERT INTO "people" ("id", "name")'
       end
 
       describe '#insert!' do
 
         it 'replaces the INSERT clause of the statement' do
-          insert = Insert.new('people (name)')
-          insert.insert!('customers (name)')
-          insert.sql.must_equal 'INSERT INTO customers (name)'
+          insert = Insert.new(:people, :name)
+          insert.insert!(:customers, :name)
+          insert.sql.must_equal 'INSERT INTO "customers" ("name")'
         end
 
       end
@@ -25,8 +26,29 @@ module Norm
       describe '#insert' do
 
         it 'returns a new statement with a different INSERT clause' do
-          insert = Insert.new('people (name)')
-          another_insert = insert.insert('customers (name)')
+          insert = Insert.new(:people, :name)
+          another_insert = insert.insert(:customers, :name)
+          insert.sql.must_equal 'INSERT INTO "people" ("name")'
+          another_insert.sql.must_equal 'INSERT INTO "customers" ("name")'
+        end
+
+      end
+
+      describe '#insert_sql!' do
+
+        it 'replaces the INSERT clause of the statement' do
+          insert = Insert.new(:people, :name)
+          insert.insert_sql!('customers (name)')
+          insert.sql.must_equal 'INSERT INTO customers (name)'
+        end
+
+      end
+
+      describe '#insert_sql' do
+
+        it 'returns a new statement with a different INSERT clause' do
+          insert = Insert.new.insert_sql!('people (name)')
+          another_insert = insert.insert_sql('customers (name)')
           insert.sql.must_equal 'INSERT INTO people (name)'
           another_insert.sql.must_equal 'INSERT INTO customers (name)'
         end
