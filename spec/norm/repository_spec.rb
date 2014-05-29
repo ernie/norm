@@ -122,10 +122,6 @@ module Norm
         proc { subject.store(nil) }.must_raise NotImplementedError
       end
 
-      it 'requires subclasses to implement #mass_store' do
-        proc { subject.mass_store(nil) }.must_raise NotImplementedError
-      end
-
       it 'requires subclasses to implement #insert' do
         proc { subject.insert(nil) }.must_raise NotImplementedError
       end

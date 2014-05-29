@@ -50,10 +50,6 @@ module Norm
       raise NotImplementedError, 'Repositories must implement #store'
     end
 
-    def mass_store(records)
-      raise NotImplementedError, 'Repositories must implement #mass_store'
-    end
-
     def insert(record)
       raise NotImplementedError, 'Repositories must implement #insert'
     end
