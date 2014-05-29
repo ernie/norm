@@ -49,7 +49,7 @@ effectively:
      * `store(record)` - Inserts or updates a single record, as necessary
      * `insert(record)` - Inserts a single record
      * `update(record)` - Updates a single record
-     * `delete(record)` - Deletes a single record
+     * `delete(record)` - Deletes a single record  
    All other queries are separate methods on the repository, with a specific
    method signature that determines how they should be used and shows their
    intent.
