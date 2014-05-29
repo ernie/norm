@@ -480,40 +480,6 @@ module Norm
 
     end
 
-    describe '#mass_store' do
-
-      it 'updates or inserts records as appropriate' do
-        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
-        bert = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.insert(ernie)
-        ernie.age = 37
-        previous_updated_at = ernie.updated_at
-        subject.mass_store([ernie, bert])
-        ernie.updated_at.must_be :>, previous_updated_at
-        bert.must_be :stored?
-      end
-
-      it 'returns successful result on success' do
-        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
-        bert = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.insert(ernie)
-        ernie.age = 37
-        result = subject.mass_store([ernie, bert])
-        result.must_be :success?
-      end
-
-      it 'returns unsuccessful result on constraint error' do
-        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
-        bert = person_record_class.new(:id => nil, :name => 'Bert', :age => 37)
-        subject.insert(ernie)
-        ernie.age = 37
-        result = subject.mass_store([ernie, bert])
-        result.must_be :error?
-        result.value.must_be_kind_of ConstraintError
-      end
-
-    end
-
     describe 'with a composite primary key' do
       subject { user_repo }
 

@@ -10,6 +10,10 @@ module Norm
       select_records(select_statement.where(attributes)).first
     end
 
+    def store(record)
+      record.stored? ? update(record) : insert(record)
+    end
+
     def insert(record)
       atomically_on(writer, result: true) do
         exec_for_record(
@@ -26,7 +30,14 @@ module Norm
 
     def mass_insert(records)
       atomically_on(writer, result: true) do
-        do_mass_insert(records)
+        insert_records(
+          records.reduce(insert_statement.dup) { |stmt, record|
+            stmt.values!(
+              *record.attribute_values_at(*attribute_names, default: true)
+            )
+          },
+          records
+        )
       end
     end
 
@@ -46,19 +57,12 @@ module Norm
 
     def mass_update(records, attrs = nil)
       atomically_on(writer, result: true) do
-        do_mass_update(records, attrs)
-      end
-    end
-
-    def store(record)
-      record.stored? ? update(record) : insert(record)
-    end
-
-    def mass_store(records)
-      atomically_on(writer, result: true) do
-        to_update, to_insert = records.partition(&:stored?)
-        do_mass_update(to_update)
-        do_mass_insert(to_insert)
+        if attrs
+          update_all(records, attrs)
+        else
+          records.group_by { |r| r.updated_attributes(default: true) }.
+            flat_map { |attrs, records| update_all(records, attrs) }
+        end
       end
     end
 
@@ -91,26 +95,6 @@ module Norm
     end
 
     private
-
-    def do_mass_insert(records)
-      insert_records(
-        records.reduce(insert_statement) { |stmt, record|
-          stmt.values(
-            *record.attribute_values_at(*attribute_names, default: true)
-          )
-        },
-        records
-      )
-    end
-
-    def do_mass_update(records, attrs = nil)
-      if attrs
-        update_all(records, attrs)
-      else
-        records.group_by { |record| record.updated_attributes(default: true) }.
-          flat_map { |attrs, records| update_all(records, attrs) }
-      end
-    end
 
     def update_all(records, attrs)
       return success! if records.empty?
