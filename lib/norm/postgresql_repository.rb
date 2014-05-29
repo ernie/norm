@@ -191,11 +191,11 @@ module Norm
         key = primary_keys.first
         statement.where(key => records.map { |r| r.attributes.orig(key) } )
       else
-        scope_with_composite_primary_keys(records, statement)
+        scope_with_composite_primary_keys(statement, records)
       end
     end
 
-    def scope_with_composite_primary_keys(records, statement)
+    def scope_with_composite_primary_keys(statement, records)
       preds = records.map { |record|
         SQL::Grouping.new(SQL::PredicateFragment.new(
           record.get_original_attributes(*primary_keys)
