@@ -13,7 +13,11 @@ module Norm
     def insert(record)
       atomically_on(writer, result: true) do
         exec_for_record(
-          writer, add_values_clause(insert_statement, record), record
+          writer,
+          insert_statement.values(
+            *record.attribute_values_at(*attribute_names, default: true)
+          ),
+          record
         ) do |record|
           record.inserted!
         end
@@ -91,7 +95,9 @@ module Norm
     def do_mass_insert(records)
       insert_records(
         records.reduce(insert_statement) { |stmt, record|
-          add_values_clause(stmt, record)
+          stmt.values(
+            *record.attribute_values_at(*attribute_names, default: true)
+          )
         },
         records
       )
@@ -188,20 +194,6 @@ module Norm
           end
         end
       end
-    end
-
-    def add_values_clause(statement, record)
-      params = []
-      sql = record.get_attributes(*attribute_names, default: true).
-        map { |name, value|
-          if value == Attribute::DEFAULT
-            'DEFAULT'
-          else
-            params << value
-            '$?'
-          end
-        }.join(', ')
-      statement.values_sql(sql, *params)
     end
 
     def scope_to_record(statement, record)

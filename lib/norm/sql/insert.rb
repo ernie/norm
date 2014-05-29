@@ -60,7 +60,12 @@ module Norm
       end
 
       def values!(*args)
-        @values << Fragment.new((['$?'] * args.size).join(', '), *args)
+        @values << Fragment.new(
+          args.map { |value|
+            value == Attribute::DEFAULT ? 'DEFAULT' : '$?'
+          }.join(', '),
+          *args.reject { |value| value == Attribute::DEFAULT }
+        )
         self
       end
 
