@@ -116,48 +116,6 @@ module Norm
         end
       end
 
-      it 'returns successful result if no errors and result: true' do
-        with_fake_db do
-          result = subject.atomically_on(
-            :primary, :reader, :writer, result: true
-          ) do |p, r, w|
-            p.must_be_kind_of Connection
-            r.must_be_kind_of Connection
-            w.must_be_kind_of Connection
-            'zomg'
-          end
-          subject.with_connections(:primary, :reader, :writer) do |p, r, w|
-            p.db.execs.must_equal ['BEGIN', 'COMMIT']
-            r.db.execs.must_equal ['BEGIN', 'COMMIT']
-            w.db.execs.must_equal ['BEGIN', 'COMMIT']
-          end
-
-          result.must_be :success?
-          result.value.must_equal 'zomg'
-        end
-      end
-
-      it 'returns unsuccessful result on constraint errors if result: true' do
-        with_fake_db do
-          result = subject.atomically_on(
-            :primary, :reader, :writer, result: true
-          ) do |p, r, w|
-            p.must_be_kind_of Connection
-            r.must_be_kind_of Connection
-            w.must_be_kind_of Connection
-            raise ConstraintError.new(PG::CheckViolation.new)
-          end
-          subject.with_connections(:primary, :reader, :writer) do |p, r, w|
-            p.db.execs.must_equal ['BEGIN', 'ROLLBACK']
-            r.db.execs.must_equal ['BEGIN', 'ROLLBACK']
-            w.db.execs.must_equal ['BEGIN', 'ROLLBACK']
-          end
-
-          result.must_be :error?
-          result.value.must_be_kind_of ConstraintError
-        end
-      end
-
       it 'creates savepoints on connections when needed' do
         with_fake_db do
           subject.atomically_on(:primary, :reader, :writer) do |p, r, w|

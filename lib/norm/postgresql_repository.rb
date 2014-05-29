@@ -15,33 +15,39 @@ module Norm
     end
 
     def insert(record)
-      atomically_on(writer, result: true) do
-        insert_record(
-          insert_statement.values(
-            *record.attribute_values_at(*attribute_names, default: true)
-          ),
-          record
-        )
+      Result.capture(ConstraintError) do
+        atomically_on(writer) do
+          insert_record(
+            insert_statement.values(
+              *record.attribute_values_at(*attribute_names, default: true)
+            ),
+            record
+          )
+        end
       end
     end
 
     def update(record)
-      return success! unless record.updated_attributes?
-
-      atomically_on(writer, result: true) do
-        update_record(
-          scope_to_record(
-            update_statement.set(record.updated_attributes(default: true)),
-            record
-          ),
-          record
-        )
+      Result.capture(ConstraintError) do
+        if record.updated_attributes?
+          atomically_on(writer) do
+            update_record(
+              scope_to_record(
+                update_statement.set(record.updated_attributes(default: true)),
+                record
+              ),
+              record
+            )
+          end
+        end
       end
     end
 
     def delete(record)
-      atomically_on(writer, result: true) do
-        delete_record(scope_to_record(delete_statement, record), record)
+      Result.capture(ConstraintError) do
+        atomically_on(writer) do
+          delete_record(scope_to_record(delete_statement, record), record)
+        end
       end
     end
 

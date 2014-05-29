@@ -49,15 +49,12 @@ module Norm
       end
     end
 
-    def atomically(result: false, &block)
-      res = if transaction?
+    def atomically(&block)
+      if transaction?
         _with_savepoint(&block)
       else
         _with_transaction(&block)
       end
-      result ? Result.new(true, res) : res
-    rescue ConstraintError => e
-      result ? Result.new(false, e) : raise(e)
     end
 
     private

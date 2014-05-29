@@ -26,10 +26,6 @@ module Norm
       record_class.new(attributes).get_attributes(*attributes.keys)
     end
 
-    def success!
-      Result.new(true)
-    end
-
     def primary_keys
       @primary_keys ||= record_class.new.identifying_attributes.keys
     end
