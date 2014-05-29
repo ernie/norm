@@ -46,10 +46,10 @@ effectively:
    these methods:
      * `all` - Returns all records in the repository.
      * `fetch(*keys)` - Returns a single record based on its primary key(s).
+     * `store(record)` - Inserts or updates a single record, as necessary
      * `insert(record)` - Inserts a single record
      * `update(record)` - Updates a single record
      * `delete(record)` - Deletes a single record
-     * `mass_[insert|update|delete](*records)` - Multiple-record variants  
    All other queries are separate methods on the repository, with a specific
    method signature that determines how they should be used and shows their
    intent.

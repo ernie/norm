@@ -126,24 +126,12 @@ module Norm
         proc { subject.insert(nil) }.must_raise NotImplementedError
       end
 
-      it 'requires subclasses to implement #mass_insert' do
-        proc { subject.mass_insert(nil) }.must_raise NotImplementedError
-      end
-
       it 'requires subclasses to implement #update' do
         proc { subject.update(nil) }.must_raise NotImplementedError
       end
 
-      it 'requires subclasses to implement #mass_update' do
-        proc { subject.mass_update(nil) }.must_raise NotImplementedError
-      end
-
       it 'requires subclasses to implement #delete' do
         proc { subject.delete(nil) }.must_raise NotImplementedError
-      end
-
-      it 'requires subclasses to implement #mass_delete' do
-        proc { subject.mass_delete(nil) }.must_raise NotImplementedError
       end
 
     end

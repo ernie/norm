@@ -183,37 +183,6 @@ module Norm
 
     end
 
-    describe '#mass_insert' do
-
-      it 'inserts multiple records' do
-        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
-        bert  = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.mass_insert([ernie, bert])
-        records = subject.all
-        records.size.must_equal 2
-        ernie = records.detect { |r| r.name == 'Ernie' }
-        bert = records.detect { |r| r.name == 'Bert' }
-        ernie.age.must_equal 36
-        bert.age.must_equal 37
-      end
-
-      it 'returns a successful result on success' do
-        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
-        bert  = person_record_class.new(:name => 'Bert', :age => 37)
-        result = subject.mass_insert([ernie, bert])
-        result.must_be :success?
-      end
-
-      it 'returns an unsuccessful result on constraint error' do
-        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
-        duplicate = person_record_class.new(:name => 'Ernie', :age => 36)
-        result = subject.mass_insert([ernie, duplicate])
-        result.must_be :error?
-        result.value.must_be_kind_of ConstraintError
-      end
-
-    end
-
     describe '#update' do
 
       it 'updates a stored record' do
@@ -265,7 +234,8 @@ module Norm
       it 'returns an unsuccessful result on constraint error' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         bert  = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.mass_insert([ernie, bert])
+        subject.insert(ernie)
+        subject.insert(bert)
         ernie.name = 'Bert'
         result = subject.update(ernie)
         result.must_be :error?
@@ -290,83 +260,13 @@ module Norm
 
     end
 
-    describe '#mass_update' do
-
-      it 'sets updated attributes on passed-in records' do
-        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
-        bert  = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.mass_insert([ernie, bert])
-        ernie_updated = ernie.updated_at
-        bert_updated  = bert.updated_at
-        ernie.name, bert.name = 'Ernest', 'Herbert'
-        subject.mass_update([ernie, bert])
-        ernie.updated_at.must_be :>, ernie_updated
-        bert.updated_at.must_be :>, bert_updated
-        ernie.name.must_equal 'Ernest'
-        bert.name.must_equal 'Herbert'
-      end
-
-      it 'allows setting attributes to DEFAULT' do
-        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
-        bert  = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.mass_insert([ernie, bert])
-        ernie_updated = ernie.updated_at
-        bert_updated  = bert.updated_at
-        ernie.age, bert.age = Attribute::DEFAULT, Attribute::DEFAULT
-        result = subject.mass_update([ernie, bert])
-        result.must_be :success?
-        ernie.updated_at.must_be :>, ernie_updated
-        bert.updated_at.must_be :>, bert_updated
-        ernie.age.must_be :zero?
-        bert.age.must_be :zero?
-      end
-
-      it 'returns a successful result on success' do
-        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
-        bert  = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.mass_insert([ernie, bert])
-        ernie_updated = ernie.updated_at
-        bert_updated  = bert.updated_at
-        ernie.name, bert.name = 'Ernest', 'Herbert'
-        result = subject.mass_update([ernie, bert])
-        result.must_be :success?
-      end
-
-      it 'returns an unsuccessful result on constraint error' do
-        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
-        bert  = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.mass_insert([ernie, bert])
-        ernie_updated = ernie.updated_at
-        bert_updated  = bert.updated_at
-        ernie.name, bert.name = bert.name, ernie.name
-        result = subject.mass_update([ernie, bert])
-        result.must_be :error?
-        result.value.must_be_kind_of ConstraintError
-      end
-
-      it 'allows updating multiple primary keys' do
-        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
-        bert  = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.mass_insert([ernie, bert])
-        ernie_updated = ernie.updated_at
-        bert_updated  = bert.updated_at
-        new_ernie = ernie.id += 2
-        new_bert  = bert.id += 2
-        result = subject.mass_update([ernie, bert])
-        ernie = subject.fetch(new_ernie)
-        bert  = subject.fetch(new_bert)
-        ernie.updated_at.must_be :>, ernie_updated
-        bert.updated_at.must_be :>, bert_updated
-      end
-
-    end
-
     describe '#delete' do
 
       it 'deletes a stored record' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         bert = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.mass_insert([ernie, bert])
+        subject.insert(ernie)
+        subject.insert(bert)
         subject.delete(ernie)
         subject.fetch(ernie.id).must_be_nil
         bert = subject.fetch(bert.id)
@@ -391,44 +291,6 @@ module Norm
         )
         post_repo.insert(post)
         result = subject.delete(ernie)
-        result.must_be :error?
-        result.value.must_be_kind_of ConstraintError
-      end
-
-    end
-
-    describe '#mass_delete' do
-
-      it 'deletes multiple stored records' do
-        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
-        bert = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.mass_insert([ernie, bert])
-        subject.mass_delete([ernie, bert])
-        subject.fetch(ernie.id).must_be_nil
-        subject.fetch(bert.id).must_be_nil
-        ernie.must_be :deleted?
-        ernie.wont_be :stored?
-        bert.must_be :deleted?
-        bert.wont_be :stored?
-      end
-
-      it 'returns a successful result on success' do
-        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
-        bert = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.mass_insert([ernie, bert])
-        result = subject.mass_delete([ernie, bert])
-        result.must_be :success?
-      end
-
-      it 'returns unsuccessful result on constraint error' do
-        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
-        bert = person_record_class.new(:name => 'Bert', :age => 37)
-        subject.mass_insert([ernie, bert])
-        post = post_record_class.new(
-          :person_id => ernie.id, :title => 'zomg', :body => 'zomg'
-        )
-        post_repo.insert(post)
-        result = subject.mass_delete([ernie, bert])
         result.must_be :error?
         result.value.must_be_kind_of ConstraintError
       end
