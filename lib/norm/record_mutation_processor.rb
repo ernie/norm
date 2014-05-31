@@ -36,6 +36,8 @@ module Norm
     end
 
     def delete_one(record)
+      return true if record.deleted?
+
       yield ->(result, conn) {
         require_one_result!(result)
         record.set_attributes(result.first) and record.deleted!
