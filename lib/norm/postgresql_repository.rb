@@ -85,14 +85,5 @@ module Norm
       statement.where(record.get_original_attributes(*primary_keys))
     end
 
-    def require_one_result!(result)
-      if result.ntuples < 1
-        raise NotFoundError, 'No results for query!'
-      elsif result.ntuples > 1
-        raise TooManyResultsError,
-          "#{result.ntuples} rows returned when only one was expected."
-      end
-    end
-
   end
 end
