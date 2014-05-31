@@ -1,13 +1,16 @@
 module Norm
   class Repository
 
-    attr_reader :record_class, :connection_manager, :reader, :writer
+    attr_reader :record_class, :connection_manager, :processor, :reader, :writer
 
     def initialize(record_class,
                    connection_manager: Norm.connection_manager,
+                   processor: RecordMutationProcessor.new(record_class),
                    reader: :primary, writer: :primary)
-      @record_class, @connection_manager = record_class, connection_manager
-      @reader, @writer = reader, writer
+      @record_class       = record_class
+      @connection_manager = connection_manager
+      @processor          = processor
+      @reader, @writer    = reader, writer
     end
 
     def with_connection(name = reader, &block)

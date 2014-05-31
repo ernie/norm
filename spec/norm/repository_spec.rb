@@ -47,6 +47,19 @@ module Norm
       repo.connection_manager.must_be_same_as mgr
     end
 
+    it 'defaults processor to a RecordMutationProcessor for record class' do
+      repo = subject.new(record_class)
+      processor = repo.processor
+      processor.must_be_kind_of RecordMutationProcessor
+      processor.record_class.must_equal record_class
+    end
+
+    it 'allows specifying an alternate processor via keyword' do
+      alternate_processor = Object.new
+      repo = subject.new(record_class, processor: alternate_processor)
+      repo.processor.must_be_same_as alternate_processor
+    end
+
     it 'defaults reader and writer database to :primary' do
       repo = subject.new(record_class)
       repo.reader.must_equal :primary

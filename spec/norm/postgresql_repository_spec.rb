@@ -190,19 +190,16 @@ module Norm
         person.updated_at.must_be_kind_of Attr::Timestamp
       end
 
-      it 'returns a successful result on success' do
+      it 'returns true on success' do
         person = person_record_class.new(:name => 'Ernie', :age => 36)
-        result = subject.insert(person)
-        result.must_be :success?
+        subject.insert(person).must_equal true
       end
 
-      it 'returns an unsuccessful result on constraint error' do
+      it 'returns false on constraint error' do
         person = person_record_class.new(
           :id => nil, :name => 'Ernie', :age => 36
         )
-        result = subject.insert(person)
-        result.must_be :error?
-        result.value.must_be_kind_of ConstraintError
+        subject.insert(person).must_equal false
       end
 
       it 'raises NotFoundError if no results are returned' do
@@ -243,32 +240,28 @@ module Norm
         person = subject.fetch(person.id)
         person.age = Attribute::DEFAULT
         previous_updated_at = person.updated_at
-        result = subject.update(person)
-        result.must_be :success?
+        subject.update(person).must_equal true
         person = subject.fetch(person.id)
         person.age.must_be :zero?
         person.updated_at.must_be :>, previous_updated_at
       end
 
-      it 'returns a successful result on success' do
+      it 'returns true on success' do
         person = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(person)
         person = subject.fetch(person.id)
         person.name = 'Bert'
         previous_updated_at = person.updated_at
-        result = subject.update(person)
-        result.must_be :success?
+        subject.update(person).must_equal true
       end
 
-      it 'returns an unsuccessful result on constraint error' do
+      it 'returns false on constraint error' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         bert  = person_record_class.new(:name => 'Bert', :age => 37)
         subject.insert(ernie)
         subject.insert(bert)
         ernie.id = bert.id
-        result = subject.update(ernie)
-        result.must_be :error?
-        result.value.must_be_kind_of ConstraintError
+        subject.update(ernie).must_equal false
       end
 
       it 'does nothing if the record has not been updated' do
@@ -279,12 +272,11 @@ module Norm
         ernie.updated_at.must_equal updated_at
       end
 
-      it 'returns a successful result if no update was needed' do
+      it 'returns true if no update was needed' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(ernie)
         updated_at = ernie.updated_at
-        result = subject.update(ernie)
-        result.must_be :success?
+        subject.update(ernie).must_equal true
       end
 
       it 'raises NotFoundError if no results are returned' do
@@ -321,23 +313,20 @@ module Norm
         bert.wont_be :deleted?
       end
 
-      it 'returns a successful result on success' do
+      it 'returns true on success' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(ernie)
-        result = subject.delete(ernie)
-        result.must_be :success?
+        subject.delete(ernie).must_equal true
       end
 
-      it 'returns unsuccessful result on constraint error' do
+      it 'returns false on constraint error' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(ernie)
         post = post_record_class.new(
           :person_id => ernie.id, :title => 'zomg', :body => 'zomg'
         )
         post_repo.insert(post)
-        result = subject.delete(ernie)
-        result.must_be :error?
-        result.value.must_be_kind_of ConstraintError
+        subject.delete(ernie).must_equal false
       end
 
       it 'raises NotFoundError if no results are returned' do
@@ -374,29 +363,25 @@ module Norm
         ernie.updated_at.must_be :>, previously_updated_at
       end
 
-      it 'returns a successful result on successful insert' do
+      it 'returns true on successful insert' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
-        result = subject.store(ernie)
-        result.must_be :success?
+        subject.store(ernie).must_equal true
       end
 
-      it 'returns successful result on successful update' do
+      it 'returns true on successful update' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(ernie)
         ernie.age = 37
-        result = subject.store(ernie)
-        result.must_be :success?
+        subject.store(ernie).must_equal true
       end
 
-      it 'returns unsuccessful result on constraint error' do
+      it 'returns false on constraint error' do
         ernie = person_record_class.new(
           :id => nil, :name => 'Ernie', :age => 36
         )
         subject.insert(ernie)
         ernie.age = 37
-        result = subject.store(ernie)
-        result.must_be :error?
-        result.value.must_be_kind_of ConstraintError
+        subject.store(ernie).must_equal false
       end
 
     end
