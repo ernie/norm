@@ -18,6 +18,22 @@ module Norm
 
   end
 
+  describe NotFoundError do
+
+    it 'is an Error' do
+      NotFoundError.new.must_be_kind_of Error
+    end
+
+  end
+
+  describe TooManyResultsError do
+
+    it 'is an Error' do
+      TooManyResultsError.new.must_be_kind_of Error
+    end
+
+  end
+
   describe ConstraintError do
 
     class BogusResult

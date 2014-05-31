@@ -97,6 +97,30 @@ module Norm
       }.new(user_record_class)
     }
 
+    let(:erroneous_repo) {
+      Class.new(PostgreSQLRepository) {
+        def primary_keys
+          [:name]
+        end
+
+        def select_statement
+          Norm::SQL.select.from('people')
+        end
+
+        def insert_statement
+          Norm::SQL.insert(:people, attribute_names)
+        end
+
+        def update_statement
+          Norm::SQL.update('people').returning('*')
+        end
+
+        def delete_statement
+          Norm::SQL.delete('people').returning('*')
+        end
+      }.new(person_record_class)
+    }
+
     subject { person_repo }
 
     before {
@@ -181,6 +205,11 @@ module Norm
         result.value.must_be_kind_of ConstraintError
       end
 
+      it 'raises NotFoundError if no results are returned' do
+        person = person_record_class.new(:name => 'Ernie', :age => 36)
+        proc { erroneous_repo.insert(person) }.must_raise NotFoundError
+      end
+
     end
 
     describe '#update' do
@@ -236,7 +265,7 @@ module Norm
         bert  = person_record_class.new(:name => 'Bert', :age => 37)
         subject.insert(ernie)
         subject.insert(bert)
-        ernie.name = 'Bert'
+        ernie.id = bert.id
         result = subject.update(ernie)
         result.must_be :error?
         result.value.must_be_kind_of ConstraintError
@@ -256,6 +285,22 @@ module Norm
         updated_at = ernie.updated_at
         result = subject.update(ernie)
         result.must_be :success?
+      end
+
+      it 'raises NotFoundError if no results are returned' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        ernie.stored!
+        ernie.age = 37
+        proc { erroneous_repo.update(ernie) }.must_raise NotFoundError
+      end
+
+      it 'raises TooManyResultsError if more than one result is returned' do
+        ernie1 = person_record_class.new(:name => 'Ernie', :age => 36)
+        ernie2 = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(ernie1)
+        subject.insert(ernie2)
+        ernie2.age = 37
+        proc { erroneous_repo.update(ernie2) }.must_raise TooManyResultsError
       end
 
     end
@@ -293,6 +338,20 @@ module Norm
         result = subject.delete(ernie)
         result.must_be :error?
         result.value.must_be_kind_of ConstraintError
+      end
+
+      it 'raises NotFoundError if no results are returned' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        ernie.stored!
+        proc { erroneous_repo.delete(ernie) }.must_raise NotFoundError
+      end
+
+      it 'raises TooManyResultsError if more than one result is returned' do
+        ernie1 = person_record_class.new(:name => 'Ernie', :age => 36)
+        ernie2 = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(ernie1)
+        subject.insert(ernie2)
+        proc { erroneous_repo.delete(ernie2) }.must_raise TooManyResultsError
       end
 
     end

@@ -30,8 +30,7 @@ Norm.connection_manager.with_connection(:primary) do |conn|
       age integer NOT NULL DEFAULT 0,
       created_at timestamp with time zone NOT NULL,
       updated_at timestamp with time zone NOT NULL,
-      CONSTRAINT people_pkey PRIMARY KEY (id),
-      CONSTRAINT people_name_unique UNIQUE (name)
+      CONSTRAINT people_pkey PRIMARY KEY (id)
     );
     CREATE TRIGGER timestamp_update_people
       BEFORE UPDATE ON people FOR EACH ROW

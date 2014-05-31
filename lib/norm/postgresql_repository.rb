@@ -2,12 +2,14 @@ module Norm
   class PostgreSQLRepository < Repository
 
     def all
-      select_records(select_statement)
+      with_connection(reader) { |conn| select_records(conn, select_statement) }
     end
 
     def fetch(*keys)
       attributes = load_attributes(Hash[primary_keys.zip(keys)])
-      select_records(select_statement.where(attributes)).first
+      with_connection(reader) do |conn|
+        select_records(conn, select_statement.where(attributes)).first
+      end
     end
 
     def store(record)
@@ -16,8 +18,9 @@ module Norm
 
     def insert(record)
       Result.capture(ConstraintError) do
-        atomically_on(writer) do
+        atomically_on(writer) do |conn|
           insert_record(
+            conn,
             insert_statement.values(
               *record.attribute_values_at(*attribute_names, default: true)
             ),
@@ -30,8 +33,9 @@ module Norm
     def update(record)
       Result.capture(ConstraintError) do
         if record.updated_attributes?
-          atomically_on(writer) do
+          atomically_on(writer) do |conn|
             update_record(
+              conn,
               scope_to_record(
                 update_statement.set(record.updated_attributes(default: true)),
                 record
@@ -45,8 +49,8 @@ module Norm
 
     def delete(record)
       Result.capture(ConstraintError) do
-        atomically_on(writer) do
-          delete_record(scope_to_record(delete_statement, record), record)
+        atomically_on(writer) do |conn|
+          delete_record(conn, scope_to_record(delete_statement, record), record)
         end
       end
     end
@@ -69,45 +73,45 @@ module Norm
 
     private
 
-    def select_records(statement)
-      with_connection(reader) do |conn|
-        conn.exec_statement(statement) do |result|
-          result.map { |tuple| record_class.from_repo(tuple) }
-        end
+    def select_records(conn, statement)
+      conn.exec_statement(statement) do |result|
+        result.map { |tuple| record_class.from_repo(tuple) }
       end
     end
 
-    def insert_record(statement, record)
-      exec_for_record(writer, statement, record) do |record|
-        record.inserted!
+    def insert_record(conn, statement, record)
+      conn.exec_statement(statement) do |result|
+        require_one_result!(result)
+        record.set_attributes(result.first) and record.inserted!
       end
     end
 
-    def update_record(statement, record)
-      exec_for_record(writer, statement, record) do |record|
-        record.updated!
+    def update_record(conn, statement, record)
+      conn.exec_statement(statement) do |result|
+        require_one_result!(result)
+        tuple = result.first
+        record.set_attributes(result.first) and record.updated!
       end
     end
 
-    def delete_record(statement, record)
-      exec_for_record(writer, statement, record) do |record|
-        record.deleted!
-      end
-    end
-
-    def exec_for_record(connection_name, statement, record, &block)
-      with_connection(connection_name) do |conn|
-        conn.exec_statement(statement) do |result|
-          if tuple = result.first
-            record.set_attributes(tuple)
-            yield record
-          end
-        end
+    def delete_record(conn, statement, record)
+      conn.exec_statement(statement) do |result|
+        require_one_result!(result)
+        record.set_attributes(result.first) and record.deleted!
       end
     end
 
     def scope_to_record(statement, record)
       statement.where(record.get_original_attributes(*primary_keys))
+    end
+
+    def require_one_result!(result)
+      if result.ntuples < 1
+        raise NotFoundError, 'No results for query!'
+      elsif result.ntuples > 1
+        raise TooManyResultsError,
+          "#{result.ntuples} rows returned when only one was expected."
+      end
     end
 
   end
