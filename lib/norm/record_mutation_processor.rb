@@ -13,6 +13,12 @@ module Norm
       }
     end
 
+    # Update the record's attributes and mark it as inserted if the query
+    # succeeds. Note that a possible (expected) failure case is a constraint
+    # error. Since we rescue and return false in this case, it's important that
+    # client code wraps the statement in a transaction before executing it, to
+    # so the transaction will have been rolled back before the constraint error
+    # is rescued here.
     def insert_one(record)
       yield ->(result, conn) {
         require_one_result!(result)
