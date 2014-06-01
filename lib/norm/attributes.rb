@@ -12,15 +12,17 @@ module Norm
         raise ArgumentError, 'Identity requires at least one attribute'
       end
       names = names.map(&:to_sym)
-      define_method(:identifiers) { |default: false|
-        get_attributes(*names, default: default)
-      }
+      define_singleton_method(:identifier_names) { names }
       define_method(:<=>) { |other|
         unless self.class.eql?(other.class) && identity? && other.identity?
           return nil
         end
         values_at(*names) <=> other.values_at(*names)
       }
+    end
+
+    def self.identifier_names
+      []
     end
 
     def self.attribute(name, loader)
@@ -50,6 +52,10 @@ module Norm
 
     def names
       self.class.names
+    end
+
+    def identifier_names
+      self.class.identifier_names
     end
 
     def []=(name, value)
@@ -99,7 +105,7 @@ module Norm
     end
 
     def identifiers(default: false)
-      {}
+      get_attributes(*identifier_names, default: default)
     end
 
     def get_attributes(*names, default: false)

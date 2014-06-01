@@ -25,6 +25,14 @@ module Norm
         attributes_class.names
       end
 
+      def identifying_attribute_names
+        attributes_class.identifier_names
+      end
+
+      def with_identifiers(*keys)
+        new(Hash[identifying_attribute_names.zip(keys)])
+      end
+
       def inherit_attributes_class(klass)
         @attributes_class ||= const_set(:Attributes, Class.new(klass))
       end
@@ -84,7 +92,11 @@ module Norm
     end
 
     def attribute_names
-      @attribute_names ||= attributes.names
+      attributes.names
+    end
+
+    def identifying_attribute_names
+      attributes.identifier_names
     end
 
     def attribute_values_at(*names, default: false)

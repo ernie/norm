@@ -12,6 +12,14 @@ module Norm
 
     end
 
+    describe '.identifier_names' do
+
+      it 'is initially empty' do
+        subject.identifier_names.must_equal []
+      end
+
+    end
+
     describe '.attribute' do
 
       it 'requires a name and a loader' do
@@ -38,6 +46,7 @@ module Norm
         Class.new(Attributes) {
           attribute :id,   Attr::Integer
           attribute :name, Attr::String
+          identity  :id
         }
       }
 
@@ -46,6 +55,11 @@ module Norm
         it 'requires at least one attribute' do
           error = proc { subject.identity }.must_raise ArgumentError
           error.message.must_equal 'Identity requires at least one attribute'
+        end
+
+        it 'sets the class identifier_names method' do
+          subject.identity :id, :name
+          subject.identifier_names.must_equal [:id, :name]
         end
 
         it 'gives instances an identifiers method returning the attributes' do
@@ -84,6 +98,14 @@ module Norm
 
         it 'returns names of attributes defined on the class' do
           subject.new.names.must_equal [:id, :name]
+        end
+
+      end
+
+      describe '#identifier_names' do
+
+        it 'returns names of identifying attributes defined on the class' do
+          subject.new.identifier_names.must_equal [:id]
         end
 
       end

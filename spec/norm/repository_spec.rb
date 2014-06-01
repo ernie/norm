@@ -10,12 +10,6 @@ module Norm
       subject.new(record_class).must_be_kind_of Repository
     end
 
-    it 'defaults PKs to the identifying attribute names of the record class' do
-      subject.new(record_class).primary_keys.must_equal(
-        record_class.new.identifying_attributes.keys
-      )
-    end
-
     it 'defaults attribute names to the attribute names of the record class' do
       subject.new(record_class).attribute_names.must_equal(
         record_class.attribute_names

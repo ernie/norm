@@ -11,9 +11,12 @@ module Norm
 
     def fetch(*keys)
       processor.select_one do |process|
-        attributes = load_attributes(Hash[primary_keys.zip(keys)])
+        identifying_record = record_class.with_identifiers(*keys)
         with_connection(reader) do |conn|
-          conn.exec_statement(select_statement.where(attributes), &process)
+          conn.exec_statement(
+            select_statement.where(identifying_record.identifying_attributes),
+            &process
+          )
         end
       end
     end
@@ -82,7 +85,11 @@ module Norm
     private
 
     def scope_to_record(statement, record)
-      statement.where(record.get_original_attributes(*primary_keys))
+      statement.where(
+        record.get_original_attributes(
+          *record_class.identifying_attribute_names
+        )
+      )
     end
 
   end

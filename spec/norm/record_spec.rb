@@ -30,6 +30,27 @@ module Norm
 
     end
 
+    describe '.identifying_attribute_names' do
+
+      it 'defaults to :id' do
+        subject.identifying_attribute_names.must_equal [:id]
+      end
+
+    end
+
+    describe '.with_identifiers' do
+
+      it 'creates a new record with the identity provided in arguments' do
+        subject.attribute :name, Attr::String
+        subject.attribute :age,  Attr::Integer
+        subject.identity :name, :age
+        record = subject.with_identifiers('Ernie', '36')
+        record.name.must_equal 'Ernie'
+        record.age.must_equal 36
+      end
+
+    end
+
     describe '.attribute' do
       subject { Class.new(Record) }
 
@@ -38,9 +59,9 @@ module Norm
         subject.attribute_names.must_equal [:my_attr]
       end
 
-      it 'adds the attribute name to #attribute_names as a string' do
+      it 'adds the attribute name to .attribute_names as a string' do
         subject.attribute 'my_attr', Attr::String
-        subject.new.attribute_names.must_equal [:my_attr]
+        subject.attribute_names.must_equal [:my_attr]
       end
 
       it 'alters only the locally-defined attribute names in a subclass' do
@@ -87,6 +108,16 @@ module Norm
       it 'sets identifying attributes for the record' do
         subject.identity :id
         subject.new.identifying_attributes.must_equal(:id => nil)
+      end
+
+      it 'adds the name to .identiifying_attribute_names as a string' do
+        subject.identity 'my_attr'
+        subject.identifying_attribute_names.must_equal [:my_attr]
+      end
+
+      it 'adds the name to .identifying_attribute_names as a symbol' do
+        subject.identity :my_attr
+        subject.identifying_attribute_names.must_equal [:my_attr]
       end
 
     end
@@ -138,9 +169,20 @@ module Norm
 
       describe '#attribute_names' do
 
-        it 'delegates to its attribute class by default' do
-          simple_record_class.send(:attributes_class).stub(:names, ['zomg']) do
-            subject.attribute_names.must_equal ['zomg']
+        it 'delegates to its attributes by default' do
+          simple_record_class.send(:attributes_class).stub(:names, [:zomg]) do
+            subject.attribute_names.must_equal [:zomg]
+          end
+        end
+
+      end
+
+      describe '#identifying_attribute_names' do
+
+        it 'delegates to its attributes by default' do
+          simple_record_class.send(:attributes_class).
+            stub(:identifier_names, [:zomg]) do
+            subject.identifying_attribute_names.must_equal [:zomg]
           end
         end
 

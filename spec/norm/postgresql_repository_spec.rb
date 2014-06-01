@@ -13,6 +13,17 @@ module Norm
       end
     }
 
+    let(:erroneous_person_record_class) {
+      Class.new(Record) do
+        attribute :id,         Attr::Integer
+        attribute :name,       Attr::String
+        attribute :age,        Attr::Integer
+        attribute :created_at, Attr::Timestamp
+        attribute :updated_at, Attr::Timestamp
+        identity  :name
+      end
+    }
+
     let(:person_repo) {
       Class.new(PostgreSQLRepository) {
         def select_statement
@@ -99,10 +110,6 @@ module Norm
 
     let(:erroneous_repo) {
       Class.new(PostgreSQLRepository) {
-        def primary_keys
-          [:name]
-        end
-
         def select_statement
           Norm::SQL.select.from('people')
         end
@@ -118,7 +125,7 @@ module Norm
         def delete_statement
           Norm::SQL.delete('people').returning('*')
         end
-      }.new(person_record_class)
+      }.new(erroneous_person_record_class)
     }
 
     subject { person_repo }
