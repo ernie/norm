@@ -157,6 +157,168 @@ module Norm
 
     end
 
+    describe 'with a composite primary key' do
+      subject { user_repo }
+
+      it 'fetches with all keys' do
+        user = user_record_class.new(
+          :username => 'ernie', :email => 'ernie@erniemiller.org',
+          :first_name => 'Ernie', :last_name => 'Miller',
+          :encrypted_password => 'zomg'
+        )
+        subject.insert(user)
+        ernie = subject.fetch 'Ernie', 'Miller'
+        ernie.username.must_equal 'ernie'
+      end
+
+      it 'deletes with all keys' do
+        user = user_record_class.new(
+          :username => 'ernie', :email => 'ernie@erniemiller.org',
+          :first_name => 'ernie', :last_name => 'miller',
+          :encrypted_password => 'zomg'
+        )
+        subject.insert(user)
+        subject.delete(user)
+        ernie = subject.fetch 'Ernie', 'Miller'
+        ernie.must_be_nil
+      end
+
+      it 'updates with all keys' do
+        user = user_record_class.new(
+          :username => 'ernie', :email => 'ernie@erniemiller.org',
+          :first_name => 'ernie', :last_name => 'miller',
+          :encrypted_password => 'zomg'
+        )
+        subject.insert(user)
+        user.first_name = 'Ernest'
+        user.last_name  = 'Mueller'
+        subject.update(user)
+        ernie = subject.fetch 'Ernest', 'Mueller'
+        ernie.username.must_equal 'ernie'
+      end
+
+    end
+
+    describe '#select_one' do
+
+      it 'executes a statement and returns a record' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(ernie)
+        record = subject.select_one(Norm::SQL.select.from(:people))
+        record.must_equal ernie
+      end
+
+    end
+
+    describe '#select_many' do
+
+      it 'executes a statement and returns an array of records' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.insert(ernie)
+        subject.insert(bert)
+        records = subject.select_many(SQL.select.from(:people))
+        records.must_include ernie
+        records.must_include bert
+      end
+
+    end
+
+    describe '#insert_one' do
+
+      it 'inserts via SQL and modifies the record, returning true on success' do
+        record = person_record_class.new
+        result = subject.insert_one(
+          SQL.insert(:people, [:name, :age]).values('Ernie', 36).returning('*'),
+          record
+        )
+        result.must_equal true
+        record.id.must_equal 1
+        record.name.must_equal 'Ernie'
+        record.age.must_equal 36
+      end
+
+      it 'returns false on constraint error' do
+        record = person_record_class.new
+        result = subject.insert_one(
+          SQL.insert(:people, [:name, :age]).values('Ernie', 36).returning('*'),
+          record
+        )
+        result.must_equal true
+        result = subject.insert_one(
+          SQL.insert(:people, [:id, :name, :age]).
+            values(record.id, 'Ernie', 36).returning('*'),
+          record
+        )
+        result.must_equal false
+      end
+
+    end
+
+    describe '#update_one' do
+
+      it 'updates via SQL and modifies the record, returning true on success' do
+        record = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(record)
+        record.name = 'Just making the processor think I was updated'
+        result = subject.update_one(
+          SQL.update(:people).set(:age => 37).where(:id => record.id).
+            returning('*'),
+          record
+        )
+        result.must_equal true
+        record.name.must_equal 'Ernie'
+        record.age.must_equal 37
+      end
+
+      it 'returns false on constraint error' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert  = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.insert(ernie)
+        subject.insert(bert)
+        original_id = bert.id
+        bert.name = 'Updated name'
+        result = subject.update_one(
+          SQL.update(:people).set(:id => ernie.id).where(:id => bert.id).
+            returning('*'),
+          bert
+        )
+        result.must_equal false
+        bert.id.must_equal original_id
+      end
+
+    end
+
+    describe '#delete_one' do
+
+      it 'deletes via SQL and modifies the record, returning true on success' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(ernie)
+        result = subject.delete_one(
+          SQL.delete(:people).where(:id => ernie.id).returning('*'),
+          ernie
+        )
+        result.must_equal true
+        ernie.must_be :deleted?
+      end
+
+      it 'returns false on constraint error' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(ernie)
+        post  = post_record_class.new(
+          :person_id => ernie.id, :title => 'Title', :body => 'Body'
+        )
+        post_repo.insert(post)
+        result = subject.delete_one(
+          SQL.delete(:people).where(:id => ernie.id).returning('*'),
+          ernie
+        )
+        result.must_equal false
+        ernie.wont_be :deleted?
+      end
+
+    end
+
     describe '#all' do
 
       it 'returns a list of all records in the store' do
@@ -389,48 +551,6 @@ module Norm
         subject.insert(ernie)
         ernie.age = 37
         subject.store(ernie).must_equal false
-      end
-
-    end
-
-    describe 'with a composite primary key' do
-      subject { user_repo }
-
-      it 'fetches with all keys' do
-        user = user_record_class.new(
-          :username => 'ernie', :email => 'ernie@erniemiller.org',
-          :first_name => 'Ernie', :last_name => 'Miller',
-          :encrypted_password => 'zomg'
-        )
-        subject.insert(user)
-        ernie = subject.fetch 'Ernie', 'Miller'
-        ernie.username.must_equal 'ernie'
-      end
-
-      it 'deletes with all keys' do
-        user = user_record_class.new(
-          :username => 'ernie', :email => 'ernie@erniemiller.org',
-          :first_name => 'ernie', :last_name => 'miller',
-          :encrypted_password => 'zomg'
-        )
-        subject.insert(user)
-        subject.delete(user)
-        ernie = subject.fetch 'Ernie', 'Miller'
-        ernie.must_be_nil
-      end
-
-      it 'updates with all keys' do
-        user = user_record_class.new(
-          :username => 'ernie', :email => 'ernie@erniemiller.org',
-          :first_name => 'ernie', :last_name => 'miller',
-          :encrypted_password => 'zomg'
-        )
-        subject.insert(user)
-        user.first_name = 'Ernest'
-        user.last_name  = 'Mueller'
-        subject.update(user)
-        ernie = subject.fetch 'Ernest', 'Mueller'
-        ernie.username.must_equal 'ernie'
       end
 
     end

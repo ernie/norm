@@ -2,23 +2,14 @@ module Norm
   class PostgreSQLRepository < Repository
 
     def all
-      processor.select_many do |process|
-        with_connection(reader) do |conn|
-          conn.exec_statement(select_statement, &process)
-        end
-      end
+      select_many(select_statement)
     end
 
     def fetch(*keys)
-      processor.select_one do |process|
-        identifying_record = record_class.with_identifiers(*keys)
-        with_connection(reader) do |conn|
-          conn.exec_statement(
-            select_statement.where(identifying_record.identifying_attributes),
-            &process
-          )
-        end
-      end
+      identifying_record = record_class.with_identifiers(*keys)
+      select_one(
+        select_statement.where(identifying_record.identifying_attributes)
+      )
     end
 
     def store(record)
@@ -26,40 +17,69 @@ module Norm
     end
 
     def insert(record)
-      processor.insert_one(record) do |process|
-        atomically_on(writer) do |conn|
-          conn.exec_statement(
-            insert_statement.values(
-              *record.attribute_values_at(*attribute_names, default: true)
-            ),
-            &process
-          )
-        end
-      end
+      insert_one(
+        insert_statement.values(
+          *record.attribute_values_at(*attribute_names, default: true)
+        ),
+        record
+      )
     end
 
     def update(record)
-      processor.update_one(record) do |process|
-        atomically_on(writer) do |conn|
-          conn.exec_statement(
-            scope_to_record(
-              update_statement.set(record.updated_attributes(default: true)),
-              record
-            ),
-            &process
-          )
-        end
-      end
+      update_one(
+        scope_to_record(
+          update_statement.set(record.updated_attributes(default: true)),
+          record
+        ),
+        record
+      )
     end
 
     def delete(record)
-      processor.delete_one(record) do |process|
-        atomically_on(writer) do |conn|
-          conn.exec_statement(
-            scope_to_record(delete_statement, record), &process
-          )
+      delete_one(scope_to_record(delete_statement, record), record)
+    end
+
+    def select_one(statement, connection: reader, processor: self.processor)
+      processor.select_one { |process|
+        with_connection(connection) do |conn|
+          conn.exec_statement(statement, &process)
         end
-      end
+      }
+    end
+
+    def select_many(statement, connection: reader, processor: self.processor)
+      processor.select_many { |process|
+        with_connection(connection) do |conn|
+          conn.exec_statement(statement, &process)
+        end
+      }
+    end
+
+    def insert_one(statement, record,
+                   connection: reader, processor: self.processor)
+      processor.insert_one(record) { |process|
+        atomically_on(connection) do |conn|
+          conn.exec_statement(statement, &process)
+        end
+      }
+    end
+
+    def update_one(statement, record,
+                   connection: writer, processor: self.processor)
+      processor.update_one(record) { |process|
+        atomically_on(connection) do |conn|
+          conn.exec_statement(statement, &process)
+        end
+      }
+    end
+
+    def delete_one(statement, record,
+                   connection: writer, processor: self.processor)
+      processor.delete_one(record) { |process|
+        atomically_on(connection) do |conn|
+          conn.exec_statement(statement, &process)
+        end
+      }
     end
 
     def select_statement
