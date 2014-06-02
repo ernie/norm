@@ -19,17 +19,18 @@ module Norm
     # client code wraps the statement in a transaction before executing it, to
     # so the transaction will have been rolled back before the constraint error
     # is rescued here.
-    def insert_one(record)
+    def insert_one(record, constraint_delegate = record)
       yield ->(result, conn) {
         require_one_result!(result)
         record.set_attributes(result.first) and record.inserted!
       }
       true
     rescue ConstraintError => e
+      constraint_delegate.constraint_error!(e)
       false
     end
 
-    def update_one(record)
+    def update_one(record, constraint_delegate = record)
       return true unless record.updated_attributes?
 
       yield ->(result, conn) {
@@ -38,10 +39,11 @@ module Norm
       }
       true
     rescue ConstraintError => e
+      constraint_delegate.constraint_error!(e)
       false
     end
 
-    def delete_one(record)
+    def delete_one(record, constraint_delegate = record)
       return true if record.deleted?
 
       yield ->(result, conn) {
@@ -50,6 +52,7 @@ module Norm
       }
       true
     rescue ConstraintError => e
+      constraint_delegate.constraint_error!(e)
       false
     end
 

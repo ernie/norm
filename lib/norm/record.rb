@@ -59,6 +59,14 @@ module Norm
         new(attributes).tap { |record| record.stored! }
       end
 
+      def constraints
+        rules = Constraint::RuleSet.new
+        yield rules
+        define_method(:constraint_rule_for) { |error|
+          rules.match(error) || super(error)
+        }
+      end
+
     end
 
     identity :id
@@ -72,6 +80,14 @@ module Norm
       else
         @attributes = self.class::Attributes.new(attributes)
       end
+    end
+
+    def constraint_rule_for(error)
+      nil
+    end
+
+    def constraint_error!(error)
+      false
     end
 
     def inspect

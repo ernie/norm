@@ -73,6 +73,14 @@ module Norm
         record_class.respond_to?(method_id, include_private) or super
       end
 
+      def constraints
+        rules = Constraint::RuleSet.new
+        yield rules
+        define_method(:constraint_rule_for) { |error|
+          rules.match(error) || super(error)
+        }
+      end
+
       def method_missing(method_id, *args, &block)
         if record_class.respond_to?(method_id)
           record_class.send(method_id, *args, &block)

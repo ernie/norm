@@ -9,6 +9,7 @@ require 'norm/attribute'
 require 'norm/attributes'
 require 'norm/result_processor'
 require 'norm/repository'
+require 'norm/constraint'
 require 'norm/record'
 require 'norm/record_delegator'
 
