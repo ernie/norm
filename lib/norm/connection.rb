@@ -72,7 +72,8 @@ module Norm
       raise ConnectionResetError, 'The DB connection was reset',
         e.backtrace
     rescue PG::IntegrityConstraintViolation => e
-      raise Norm::ConstraintError.new(e), 'Constraint violation', e.backtrace
+      raise Norm::Constraint::ConstraintError.new(e),
+        'Constraint violation', e.backtrace
     end
 
     def _with_savepoint(&block)

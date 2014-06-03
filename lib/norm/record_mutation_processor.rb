@@ -25,7 +25,7 @@ module Norm
         record.set_attributes(result.first) and record.inserted!
       }
       true
-    rescue ConstraintError => e
+    rescue Constraint::ConstraintError => e
       constraint_delegate.constraint_error!(e)
       false
     end
@@ -38,7 +38,7 @@ module Norm
         record.set_attributes(result.first) and record.updated!
       }
       true
-    rescue ConstraintError => e
+    rescue Constraint::ConstraintError => e
       constraint_delegate.constraint_error!(e)
       false
     end
@@ -51,7 +51,7 @@ module Norm
         record.set_attributes(result.first) and record.deleted!
       }
       true
-    rescue ConstraintError => e
+    rescue Constraint::ConstraintError => e
       constraint_delegate.constraint_error!(e)
       false
     end

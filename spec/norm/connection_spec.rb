@@ -72,7 +72,7 @@ module Norm
           raise check_violation
         })
         error = proc { subject.exec_string('select 1') }.
-          must_raise ConstraintError
+          must_raise Constraint::ConstraintError
         error.message.must_equal 'Constraint violation'
         error.error.must_equal check_violation
         error.backtrace.must_equal check_violation.backtrace
@@ -132,7 +132,7 @@ module Norm
           raise check_violation
         })
         error = proc { subject.exec_params('select $1', [1], 0) }.
-          must_raise ConstraintError
+          must_raise Constraint::ConstraintError
         error.message.must_equal 'Constraint violation'
         error.error.must_equal check_violation
         error.backtrace.must_equal check_violation.backtrace
@@ -193,7 +193,7 @@ module Norm
           raise check_violation
         })
         error = proc { subject.exec_statement(statement, 1) }.
-          must_raise ConstraintError
+          must_raise Constraint::ConstraintError
         error.message.must_equal 'Constraint violation'
         error.error.must_equal check_violation
         error.backtrace.must_equal check_violation.backtrace
