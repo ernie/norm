@@ -1,6 +1,7 @@
 module Norm
   module Constraint
     class RuleSet
+      attr_reader :rules
 
       def initialize
         @rules = []
