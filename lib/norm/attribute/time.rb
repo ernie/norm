@@ -68,5 +68,10 @@ module Norm
       end
 
     end
+
+    def self.Time(*)
+      Time
+    end
+
   end
 end

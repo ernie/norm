@@ -132,6 +132,14 @@ module Norm
 
       end
 
+      describe 'Interval()' do
+
+        it 'returns Interval' do
+          Attribute::Interval().must_be_same_as Interval
+        end
+
+      end
+
     end
   end
 end

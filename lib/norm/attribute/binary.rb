@@ -35,5 +35,10 @@ module Norm
       end
 
     end
+
+    def self.Binary(*)
+      Binary
+    end
+
   end
 end

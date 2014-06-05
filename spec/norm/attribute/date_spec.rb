@@ -40,6 +40,14 @@ module Norm
         end
       end
 
+      describe 'Date()' do
+
+        it 'returns Date' do
+          Attribute::Date().must_be_same_as Date
+        end
+
+      end
+
     end
   end
 end

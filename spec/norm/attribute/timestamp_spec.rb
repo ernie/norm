@@ -90,6 +90,14 @@ module Norm
 
       end
 
+      describe 'Timestamp()' do
+
+        it 'returns Timestamp' do
+          Attribute::Timestamp().must_be_same_as Timestamp
+        end
+
+      end
+
     end
   end
 end

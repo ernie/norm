@@ -141,5 +141,10 @@ module Norm
       end
 
     end
+
+    def self.Interval(*)
+      Interval
+    end
+
   end
 end

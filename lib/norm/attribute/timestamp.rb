@@ -40,5 +40,10 @@ module Norm
       end
 
     end
+
+    def self.Timestamp(*)
+      Timestamp
+    end
+
   end
 end

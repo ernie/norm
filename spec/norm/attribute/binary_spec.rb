@@ -28,6 +28,14 @@ module Norm
         end
       end
 
+      describe 'Binary()' do
+
+        it 'returns Binary' do
+          Attribute::Binary().must_be_same_as Binary
+        end
+
+      end
+
     end
   end
 end

@@ -43,6 +43,14 @@ module Norm
 
       end
 
+      describe 'Time()' do
+
+        it 'returns Time' do
+          Attribute::Time().must_be_same_as Time
+        end
+
+      end
+
     end
   end
 end

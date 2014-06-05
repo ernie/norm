@@ -26,5 +26,10 @@ module Norm
       end
 
     end
+
+    def self.Date(*)
+      Date
+    end
+
   end
 end
