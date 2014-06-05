@@ -26,7 +26,7 @@ module Norm
       }
       true
     rescue Constraint::ConstraintError => e
-      constraint_delegate.constraint_error!(e)
+      constraint_delegate.constraint_error(e)
       false
     end
 
@@ -39,7 +39,7 @@ module Norm
       }
       true
     rescue Constraint::ConstraintError => e
-      constraint_delegate.constraint_error!(e)
+      constraint_delegate.constraint_error(e)
       false
     end
 
@@ -52,7 +52,7 @@ module Norm
       }
       true
     rescue Constraint::ConstraintError => e
-      constraint_delegate.constraint_error!(e)
+      constraint_delegate.constraint_error(e)
       false
     end
 

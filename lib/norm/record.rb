@@ -86,8 +86,8 @@ module Norm
       nil
     end
 
-    def constraint_error!(error)
-      false
+    def constraint_error(error)
+      nil
     end
 
     def inspect
