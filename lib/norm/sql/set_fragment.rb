@@ -14,13 +14,15 @@ module Norm
         sql    = []
         params = []
         hash.map { |attr, value|
-          if value.nil?
-            sql << "#{quote_identifier(attr)} = NULL"
-          elsif Attribute::DEFAULT == value
-            sql << "#{quote_identifier(attr)} = DEFAULT"
+          attr = Attribute::Identifier(attr)
+          case value
+          when nil
+            sql << "#{attr} = NULL"
+          when Attribute::Default, Attribute::Identifier
+            sql << "#{attr} = #{value}"
           else
             params << value
-            sql << "#{quote_identifier(attr)} = $?"
+            sql << "#{attr} = $?"
           end
         }
         [sql.join(', '), params]

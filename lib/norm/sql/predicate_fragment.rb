@@ -14,20 +14,24 @@ module Norm
         sql    = []
         params = []
         hash.map { |attr, value|
-          if value.nil?
-            sql << "#{quote_identifier(attr)} IS NULL"
-          elsif Array === value
+          attr = Attribute::Identifier(attr)
+          case value
+          when nil
+            sql << "#{attr} IS NULL"
+          when Attribute::Default, Attribute::Identifier
+            sql << "#{attr} = #{value}"
+          when Array
             if value.include?(nil)
               sql << 'FALSE /* IN with NULL value is never TRUE */'
             else
-              sql << "#{quote_identifier(attr)} IN (#{
+              sql << "#{attr} IN (#{
                 (['$?'] * value.size).join(', ')
               })"
               params.concat(value)
             end
           else
             params << value
-            sql << "#{quote_identifier(attr)} = $?"
+            sql << "#{attr} = $?"
           end
         }
         [sql.join(' AND '), params]

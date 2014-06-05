@@ -17,10 +17,6 @@ module Norm
 
       private
 
-      def quote_identifier(stringable)
-        PG::Connection.quote_ident(stringable.to_s)
-      end
-
       def interpolate_hash_params(sql, hash_params)
         hash_params = stringify_hash(hash_params)
         sql.gsub(HASH_INTERPOLATION) { |match|

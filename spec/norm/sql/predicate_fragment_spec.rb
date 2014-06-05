@@ -66,6 +66,18 @@ module Norm
           fragment.params.must_be :empty?
         end
 
+        it 'builds sql/params with DEFAULT if an Default is on RHS' do
+          fragment = subject.new(:id => Attribute::DEFAULT)
+          fragment.sql.must_equal '"id" = DEFAULT'
+          fragment.params.must_be :empty?
+        end
+
+        it 'builds sql/params with identifier if an identifier is on RHS' do
+          fragment = subject.new(:id => Attribute::Identifier('people.id'))
+          fragment.sql.must_equal '"id" = "people"."id"'
+          fragment.params.must_be :empty?
+        end
+
         it 'builds sql/params with IN if an array is on RHS' do
           fragment = subject.new(:id => [1, 2])
           fragment.sql.must_equal '"id" IN ($?, $?)'

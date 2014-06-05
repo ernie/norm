@@ -36,10 +36,10 @@ module Norm
       def insert!(table_name, column_names)
         column_names = Array(column_names)
         if column_names.empty?
-          @insert.value = Fragment.new(quote_identifier(table_name))
+          @insert.value = Fragment.new(Attribute::Identifier(table_name))
         else
           table, *cols = [table_name, *column_names].map { |name|
-            quote_identifier(name)
+            Attribute::Identifier(name)
           }
           @insert.value = Fragment.new("#{table} (#{cols.join(', ')})")
         end

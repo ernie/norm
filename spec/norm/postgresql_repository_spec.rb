@@ -415,6 +415,18 @@ module Norm
         person.updated_at.must_be :>, previous_updated_at
       end
 
+      it 'allows setting an attribute to an identifier' do
+        person = person_record_class.new(:name => 'Ernie', :age => 36)
+        subject.insert(person)
+        person = subject.fetch(person.id)
+        person.age = Attribute::Identifier('id')
+        previous_updated_at = person.updated_at
+        subject.update(person).must_equal true
+        person = subject.fetch(person.id)
+        person.age.must_equal person.id
+        person.updated_at.must_be :>, previous_updated_at
+      end
+
       it 'returns true on success' do
         person = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(person)
