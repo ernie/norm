@@ -10,12 +10,12 @@ module Norm
 
     def initialize(attributes = {})
       if block_given?
-        record_class.new(attributes) do |record|
+        __record_class__.new(attributes) do |record|
           @__record__ = record
           yield self
         end
       else
-        @__record__ = record_class.new(attributes)
+        @__record__ = __record_class__.new(attributes)
       end
     end
 
@@ -70,7 +70,7 @@ module Norm
       end
 
       def respond_to_missing?(method_id, include_private = false)
-        record_class.respond_to?(method_id, include_private) or super
+        __record_class__.respond_to?(method_id, include_private) or super
       end
 
       def constraints
@@ -82,8 +82,8 @@ module Norm
       end
 
       def method_missing(method_id, *args, &block)
-        if record_class.respond_to?(method_id)
-          record_class.send(method_id, *args, &block)
+        if __record_class__.respond_to?(method_id)
+          __record_class__.send(method_id, *args, &block)
         else
           super
         end
@@ -94,16 +94,18 @@ module Norm
   end
 
   def self.RecordDelegator(klass)
-    mod = Module.new {
-      define_singleton_method(:included) { |base|
-        base.class_eval {
-          define_method(:record_class) { klass }
-          define_singleton_method(:record_class) { klass }
-          include RecordDelegator
+    Module.new.tap { |generated_module|
+      generated_module.module_eval {
+        define_method(:__record_class__) { klass }
+        alias_method :record_class, :__record_class__
+        define_singleton_method(:included) { |base|
+          base.class_eval {
+            extend  generated_module
+            include RecordDelegator
+          }
         }
       }
     }
-    mod
   end
 
 end
