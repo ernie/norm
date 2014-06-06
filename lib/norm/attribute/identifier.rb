@@ -42,8 +42,12 @@ module Norm
 
     end
 
-    def self.Identifier(*args)
-      Identifier.new(*args)
+    def self.Identifier(value)
+      if Identifier === value
+        value
+      else
+        Identifier.new(value)
+      end
     end
 
   end

@@ -112,6 +112,11 @@ module Norm
           id.value.must_equal '"people"."id"'
         end
 
+        it 'returns same Identifier if value is already an Identifier' do
+          id = Attribute::Identifier('people.id')
+          Attribute::Identifier(id).must_be_same_as id
+        end
+
       end
 
     end
