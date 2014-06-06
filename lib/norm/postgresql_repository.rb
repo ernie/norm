@@ -56,7 +56,7 @@ module Norm
     end
 
     def insert_one(statement, record,
-                   connection: reader, processor: self.processor)
+                   connection: writer, processor: self.processor)
       processor.insert_one(record) { |process|
         atomically_on(connection) do |conn|
           conn.exec_statement(statement, &process)
