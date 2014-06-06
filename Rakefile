@@ -9,6 +9,13 @@ end
 
 task :default => :test
 
+namespace :test do
+  task :integration do
+    ENV['INTEGRATION'] = 'true'
+    task(:test).execute
+  end
+end
+
 task :console do
   require 'irb'
   require 'irb/completion'

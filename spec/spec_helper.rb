@@ -2,6 +2,17 @@ require 'minitest/autorun'
 require 'minitest/mock'
 require 'norm'
 
+require 'integration_helper' if ENV['INTEGRATION'] == 'true'
+
+module Kernel
+  def describe_integration(*args, &block)
+    if ENV['INTEGRATION'] == 'true'
+      describe(*args, &block)
+    end
+  end
+end
+
+
 Norm.init!('primary' => {:user=> 'norm_test'})
 Norm.connection_manager.with_connection(:primary) do |conn|
   conn.exec_string('SET client_min_messages TO WARNING')

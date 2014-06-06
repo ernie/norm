@@ -22,6 +22,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rake'
   spec.add_development_dependency 'guard-minitest'
   spec.add_development_dependency 'terminal-notifier-guard'
+  spec.add_development_dependency 'activemodel', '~> 4.0'
 
   spec.add_dependency 'pg'
   spec.add_dependency 'connection_pool'

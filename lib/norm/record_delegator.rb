@@ -91,17 +91,58 @@ module Norm
 
     end
 
+    module Railsification
+
+      def self.included(base)
+        base.extend(ClassMethods)
+      end
+
+      def persisted?
+        __record__.stored?
+      end
+
+      def new_record?
+        !persisted?
+      end
+
+      def to_key
+        __record__.identifying_attributes.values
+      end
+
+      def constraint_error(error)
+        if rule = constraint_rule_for(error)
+          rule.each do |attr, message|
+            errors.add(attr, message)
+          end
+        end
+      end
+
+      module ClassMethods
+        def model_name
+          ActiveModel::Name.new(__record_class__)
+        end
+      end
+
+    end
+
   end
 
-  def self.RecordDelegator(klass)
+  def self.RecordDelegator(klass, railsify: false)
     Module.new.tap { |generated_module|
       generated_module.module_eval {
         define_method(:__record_class__) { klass }
         alias_method :record_class, :__record_class__
         define_singleton_method(:included) { |base|
           base.class_eval {
-            extend  generated_module
+            if railsify
+              extend  ActiveModel::Naming
+              extend  ActiveModel::Translation
+              include ActiveModel::Validations
+              include ActiveModel::Conversion
+              include RecordDelegator::Railsification
+            end
             include RecordDelegator
+            extend  generated_module
           }
         }
       }
