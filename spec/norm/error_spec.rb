@@ -26,10 +26,10 @@ module Norm
 
   end
 
-  describe TooManyResultsError do
+  describe ResultMismatchError do
 
     it 'is an Error' do
-      TooManyResultsError.new.must_be_kind_of Error
+      ResultMismatchError.new.must_be_kind_of Error
     end
 
   end

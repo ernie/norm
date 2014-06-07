@@ -21,8 +21,21 @@ module Norm
     # is rescued here.
     def insert_one(record, constraint_delegate: record)
       yield ->(result, conn) {
-        require_one_result!(result)
+        assert_result_size(1, result)
         record.set_attributes(result.first) and record.inserted!
+      }
+      true
+    rescue Constraint::ConstraintError => e
+      constraint_delegate.constraint_error(e)
+      false
+    end
+
+    def insert_many(records, constraint_delegate: nil)
+      records = Norm::RecordCollection(records)
+      constraint_delegate ||= records
+      yield ->(result, conn) {
+        assert_result_size(records.size, result)
+        records.insert_attributes(result) and records.inserted!
       }
       true
     rescue Constraint::ConstraintError => e
@@ -34,7 +47,7 @@ module Norm
       return true unless record.updated_attributes?
 
       yield ->(result, conn) {
-        require_one_result!(result)
+        assert_result_size(1, result)
         record.set_attributes(result.first) and record.updated!
       }
       true
@@ -47,7 +60,7 @@ module Norm
       return true if record.deleted?
 
       yield ->(result, conn) {
-        require_one_result!(result)
+        assert_result_size(1, result)
         record.set_attributes(result.first) and record.deleted!
       }
       true

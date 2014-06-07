@@ -40,12 +40,10 @@ module Norm
 
     private
 
-    def require_one_result!(result)
-      if result.ntuples < 1
-        raise NotFoundError, 'No results for query!'
-      elsif result.ntuples > 1
-        raise TooManyResultsError,
-          "#{result.ntuples} rows returned when only one was expected."
+    def assert_result_size(size, result)
+      if result.ntuples != size
+        raise ResultMismatchError,
+          "#{result.ntuples} results returned, but #{size} was expected"
       end
     end
 

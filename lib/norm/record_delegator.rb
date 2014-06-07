@@ -49,6 +49,11 @@ module Norm
       self
     end
 
+    def <=>(other)
+      return nil unless self.class <=> other.class
+      self.__record__ <=> other.__record__
+    end
+
     def ==(other)
       !!(self.class <=> other.class) &&
         self.__record__ == other.__record__

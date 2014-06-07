@@ -11,6 +11,16 @@ module Norm
       end
     }
 
+    let(:simple_record_subclass) { Class.new(simple_record_class) }
+
+    let(:another_record_class) {
+      Class.new(Record) do
+        attribute :id,   Attr::Integer
+        attribute :name, Attr::String
+        attribute :age,  Attr::Integer
+      end
+    }
+
     subject { Class.new(Norm::Record) }
 
     it 'creates an AttributeMethods module inside the inheriting class' do
@@ -348,6 +358,14 @@ module Norm
 
       end
 
+      describe '#valid?' do
+
+        it 'defaults to true' do
+          subject.must_be :valid?
+        end
+
+      end
+
       describe '#constraint_rule_for' do
 
         it 'returns nil by default' do
@@ -578,7 +596,65 @@ module Norm
 
       end
 
-    end
+      describe '#<=>' do
+
+        it 'is 0 for attributes with matching identifiers' do
+          record1 = simple_record_class.new(:id => 1, :name => 'Ernie')
+          record2 = simple_record_class.new(:id => 1, :name => 'Bert')
+          (record1 <=> record2).must_equal 0
+        end
+
+        it 'is -1 for record1 identifiers < record2 identifiers' do
+          record1 = simple_record_class.new(:id => 1, :name => 'Ernie')
+          record2 = simple_record_class.new(:id => 2, :name => 'Ernie')
+          (record1 <=> record2).must_equal -1
+        end
+
+        it 'is 1 for record1 identifiers > record2 identifiers' do
+          record1 = simple_record_class.new(:id => 2, :name => 'Ernie')
+          record2 = simple_record_class.new(:id => 1, :name => 'Ernie')
+          (record1 <=> record2).must_equal 1
+        end
+
+        it 'is nil if attributes are missing identity' do
+          record1 = simple_record_class.new(:name => 'Ernie')
+          record2 = simple_record_class.new(:name => 'Ernie')
+          (record1 <=> record2).must_be_nil
+        end
+
+        it 'is 0 for otherwise identical ancestor <=> child comparison' do
+          record1 = simple_record_class.new(:id => 1, :name => 'Ernie')
+          record2 = simple_record_subclass.new(:id => 1, :name => 'Ernie')
+          (record1 <=> record2).must_equal 0
+        end
+
+        it 'is 0 for otherwise identical child <=> ancestor comparison' do
+          record1 = simple_record_class.new(:id => 1, :name => 'Ernie')
+          record2 = simple_record_subclass.new(:id => 1, :name => 'Ernie')
+          (record2 <=> record1).must_equal 0
+        end
+
+        it 'is nil for identical classes when not subclasses' do
+          record1 = simple_record_class.new(:id => 1, :name => 'Ernie')
+          record2 = another_record_class.new(:id => 1, :name => 'Ernie')
+          (record1 <=> record2).must_be_nil
+        end
+
+        it 'sorts when all objects are comparable' do
+          record1 = simple_record_class.new(:id => 2, :name => 'Bert')
+          record2 = simple_record_class.new(:id => 1, :name => 'Ernie')
+          [record1, record2].sort.must_equal [record2, record1]
+        end
+
+        it 'raises ArgumentError on sort when an object is not comparable' do
+          record1 = simple_record_class.new(:id => 2, :name => 'Bert')
+          record2 = another_record_class.new(:id => 1, :name => 'Ernie')
+          proc { [record1, record2].sort }.must_raise ArgumentError
+        end
+
+      end
+
+    end # Instance methods
 
   end
 end

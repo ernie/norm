@@ -618,16 +618,16 @@ module Norm
             (attr1 <=> attr2).must_be_nil
           end
 
-          it 'is nil for ancestor <=> child comparison' do
+          it 'is 0 for otherwise identical ancestor <=> child comparison' do
             attr1 = subject.new(:id => 1, :name => 'Ernie')
             attr2 = attributes1_subclass.new(:id => 1, :name => 'Ernie')
-            (attr1 <=> attr2).must_be_nil
+            (attr1 <=> attr2).must_equal 0
           end
 
-          it 'is nil for child <=> ancestor comparison' do
+          it 'is 0 for otherwise identical child <=> ancestor comparison' do
             attr1 = subject.new(:id => 1, :name => 'Ernie')
             attr2 = attributes1_subclass.new(:id => 1, :name => 'Ernie')
-            (attr2 <=> attr1).must_be_nil
+            (attr2 <=> attr1).must_equal 0
           end
 
           it 'is nil for identical classes when not subclasses' do

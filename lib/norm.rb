@@ -12,6 +12,7 @@ require 'norm/repository'
 require 'norm/constraint'
 require 'norm/record'
 require 'norm/record_delegator'
+require 'norm/record_collection'
 
 module Norm
 

@@ -64,6 +64,15 @@ module Norm
       }
     end
 
+    def insert_many(statement, records,
+                   connection: writer, processor: self.processor)
+      processor.insert_many(records) { |process|
+        atomically_on(connection) do |conn|
+          conn.exec_statement(statement, &process)
+        end
+      }
+    end
+
     def update_one(statement, record,
                    connection: writer, processor: self.processor)
       processor.update_one(record) { |process|

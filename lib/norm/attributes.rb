@@ -13,12 +13,6 @@ module Norm
       end
       names = names.map(&:to_sym)
       define_singleton_method(:identifier_names) { names }
-      define_method(:<=>) { |other|
-        unless self.class.eql?(other.class) && identity? && other.identity?
-          return nil
-        end
-        values_at(*names) <=> other.values_at(*names)
-      }
     end
 
     def self.identifier_names
@@ -148,6 +142,15 @@ module Norm
       }>"
     end
 
+    def <=>(other)
+      unless (self.class <=> other.class) &&
+        (self.identifier_names == other.identifier_names) &&
+        self.identity? && other.identity?
+        return nil
+      end
+      values_at(*identifier_names) <=> other.values_at(*identifier_names)
+    end
+
     def ==(other)
       !!(self.class <=> other.class) &&
         self.identity? && other.identity? &&
@@ -166,10 +169,6 @@ module Norm
       else
         super
       end
-    end
-
-    def <=>(other)
-      nil
     end
 
     private

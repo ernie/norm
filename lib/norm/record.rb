@@ -82,6 +82,10 @@ module Norm
       end
     end
 
+    def valid?
+      true
+    end
+
     def constraint_rule_for(error)
       nil
     end
@@ -186,6 +190,11 @@ module Norm
 
     def deleted?
       @_deleted == true
+    end
+
+    def <=>(other)
+      return nil unless self.class <=> other.class
+      self.attributes <=> other.attributes
     end
 
     def ==(other)

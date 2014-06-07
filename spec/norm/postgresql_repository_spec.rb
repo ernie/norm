@@ -255,6 +255,37 @@ module Norm
 
     end
 
+    describe '#insert_many' do
+
+      it 'executes statement and modifies records, returning true on success' do
+        records = 2.times.map { person_record_class.new }
+        result = subject.insert_many(
+          SQL.insert(:people, [:name, :age]).
+            values('Ernie', 36).values('Bert', 37).returning('*'),
+          records
+        )
+        result.must_equal true
+        ernie, bert = records
+        ernie.get_attributes(:id, :name, :age).must_equal(
+          :id => 1, :name => 'Ernie', :age => 36
+        )
+        bert.get_attributes(:id, :name, :age).must_equal(
+          :id => 2, :name => 'Bert', :age => 37
+        )
+      end
+
+      it 're-raises constraint error if encountered' do
+        records = 2.times.map { person_record_class.new }
+        result = subject.insert_many(
+            SQL.insert(:people, [:id, :name, :age]).
+              values(nil, 'Ernie', 36).returning('*'),
+            records
+          )
+        result.must_equal false
+      end
+
+    end
+
     describe '#update_one' do
 
       it 'updates via SQL and modifies the record, returning true on success' do
@@ -371,9 +402,9 @@ module Norm
         subject.insert(person).must_equal false
       end
 
-      it 'raises NotFoundError if no results are returned' do
+      it 'raises ResultMismatchError if no results are returned' do
         person = person_record_class.new(:name => 'Ernie', :age => 36)
-        proc { erroneous_repo.insert(person) }.must_raise NotFoundError
+        proc { erroneous_repo.insert(person) }.must_raise ResultMismatchError
       end
 
     end
@@ -460,20 +491,20 @@ module Norm
         subject.update(ernie).must_equal true
       end
 
-      it 'raises NotFoundError if no results are returned' do
+      it 'raises ResultMismatchError if no results are returned' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         ernie.stored!
         ernie.age = 37
-        proc { erroneous_repo.update(ernie) }.must_raise NotFoundError
+        proc { erroneous_repo.update(ernie) }.must_raise ResultMismatchError
       end
 
-      it 'raises TooManyResultsError if more than one result is returned' do
+      it 'raises ResultMismatchError if more than one result is returned' do
         ernie1 = person_record_class.new(:name => 'Ernie', :age => 36)
         ernie2 = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(ernie1)
         subject.insert(ernie2)
         ernie2.age = 37
-        proc { erroneous_repo.update(ernie2) }.must_raise TooManyResultsError
+        proc { erroneous_repo.update(ernie2) }.must_raise ResultMismatchError
       end
 
     end
@@ -510,18 +541,18 @@ module Norm
         subject.delete(ernie).must_equal false
       end
 
-      it 'raises NotFoundError if no results are returned' do
+      it 'raises ResultMismatchError if no results are returned' do
         ernie = person_record_class.new(:name => 'Ernie', :age => 36)
         ernie.stored!
-        proc { erroneous_repo.delete(ernie) }.must_raise NotFoundError
+        proc { erroneous_repo.delete(ernie) }.must_raise ResultMismatchError
       end
 
-      it 'raises TooManyResultsError if more than one result is returned' do
+      it 'raises ResultMismatchError if more than one result is returned' do
         ernie1 = person_record_class.new(:name => 'Ernie', :age => 36)
         ernie2 = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert(ernie1)
         subject.insert(ernie2)
-        proc { erroneous_repo.delete(ernie2) }.must_raise TooManyResultsError
+        proc { erroneous_repo.delete(ernie2) }.must_raise ResultMismatchError
       end
 
     end

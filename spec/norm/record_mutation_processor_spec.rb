@@ -86,19 +86,19 @@ module Norm
         record.id.must_equal 1
       end
 
-      it 'raises NotFoundError if no tuples returned' do
+      it 'raises ResultMismatchError if no tuples returned' do
         record = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert_one(record) do |process|
-          proc { process.call(no_tuples, nil) }.must_raise NotFoundError
+          proc { process.call(no_tuples, nil) }.must_raise ResultMismatchError
         end
         record.wont_be :stored?
         record.id.must_be_nil
       end
 
-      it 'raises TooManyResultsError if more than one tuple returned' do
+      it 'raises ResultMismatchError if more than one tuple returned' do
         record = person_record_class.new(:name => 'Ernie', :age => 36)
         subject.insert_one(record) do |process|
-          proc { process.call(two_tuples, nil) }.must_raise TooManyResultsError
+          proc { process.call(two_tuples, nil) }.must_raise ResultMismatchError
         end
         record.wont_be :stored?
         record.id.must_be_nil
@@ -107,7 +107,29 @@ module Norm
     end
 
     describe '#insert_many process' do
-      it { skip 'needs to be implemented' }
+
+      it 'updates the passed-in records with the returned tuples in order' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert = person_record_class.new(:name => 'Bert', :age => 37)
+        subject.insert_many([ernie, bert]) do |process|
+          process.call(two_tuples, nil)
+        end
+        ernie.must_be :stored?
+        ernie.id.must_equal 1
+        bert.must_be :stored?
+        bert.id.must_equal 2
+      end
+
+      it 'returns false on constraint error' do
+        error = Constraint::ConstraintError.new(PG::Error.new)
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert = person_record_class.new(:name => 'Bert', :age => 37)
+        result = subject.insert_many([ernie, bert]) do |process|
+            raise error
+          end
+        result.must_equal false
+      end
+
     end
 
     describe '#update_one process' do
@@ -125,27 +147,27 @@ module Norm
         record.age.must_equal 36
       end
 
-      it 'raises NotFoundError if no tuples returned' do
+      it 'raises ResultMismatchError if no tuples returned' do
         record = person_record_class.from_repo(
           :id => 1, :name => 'Ernie', :age => 36
         )
         record.age = 37
         record.must_be :updated_attributes?
         subject.update_one(record) do |process|
-          proc { process.call(no_tuples, nil) }.must_raise NotFoundError
+          proc { process.call(no_tuples, nil) }.must_raise ResultMismatchError
         end
         record.must_be :updated_attributes?
         record.age.must_equal 37
       end
 
-      it 'raises TooManyResultsError if more than one tuple returned' do
+      it 'raises ResultMismatchError if more than one tuple returned' do
         record = person_record_class.from_repo(
           :id => 1, :name => 'Ernie', :age => 36
         )
         record.age = 37
         record.must_be :updated_attributes?
         subject.update_one(record) do |process|
-          proc { process.call(two_tuples, nil) }.must_raise TooManyResultsError
+          proc { process.call(two_tuples, nil) }.must_raise ResultMismatchError
         end
         record.must_be :updated_attributes?
         record.age.must_equal 37
@@ -170,23 +192,23 @@ module Norm
         record.age.must_equal 36
       end
 
-      it 'raises NotFoundError if no tuples returned' do
+      it 'raises ResultMismatchError if no tuples returned' do
         record = person_record_class.from_repo(
           :id => 1, :name => 'Ernie', :age => 37
         )
         subject.delete_one(record) do |process|
-          proc { process.call(no_tuples, nil) }.must_raise NotFoundError
+          proc { process.call(no_tuples, nil) }.must_raise ResultMismatchError
         end
         record.wont_be :deleted?
         record.age.must_equal 37
       end
 
-      it 'raises TooManyResultsError if more than one tuple returned' do
+      it 'raises ResultMismatchError if more than one tuple returned' do
         record = person_record_class.from_repo(
           :id => 1, :name => 'Ernie', :age => 37
         )
         subject.delete_one(record) do |process|
-          proc { process.call(two_tuples, nil) }.must_raise TooManyResultsError
+          proc { process.call(two_tuples, nil) }.must_raise ResultMismatchError
         end
         record.wont_be :deleted?
         record.age.must_equal 37
