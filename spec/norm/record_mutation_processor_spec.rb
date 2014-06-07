@@ -130,6 +130,17 @@ module Norm
         result.must_equal false
       end
 
+      it 'raises ResultMismatchError when unexpected number of results' do
+        ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+        bert = person_record_class.new(:name => 'Bert', :age => 37)
+        error = proc {
+          subject.insert_many([ernie, bert]) do |process|
+            process.call(no_tuples, nil)
+          end
+        }.must_raise ResultMismatchError
+        error.message.must_equal '0 results returned, but 2 expected'
+      end
+
     end
 
     describe '#update_one process' do
@@ -176,7 +187,40 @@ module Norm
     end
 
     describe '#update_many process' do
-      it { skip 'needs to be implemented' }
+
+      it 'updates the passed-in records with the returned tuples by match' do
+        ernie = person_record_class.new(:id => 1, :name => 'Ernie', :age => 35)
+        bert = person_record_class.new(:id => 2, :name => 'Bert', :age => 36)
+        subject.update_many([bert, ernie]) do |process|
+          process.call(two_tuples, nil)
+        end
+        ernie.wont_be :updated_attributes?
+        bert.wont_be :updated_attributes?
+        ernie.age.must_equal 36
+        bert.age.must_equal 37
+      end
+
+      it 'returns false on constraint error' do
+        error = Constraint::ConstraintError.new(PG::Error.new)
+        ernie = person_record_class.new(:id => 1, :name => 'Ernie', :age => 36)
+        bert = person_record_class.new(:id => 2, :name => 'Bert', :age => 37)
+        result = subject.update_many([ernie, bert]) do |process|
+            raise error
+          end
+        result.must_equal false
+      end
+
+      it 'raises ResultMismatchError when unexpected number of results' do
+        ernie = person_record_class.new(:id => 1, :name => 'Ernie', :age => 36)
+        bert = person_record_class.new(:id => 2, :name => 'Bert', :age => 37)
+        error = proc {
+          subject.update_many([ernie, bert]) do |process|
+            process.call(no_tuples, nil)
+          end
+        }.must_raise ResultMismatchError
+        error.message.must_equal '0 results returned, but 2 expected'
+      end
+
     end
 
     describe '#delete_one process' do
@@ -217,7 +261,53 @@ module Norm
     end
 
     describe '#delete_many process' do
-      it { skip 'needs to be implemented' }
+
+      it 'updates the passed-in records with the returned tuples by match' do
+        ernie = person_record_class.from_repo(
+          :id => 1, :name => 'Ernie', :age => 37
+        )
+        bert = person_record_class.from_repo(
+          :id => 2, :name => 'Bert', :age => 38
+        )
+        subject.delete_many([bert, ernie]) do |process|
+          process.call(two_tuples, nil)
+        end
+        ernie.must_be :deleted?
+        bert.must_be :deleted?
+        ernie.age.must_equal 36
+        bert.age.must_equal 37
+      end
+
+      it 'returns false on constraint error' do
+        error = Constraint::ConstraintError.new(PG::Error.new)
+        ernie = person_record_class.from_repo(
+          :id => 1, :name => 'Ernie', :age => 36
+        )
+        bert = person_record_class.from_repo(
+          :id => 2, :name => 'Bert', :age => 37
+        )
+        result = subject.delete_many([ernie, bert]) do |process|
+            raise error
+          end
+        result.must_equal false
+      end
+
+      it 'raises ResultMismatchError if unexpected number of tuples returned' do
+        ernie = person_record_class.from_repo(
+          :id => 1, :name => 'Ernie', :age => 36
+        )
+        bert = person_record_class.from_repo(
+          :id => 2, :name => 'Bert', :age => 37
+        )
+        error = proc {
+          subject.delete_many([bert, ernie]) do |process|
+            process.call(no_tuples, nil)
+          end
+        }.must_raise ResultMismatchError
+        ernie.wont_be :deleted?
+        bert.wont_be :deleted?
+      end
+
     end
 
   end

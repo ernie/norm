@@ -56,12 +56,38 @@ module Norm
       false
     end
 
+    def update_many(records, constraint_delegate: nil)
+      records = Norm::RecordCollection(records)
+      constraint_delegate ||= records
+      yield ->(result, conn) {
+        assert_result_size(records.size, result)
+        records.set_attributes(result) and records.updated!
+      }
+      true
+    rescue Constraint::ConstraintError => e
+      constraint_delegate.constraint_error(e)
+      false
+    end
+
     def delete_one(record, constraint_delegate: record)
       return true if record.deleted?
 
       yield ->(result, conn) {
         assert_result_size(1, result)
         record.set_attributes(result.first) and record.deleted!
+      }
+      true
+    rescue Constraint::ConstraintError => e
+      constraint_delegate.constraint_error(e)
+      false
+    end
+
+    def delete_many(records, constraint_delegate: nil)
+      records = Norm::RecordCollection(records)
+      constraint_delegate ||= records
+      yield ->(result, conn) {
+        assert_result_size(records.size, result)
+        records.set_attributes(result) and records.deleted!
       }
       true
     rescue Constraint::ConstraintError => e

@@ -274,7 +274,7 @@ module Norm
         )
       end
 
-      it 're-raises constraint error if encountered' do
+      it 'returns false on constraint error' do
         records = 2.times.map { person_record_class.new }
         result = subject.insert_many(
             SQL.insert(:people, [:id, :name, :age]).
@@ -320,6 +320,49 @@ module Norm
 
     end
 
+    describe '#update_many' do
+
+      it 'executes statement and modifies records, returning true on success' do
+        records = 2.times.map { person_record_class.new }
+        subject.insert_many(
+          SQL.insert(:people, [:name, :age]).
+            values('Ernie', 36).values('Bert', 37).returning('*'),
+          records
+        )
+        ernie, bert = records
+        ernie_updated = ernie.updated_at
+        bert_updated = bert.updated_at
+        result = subject.update_many(
+          SQL.update(:people).set(:age => 40).
+            where(:id => [1, 2]).returning('*'),
+          records
+        )
+        result.must_equal true
+        ernie = subject.fetch(ernie.id)
+        bert = subject.fetch(bert.id)
+        ernie.age.must_equal 40
+        bert.age.must_equal 40
+        ernie.updated_at.must_be :>, ernie_updated
+        bert.updated_at.must_be :>, bert_updated
+      end
+
+      it 'returns false on constraint error' do
+        records = 2.times.map { person_record_class.new }
+        subject.insert_many(
+          SQL.insert(:people, [:name, :age]).
+            values('Ernie', 36).values('Bert', 37).returning('*'),
+          records
+        )
+        result = subject.update_many(
+          SQL.update(:people).set(:id => nil).
+            where(:id => [1, 2]).returning('*'),
+          records
+        )
+        result.must_equal false
+      end
+
+    end
+
     describe '#delete_one' do
 
       it 'deletes via SQL and modifies the record, returning true on success' do
@@ -331,6 +374,7 @@ module Norm
         )
         result.must_equal true
         ernie.must_be :deleted?
+        subject.fetch(ernie.id).must_be_nil
       end
 
       it 'returns false on constraint error' do
@@ -346,6 +390,52 @@ module Norm
         )
         result.must_equal false
         ernie.wont_be :deleted?
+      end
+
+    end
+
+    describe '#delete_many' do
+
+      it 'executes statement and modifies records, returning true on success' do
+        records = 2.times.map { person_record_class.new }
+        subject.insert_many(
+          SQL.insert(:people, [:name, :age]).
+            values('Ernie', 36).values('Bert', 37).returning('*'),
+          records
+        )
+        ernie, bert = records
+        result = subject.delete_many(
+          SQL.delete(:people).where(:id => [1, 2]).returning('*'),
+          records
+        )
+        result.must_equal true
+        ernie.must_be :deleted?
+        bert.must_be :deleted?
+        subject.fetch(ernie.id).must_be_nil
+        subject.fetch(bert.id).must_be_nil
+      end
+
+      it 'returns false on constraint error' do
+        records = 2.times.map { person_record_class.new }
+        subject.insert_many(
+          SQL.insert(:people, [:name, :age]).
+            values('Ernie', 36).values('Bert', 37).returning('*'),
+          records
+        )
+        ernie, bert = records
+        post  = post_record_class.new(
+          :person_id => ernie.id, :title => 'Title', :body => 'Body'
+        )
+        post_repo.insert(post)
+        result = subject.delete_many(
+          SQL.delete(:people).where(:id => [1, 2]).returning('*'),
+          records
+        )
+        result.must_equal false
+        ernie.wont_be :deleted?
+        bert.wont_be :deleted?
+        subject.fetch(ernie.id).must_equal ernie
+        subject.fetch(bert.id).must_equal bert
       end
 
     end

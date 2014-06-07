@@ -43,7 +43,7 @@ module Norm
     def assert_result_size(size, result)
       if result.ntuples != size
         raise ResultMismatchError,
-          "#{result.ntuples} results returned, but #{size} was expected"
+          "#{result.ntuples} results returned, but #{size} expected"
       end
     end
 

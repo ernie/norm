@@ -65,7 +65,7 @@ module Norm
     end
 
     def insert_many(statement, records,
-                   connection: writer, processor: self.processor)
+                    connection: writer, processor: self.processor)
       processor.insert_many(records) { |process|
         atomically_on(connection) do |conn|
           conn.exec_statement(statement, &process)
@@ -82,9 +82,27 @@ module Norm
       }
     end
 
+    def update_many(statement, records,
+                    connection: writer, processor: self.processor)
+      processor.update_many(records) { |process|
+        atomically_on(connection) do |conn|
+          conn.exec_statement(statement, &process)
+        end
+      }
+    end
+
     def delete_one(statement, record,
                    connection: writer, processor: self.processor)
       processor.delete_one(record) { |process|
+        atomically_on(connection) do |conn|
+          conn.exec_statement(statement, &process)
+        end
+      }
+    end
+
+    def delete_many(statement, records,
+                    connection: writer, processor: self.processor)
+      processor.delete_many(records) { |process|
         atomically_on(connection) do |conn|
           conn.exec_statement(statement, &process)
         end
