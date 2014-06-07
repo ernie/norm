@@ -31,7 +31,7 @@ module Norm
     end
 
     def insert_many(records, constraint_delegate: nil)
-      records = Norm::RecordCollection(records)
+      records = Norm::Record::Collection(records)
       constraint_delegate ||= records
       yield ->(result, conn) {
         assert_result_size(records.size, result)
@@ -57,7 +57,7 @@ module Norm
     end
 
     def update_many(records, constraint_delegate: nil)
-      records = Norm::RecordCollection(records)
+      records = Norm::Record::Collection(records)
       constraint_delegate ||= records
       yield ->(result, conn) {
         assert_result_size(records.size, result)
@@ -83,7 +83,7 @@ module Norm
     end
 
     def delete_many(records, constraint_delegate: nil)
-      records = Norm::RecordCollection(records)
+      records = Norm::Record::Collection(records)
       constraint_delegate ||= records
       yield ->(result, conn) {
         assert_result_size(records.size, result)

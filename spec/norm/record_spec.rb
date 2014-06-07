@@ -27,6 +27,10 @@ module Norm
       subject.ancestors.must_include subject::AttributeMethods
     end
 
+    it 'has a Collection with its class as its record_class' do
+      subject::Collection.new.record_class.must_be_same_as subject
+    end
+
     it 'creates another AttributeMethods module when subclassing the class' do
       subclass = Class.new(subject)
       subclass::AttributeMethods.wont_be_same_as subject::AttributeMethods
