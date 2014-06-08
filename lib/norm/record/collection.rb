@@ -24,25 +24,15 @@ module Norm
       end
 
       def set_attributes(attributes)
-        return self unless records.any?
-        matching = record_map(attributes)
-        records.each do |record|
-          if match = matching[record]
-            record.set_attributes(match.initialized_attributes)
-          end
+        with_matching_records(attributes) do |record, match|
+          record.set_attributes(match.initialized_attributes)
         end
-        self
       end
 
       def set(attributes)
-        return self unless records.any?
-        matching = record_map(attributes)
-        records.each do |record|
-          if match = matching[record]
-            record.set(match.initialized_attributes)
-          end
+        with_matching_records(attributes) do |record, match|
+          record.set(match.initialized_attributes)
         end
-        self
       end
 
       def stored!
@@ -120,6 +110,17 @@ module Norm
       end
 
       private
+
+      def with_matching_records(attributes)
+        return self unless records.any?
+        matching = record_map(attributes)
+        records.each do |record|
+          if match = matching[record]
+            yield record, match
+          end
+        end
+        self
+      end
 
       def record_map(attributes)
         Hash[
