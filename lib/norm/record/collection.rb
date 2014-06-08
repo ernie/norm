@@ -25,10 +25,7 @@ module Norm
 
       def set_attributes(attributes)
         return self unless records.any?
-        matching = Hash[attributes.map { |attrs|
-          record = record_class.new(attrs)
-          [record, record]
-        }]
+        matching = record_map(attributes)
         records.each do |record|
           if match = matching[record]
             record.set_attributes(match.initialized_attributes)
@@ -39,10 +36,7 @@ module Norm
 
       def set(attributes)
         return self unless records.any?
-        matching = Hash[attributes.map { |attrs|
-          record = record_class.new(attrs)
-          [record, record]
-        }]
+        matching = record_map(attributes)
         records.each do |record|
           if match = matching[record]
             record.set(match.initialized_attributes)
@@ -126,6 +120,15 @@ module Norm
       end
 
       private
+
+      def record_map(attributes)
+        Hash[
+          attributes.map { |attrs|
+            record = record_class.new(attrs)
+            [record, record]
+          }
+        ]
+      end
 
     end
 
