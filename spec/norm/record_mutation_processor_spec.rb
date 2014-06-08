@@ -10,6 +10,10 @@ module Norm
       }
     }
 
+    let(:invalid_person) {
+      person_record_class.new.tap { |p| def p.valid?; false; end }
+    }
+
     let(:no_tuples) {
       [].tap do |no_tuples|
         def no_tuples.ntuples
@@ -75,6 +79,30 @@ module Norm
 
     end
 
+    describe '#noop_one process' do
+
+      it 'returns true if record is valid' do
+        subject.noop_one(person_record_class.new).must_equal true
+      end
+
+      it 'returns false if record is invalid' do
+        subject.noop_one(invalid_person).must_equal false
+      end
+
+    end
+
+    describe '#noop_many process' do
+
+      it 'returns true if records are valid' do
+        subject.noop_many([person_record_class.new]).must_equal true
+      end
+
+      it 'returns false if records are invalid' do
+        subject.noop_many([invalid_person]).must_equal false
+      end
+
+    end
+
     describe '#insert_one process' do
 
       it 'updates the passed-in record with the returned tuple' do
@@ -102,6 +130,10 @@ module Norm
         end
         record.wont_be :stored?
         record.id.must_be_nil
+      end
+
+      it 'returns false if records are invalid' do
+        subject.insert_one(invalid_person).must_equal false
       end
 
     end
@@ -139,6 +171,10 @@ module Norm
           end
         }.must_raise ResultMismatchError
         error.message.must_equal '0 results returned, but 2 expected'
+      end
+
+      it 'returns false if records are invlid' do
+        subject.insert_many([invalid_person]).must_equal false
       end
 
     end
@@ -184,6 +220,10 @@ module Norm
         record.age.must_equal 37
       end
 
+      it 'returns false if record is invalid' do
+        subject.update_one(invalid_person).must_equal false
+      end
+
     end
 
     describe '#update_many process' do
@@ -219,6 +259,10 @@ module Norm
           end
         }.must_raise ResultMismatchError
         error.message.must_equal '0 results returned, but 2 expected'
+      end
+
+      it 'returns false if records are invalid' do
+        subject.update_many([invalid_person]).must_equal false
       end
 
     end

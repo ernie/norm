@@ -37,6 +37,14 @@ module Norm
         proc { subject.insert_many(nil) }.must_raise NotImplementedError
       end
 
+      it 'expects subclasses to implement #noop_one' do
+        proc { subject.noop_one(nil) }.must_raise NotImplementedError
+      end
+
+      it 'expects subclasses to implement #noop_many' do
+        proc { subject.noop_many(nil) }.must_raise NotImplementedError
+      end
+
       it 'expects subclasses to implement #update_one' do
         proc { subject.update_one(nil) }.must_raise NotImplementedError
       end

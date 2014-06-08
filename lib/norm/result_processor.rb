@@ -14,6 +14,14 @@ module Norm
       raise NotImplementedError, "This processor doesn't implement #select_many"
     end
 
+    def noop_one(record)
+      raise NotImplementedError, "This processor doesn't implement #noop_one"
+    end
+
+    def noop_many(records)
+      raise NotImplementedError, "This processor doesn't implement #noop_many"
+    end
+
     def insert_one(record, constraint_delegate: raise_delegate)
       raise NotImplementedError, "This processor doesn't implement #insert_one"
     end

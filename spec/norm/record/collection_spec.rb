@@ -22,16 +22,17 @@ module Norm
       let(:records) {
         [ernie, bert, oscar]
       }
-      subject { person_record_class::Collection.new(records) }
+      let(:person_collection_class) { person_record_class::Collection }
+      subject { person_collection_class.new(records) }
 
       describe 'initialization' do
 
         it 'is empty when no records are supplied' do
-          person_record_class::Collection.new.must_be :empty?
+          person_collection_class.new.must_be :empty?
         end
 
         it 'has one record when a single record is supplied' do
-          person_record_class::Collection.new(ernie).size.must_equal 1
+          person_collection_class.new(ernie).size.must_equal 1
           subject.first.must_equal ernie
         end
 
@@ -50,7 +51,7 @@ module Norm
       describe '#insert_attributes' do
 
         it 'batch updates attributes in order provided' do
-          records = person_record_class::Collection.new(
+          records = person_collection_class.new(
             2.times.map { person_record_class.new }
           )
           records.insert_attributes(
@@ -63,7 +64,7 @@ module Norm
         end
 
         it 'raises ArgumentError if differing number of records and attrs' do
-          records = person_record_class::Collection.new(
+          records = person_collection_class.new(
             2.times.map { person_record_class.new }
           )
           error = proc {
@@ -159,6 +160,62 @@ module Norm
 
         it 'returns the collection' do
           subject.deleted!.must_be_same_as subject
+        end
+
+      end
+
+      describe '#valid?' do
+
+        it 'is true for an empty collection' do
+          person_collection_class.new.must_be :valid?
+        end
+
+        it 'is true for a collection of valid records' do
+          subject.must_be :valid?
+        end
+
+        it 'is false if any records are invalid' do
+          record = subject.records.first
+          def record.valid?
+            false
+          end
+          subject.wont_be :valid?
+        end
+
+      end
+
+      describe '#stored?' do
+
+        it 'is true for an empty collection' do
+          person_collection_class.new.must_be :stored?
+        end
+
+        it 'is true for a collection of stored records' do
+          subject.stored!
+          subject.must_be :stored?
+        end
+
+        it 'is false if any records are not stored' do
+          subject[0..1].each(&:stored!)
+          subject.wont_be :stored?
+        end
+
+      end
+
+      describe '#deleted?' do
+
+        it 'is true for an empty collection' do
+          person_collection_class.new.must_be :deleted?
+        end
+
+        it 'is true for a collection of deleted records' do
+          subject.deleted!
+          subject.must_be :deleted?
+        end
+
+        it 'is false if any records are not deleted' do
+          subject[0..1].each(&:deleted!)
+          subject.wont_be :deleted?
         end
 
       end

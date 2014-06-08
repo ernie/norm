@@ -13,6 +13,15 @@ module Norm
       }
     end
 
+    def noop_one(record)
+      record.valid? && true
+    end
+
+    def noop_many(records)
+      records = Norm::Record::Collection(records)
+      records.valid? && true
+    end
+
     # Update the record's attributes and mark it as inserted if the query
     # succeeds. Note that a possible (expected) failure case is a constraint
     # error. Since we rescue and return false in this case, it's important that
@@ -20,6 +29,8 @@ module Norm
     # so the transaction will have been rolled back before the constraint error
     # is rescued here.
     def insert_one(record, constraint_delegate: record)
+      return false unless record.valid?
+
       yield ->(result, conn) {
         assert_result_size(1, result)
         record.set_attributes(result.first) and record.inserted!
@@ -32,6 +43,8 @@ module Norm
 
     def insert_many(records, constraint_delegate: nil)
       records = Norm::Record::Collection(records)
+      return false unless records.valid?
+
       constraint_delegate ||= records
       yield ->(result, conn) {
         assert_result_size(records.size, result)
@@ -44,7 +57,7 @@ module Norm
     end
 
     def update_one(record, constraint_delegate: record)
-      return true unless record.updated_attributes?
+      return false unless record.valid?
 
       yield ->(result, conn) {
         assert_result_size(1, result)
@@ -58,6 +71,8 @@ module Norm
 
     def update_many(records, constraint_delegate: nil)
       records = Norm::Record::Collection(records)
+      return false unless records.valid?
+
       constraint_delegate ||= records
       yield ->(result, conn) {
         assert_result_size(records.size, result)
@@ -84,6 +99,8 @@ module Norm
 
     def delete_many(records, constraint_delegate: nil)
       records = Norm::Record::Collection(records)
+      return true if records.deleted?
+
       constraint_delegate ||= records
       yield ->(result, conn) {
         assert_result_size(records.size, result)

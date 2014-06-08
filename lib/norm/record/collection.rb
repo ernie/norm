@@ -40,6 +40,10 @@ module Norm
         self
       end
 
+      def stored?
+        records.all?(&:stored?)
+      end
+
       def inserted!
         records.each(&:inserted!)
         self
@@ -53,6 +57,10 @@ module Norm
       def deleted!
         records.each(&:deleted!)
         self
+      end
+
+      def deleted?
+        records.all?(&:deleted?)
       end
 
       def valid?

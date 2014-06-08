@@ -26,6 +26,8 @@ module Norm
     end
 
     def update(record)
+      return processor.noop_one(record) unless record.updated_attributes?
+
       update_one(
         scope_to_record(
           update_statement.set(record.updated_attributes(default: true)),
