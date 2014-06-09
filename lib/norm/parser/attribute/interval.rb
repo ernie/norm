@@ -51,16 +51,20 @@ module Norm
         end
 
         def explicit_seconds
-          @match[:hours].to_r * 3600 +
-          @match[:minutes].to_r * 60 +
-          @match[:seconds].to_r
+          to_seconds(@match[:hours], @match[:minutes], @match[:seconds])
         end
 
         def segment_seconds
-          sum = @match[:hours_seg].to_r * 3600 +
-                @match[:minutes_seg].to_r * 60 +
-                @match[:seconds_seg].to_r
+          sum = to_seconds(
+            @match[:hours_seg], @match[:minutes_seg], @match[:seconds_seg]
+          )
           @match[:negative_seg] ? -sum : sum
+        end
+
+        def to_seconds(hours, minutes, seconds)
+          hours.to_r * 3600 +
+            minutes.to_r * 60 +
+            seconds.to_r
         end
 
       end
