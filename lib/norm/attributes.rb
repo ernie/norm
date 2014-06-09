@@ -121,7 +121,11 @@ module Norm
     end
 
     def values_at(*names, default: false)
-      get_attributes(*names, default: default).values
+      names.map { |name| self[name, default: default] }
+    end
+
+    def original_values_at(*names, default: false)
+      names.map { |name| orig(name, default: default) }
     end
 
     def has_key?(name)

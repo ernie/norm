@@ -119,14 +119,18 @@ module Norm
         end
 
         def update_statement
-          Norm::SQL.update('people').returning('*')
+          Norm::SQL.update('people')
         end
 
         def delete_statement
-          Norm::SQL.delete('people').returning('*')
+          Norm::SQL.delete('people')
         end
       }.new(erroneous_person_record_class)
     }
+
+    let(:ernie) { person_record_class.new(:name => 'Ernie', :age => 36) }
+    let(:bert) { person_record_class.new(:name => 'Bert', :age => 37) }
+    let(:people) { [ernie, bert] }
 
     subject { person_repo }
 
@@ -183,10 +187,27 @@ module Norm
         ernie.must_be_nil
       end
 
+      it 'mass deletes with all keys' do
+        ernie = user_record_class.new(
+          :username => 'ernie', :email => 'ernie@erniemiller.org',
+          :first_name => 'Ernie', :last_name => 'Miller',
+          :encrypted_password => 'zomg'
+        )
+        bert = user_record_class.new(
+          :username => 'bert', :email => 'bert@bertmyers.org',
+          :first_name => 'Bert', :last_name => 'Myers',
+          :encrypted_password => 'zomg'
+        )
+        users = [ernie, bert]
+        subject.mass_insert(users)
+        subject.mass_delete(users)
+        subject.all.size.must_be :zero?
+      end
+
       it 'updates with all keys' do
         user = user_record_class.new(
           :username => 'ernie', :email => 'ernie@erniemiller.org',
-          :first_name => 'ernie', :last_name => 'miller',
+          :first_name => 'Ernie', :last_name => 'Miller',
           :encrypted_password => 'zomg'
         )
         subject.insert(user)
@@ -195,6 +216,24 @@ module Norm
         subject.update(user)
         ernie = subject.fetch 'Ernest', 'Mueller'
         ernie.username.must_equal 'ernie'
+      end
+
+      it 'mass updates with all keys' do
+        ernie = user_record_class.new(
+          :username => 'ernie', :email => 'ernie@erniemiller.org',
+          :first_name => 'Ernie', :last_name => 'Miller',
+          :encrypted_password => 'zomg'
+        )
+        bert = user_record_class.new(
+          :username => 'bert', :email => 'bert@bertmyers.org',
+          :first_name => 'Bert', :last_name => 'Myers',
+          :encrypted_password => 'zomg'
+        )
+        users = [ernie, bert]
+        subject.mass_insert(users)
+        subject.mass_update(users, :encrypted_password => 'bbq')
+        subject.all.size.must_equal 2
+        subject.all.all? { |user| user.encrypted_password == 'bbq' }
       end
 
     end
@@ -499,6 +538,32 @@ module Norm
 
     end
 
+    describe '#mass_insert' do
+
+      it 'inserts multiple records' do
+        subject.mass_insert(people)
+        subject.all.size.must_equal 2
+        ernie.id.must_equal 1
+        bert.id.must_equal 2
+      end
+
+      it 'returns true on success' do
+        subject.mass_insert(people).must_equal true
+      end
+
+      it 'returns false on constraint error' do
+        ernie.id = nil
+        subject.mass_insert(people).must_equal false
+        subject.all.size.must_be :zero?
+      end
+
+      it 'raises ResultMismatchError if no results are returned' do
+        proc { erroneous_repo.mass_insert(people) }.
+          must_raise ResultMismatchError
+      end
+
+    end
+
     describe '#update' do
 
       it 'updates a stored record' do
@@ -599,6 +664,36 @@ module Norm
 
     end
 
+    describe '#mass_update' do
+
+      it 'requires an attributes parameter' do
+        proc { subject.mass_update(people) }.must_raise ArgumentError
+      end
+
+      it 'sets the attributes that are supplied on all of the records' do
+        subject.mass_insert(people)
+        subject.mass_update(people, :age => 42)
+        subject.all.all? { |person| person.age == 42 }
+      end
+
+      it 'returns true on success' do
+        subject.mass_insert(people)
+        subject.mass_update(people, :age => 42).must_equal true
+      end
+
+      it 'returns false on constraint error' do
+        subject.mass_insert(people)
+        subject.mass_update(people, :id => nil).must_equal false
+      end
+
+      it 'raises ResultMismatchError if no results are returned' do
+        subject.mass_insert(people)
+        proc { erroneous_repo.mass_update(people, :name => 'zomg') }.
+          must_raise ResultMismatchError
+      end
+
+    end
+
     describe '#delete' do
 
       it 'deletes a stored record' do
@@ -643,6 +738,36 @@ module Norm
         subject.insert(ernie1)
         subject.insert(ernie2)
         proc { erroneous_repo.delete(ernie2) }.must_raise ResultMismatchError
+      end
+
+    end
+
+    describe '#mass_delete' do
+
+      it 'deletes the records' do
+        subject.mass_insert(people)
+        subject.mass_delete(people)
+        subject.all.size.must_be :zero?
+      end
+
+      it 'returns true on success' do
+        subject.mass_insert(people)
+        subject.mass_delete(people).must_equal true
+      end
+
+      it 'returns false on constraint error' do
+        subject.mass_insert(people)
+        post = post_record_class.new(
+          :person_id => ernie.id, :title => 'zomg', :body => 'zomg'
+        )
+        post_repo.insert(post)
+        subject.mass_delete(people).must_equal false
+      end
+
+      it 'raises ResultMismatchError if no results are returned' do
+        subject.mass_insert(people)
+        proc { erroneous_repo.mass_delete(people) }.
+          must_raise ResultMismatchError
       end
 
     end

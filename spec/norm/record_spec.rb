@@ -249,6 +249,24 @@ module Norm
 
       end
 
+      describe '#original_attribute_values_at' do
+
+        it 'returns an array of original values in the specified order' do
+          record = simple_record_class.new(:name => 'Ernie', :age => 36)
+          record.name = 'Bert'
+          record.original_attribute_values_at(:age, :name).
+            must_equal [36, 'Ernie']
+        end
+
+        it 'returns DEFAULT values for missing attributes when default: true' do
+          record = simple_record_class.new(:name => 'Ernie')
+          record.name = 'Ernie'
+          record.original_attribute_values_at(:age, :name, default: true).
+            must_equal([Attribute::DEFAULT, 'Ernie'])
+        end
+
+      end
+
       describe '#values_at' do
 
         it 'returns an array of values in the specified order using readers' do
@@ -424,6 +442,19 @@ module Norm
           )
         end
 
+      end
+
+      describe '#reset_attributes!' do
+        subject { simple_record_class.new(:name => 'Ernie Miller', :age => 36) }
+
+        it 'resets the attributes to their original values' do
+          subject.age = 37
+          subject.must_be :updated_attributes?
+          subject.age.must_equal 37
+          subject.reset_attributes!
+          subject.age.must_equal 36
+          subject.wont_be :updated_attributes?
+        end
       end
 
       describe '#updated_attributes?' do

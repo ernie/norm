@@ -400,6 +400,30 @@ module Norm
 
       end
 
+      describe '#original_values_at' do
+
+        it 'returns an array of original values requested' do
+          instance = subject.new(:id => 1, :name => 'Ernie')
+          instance[:name] = 'Bert'
+          instance.original_values_at(:id, :name).must_equal([1, 'Ernie'])
+        end
+
+        it 'returns the values in the same order requested' do
+          instance = subject.new(:id => 1, :name => 'Ernie')
+          instance[:name] = 'Bert'
+          instance.original_values_at(:name, :id).must_equal(['Ernie', 1])
+        end
+
+        it 'returns DEFAULT for unset attributes when default: true' do
+          instance = subject.new(:name => 'Ernie')
+          instance[:name] = 'Bert'
+          instance.original_values_at(:id, :name, default: true).must_equal(
+            [Attribute::DEFAULT, 'Ernie']
+          )
+        end
+
+      end
+
       describe '#has_key?' do
 
         it 'returns true for attributes that exist on the class' do

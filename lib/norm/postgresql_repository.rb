@@ -25,6 +25,19 @@ module Norm
       )
     end
 
+    def mass_insert(records)
+      return processor.noop_many(records) if records.empty?
+
+      insert_many(
+        records.reduce(insert_statement) { |statement, record|
+          statement.values(
+            *record.attribute_values_at(*attribute_names, default: true)
+          )
+        },
+        records
+      )
+    end
+
     def update(record)
       return processor.noop_one(record) unless record.updated_attributes?
 
@@ -37,8 +50,32 @@ module Norm
       )
     end
 
+    def mass_update(records, attributes)
+      return processor.noop_many(records) if records.empty? || attributes.empty?
+
+      records.each do |record|
+        record.reset_attributes!
+        record.set_attributes(attributes)
+      end
+
+      update_many(
+        scope_to_records(
+          update_statement.set(attributes), records
+        ),
+        records
+      )
+    end
+
     def delete(record)
       delete_one(scope_to_record(delete_statement, record), record)
+    end
+
+    def mass_delete(records)
+      return processor.noop_many(records) if records.empty?
+
+      delete_many(
+        scope_to_records(delete_statement, records), records
+      )
     end
 
     def select_one(statement, connection: reader, processor: self.processor)
@@ -139,6 +176,27 @@ module Norm
           *record_class.identifying_attribute_names
         )
       )
+    end
+
+    def scope_to_records(statement, records)
+      attrs = record_class.identifying_attribute_names
+      if attrs.size == 1
+        statement.where(
+          attrs.first => records.flat_map { |record|
+            record.original_attribute_values_at(attrs.first)
+          }
+        )
+      else
+        predicates = records.map { |record|
+          SQL::Grouping.new(
+            SQL::PredicateFragment.new(record.get_original_attributes(*attrs))
+          )
+        }
+        statement.where(
+          predicates.map(&:sql).join(' OR '),
+          *predicates.flat_map(&:params)
+        )
+      end
     end
 
   end

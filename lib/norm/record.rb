@@ -136,6 +136,10 @@ module Norm
       attributes.values_at(*names, default: default)
     end
 
+    def original_attribute_values_at(*names, default: false)
+      attributes.original_values_at(*names, default: default)
+    end
+
     def values_at(*names)
       names.map { |name| public_send(name) }
     end
@@ -158,6 +162,10 @@ module Norm
 
     def updated_attributes?
       attributes.updated?
+    end
+
+    def reset_attributes!
+      attributes.reset!
     end
 
     def get_attributes(*attribute_names, default: false)
