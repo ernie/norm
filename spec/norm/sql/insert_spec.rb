@@ -64,11 +64,11 @@ module Norm
           insert.params.must_equal [1, 2]
         end
 
-        it 'only adds placeholders for non-default values' do
+        it 'only adds placeholders for non-default/identifer values' do
           insert = Insert.new
-          insert.values!(Attribute::DEFAULT, 1, 2)
-          insert.sql.must_equal 'VALUES (DEFAULT, $?, $?)'
-          insert.params.must_equal [1, 2]
+          insert.values!(Attribute::DEFAULT, Attribute::Identifier(:id), 1)
+          insert.sql.must_equal 'VALUES (DEFAULT, "id", $?)'
+          insert.params.must_equal [1]
         end
 
       end

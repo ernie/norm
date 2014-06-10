@@ -60,12 +60,18 @@ module Norm
       end
 
       def values!(*args)
-        @values << Fragment.new(
-          args.map { |value|
-            value == Attribute::DEFAULT ? 'DEFAULT' : '$?'
-          }.join(', '),
-          *args.reject { |value| value == Attribute::DEFAULT }
-        )
+        sql    = []
+        params = []
+        args.each do |value|
+          case value
+          when Attribute::Default, Attribute::Identifier
+            sql << value.to_s
+          else
+            params << value
+            sql << '$?'
+          end
+        end
+        @values << Fragment.new(sql.join(', '), *params)
         self
       end
 

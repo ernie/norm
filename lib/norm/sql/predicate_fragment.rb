@@ -13,7 +13,7 @@ module Norm
       def build_from_hash(hash)
         sql    = []
         params = []
-        hash.map { |attr, value|
+        hash.each do |attr, value|
           attr = Attribute::Identifier(attr)
           case value
           when nil
@@ -33,7 +33,7 @@ module Norm
             params << value
             sql << "#{attr} = $?"
           end
-        }
+        end
         [sql.join(' AND '), params]
       end
 
