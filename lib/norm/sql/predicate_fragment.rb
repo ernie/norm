@@ -18,8 +18,6 @@ module Norm
           case value
           when nil
             sql << "#{attr} IS NULL"
-          when Attribute::Default, Attribute::Identifier
-            sql << "#{attr} = #{value}"
           when Array
             if value.include?(nil)
               sql << 'FALSE /* IN with NULL value is never TRUE */'

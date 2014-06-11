@@ -15,11 +15,8 @@ module Norm
         params = []
         hash.map { |attr, value|
           attr = Attribute::Identifier(attr)
-          case value
-          when nil
+          if value.nil?
             sql << "#{attr} = NULL"
-          when Attribute::Default, Attribute::Identifier
-            sql << "#{attr} = #{value}"
           else
             params << value
             sql << "#{attr} = $?"

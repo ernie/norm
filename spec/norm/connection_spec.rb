@@ -177,6 +177,46 @@ module Norm
         mock_pg.verify
       end
 
+      it 'converts DEFAULTs in params to "DEFAULT" in SQL' do
+        statement = SQL.statement(
+          'insert into items values ($?, $?, $?)',
+          'A lovely item', Attribute::DEFAULT, 42
+        )
+        mock_pg.expect(:exec_params, nil, &->(sql, params, format, &block) {
+          sql == 'insert into items values ($1, DEFAULT, $2)' &&
+          params == statement.params.reject { |p| Attribute::Default === p } &&
+          format == 1 &&
+          block.call('result') == 'called!'
+        })
+        subject.exec_statement(statement, 1) do |result, conn|
+          result.must_equal 'result'
+          conn.must_be_kind_of Connection
+          'called!'
+        end
+        mock_pg.verify
+      end
+
+      it 'converts Identifiers in params to their string value in SQL' do
+        statement = SQL.statement(
+          'insert into items values ($?, $?, $?)',
+          'A lovely item', Attribute::Identifier('items.name'), 42
+        )
+        mock_pg.expect(:exec_params, nil, &->(sql, params, format, &block) {
+          sql == 'insert into items values ($1, "items"."name", $2)' &&
+          params == statement.params.reject { |p|
+            Attribute::Identifier === p
+          } &&
+          format == 1 &&
+          block.call('result') == 'called!'
+        })
+        subject.exec_statement(statement, 1) do |result, conn|
+          result.must_equal 'result'
+          conn.must_be_kind_of Connection
+          'called!'
+        end
+        mock_pg.verify
+      end
+
       it 'does not require a block' do
         mock_pg.expect(:exec_params, nil, &->(sql, params, format, &block) {
           sql == 'insert into items values ($1, $2)' &&

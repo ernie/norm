@@ -63,13 +63,8 @@ module Norm
         sql    = []
         params = []
         args.each do |value|
-          case value
-          when Attribute::Default, Attribute::Identifier
-            sql << value.to_s
-          else
-            params << value
-            sql << '$?'
-          end
+          params << value
+          sql << '$?'
         end
         @values << Fragment.new(sql.join(', '), *params)
         self

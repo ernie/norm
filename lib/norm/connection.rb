@@ -40,10 +40,10 @@ module Norm
       end
     end
 
-    def exec_statement(stmt, result_format = 0, &block)
+    def exec_statement(statement, result_format = 0, &block)
       handling_errors do
-        sql = finalize_placeholders(stmt.sql)
-        @db.exec_params(sql, stmt.params, result_format) do |result|
+        sql, params = finalize_placeholders(statement)
+        @db.exec_params(sql, params, result_format) do |result|
           yield result, self if block_given?
         end
       end
@@ -103,15 +103,24 @@ module Norm
       @transaction = false
     end
 
-    def finalize_placeholders(sql)
-      counter = (1..65536).to_enum
-      sql.gsub(PLACEHOLDER_FINALIZATION_REGEXP) { |match|
+    def finalize_placeholders(statement)
+      index = 0
+      sql    = statement.sql.dup
+      params = statement.params.dup
+      sql.gsub!(PLACEHOLDER_FINALIZATION_REGEXP) { |match|
         if match.start_with? '\\'
           '$?'
         else
-          "$#{counter.next}"
+          case params[index]
+          when Attribute::Default, Attribute::Identifier
+            params.delete_at(index).to_s
+          else
+            index += 1
+            "$#{index}"
+          end
         end
       }
+      [sql, params]
     end
 
   end
