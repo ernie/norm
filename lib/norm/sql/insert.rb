@@ -60,13 +60,7 @@ module Norm
       end
 
       def values!(*args)
-        sql    = []
-        params = []
-        args.each do |value|
-          params << value
-          sql << '$?'
-        end
-        @values << Fragment.new(sql.join(', '), *params)
+        @values << Fragment.new((['$?'] * args.size).join(', '), *args)
         self
       end
 
