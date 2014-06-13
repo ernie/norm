@@ -74,6 +74,10 @@ module Norm
         new(attributes).tap { |record| record.stored! }
       end
 
+      def with_identifiers(*keys)
+        new(Hash[identifying_attribute_names.zip(keys)])
+      end
+
       def respond_to_missing?(method_id, include_private = false)
         __record_class__.respond_to?(method_id, include_private) or super
       end

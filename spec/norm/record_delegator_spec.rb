@@ -66,6 +66,19 @@ module Norm
 
     end
 
+    describe '.with_identifiers' do
+
+      it 'creates a new delegator with the identity provided in arguments' do
+        subject.identity :name, :age
+        delegator = subject.with_identifiers('Ernie', '36')
+        delegator.must_be_kind_of Norm::RecordDelegator
+        delegator.name.must_equal 'Ernie'
+        delegator.age.must_equal 36
+      end
+
+    end
+
+
     describe 'initialization' do
 
       it 'creates the instance with a record containing the given attributes' do
