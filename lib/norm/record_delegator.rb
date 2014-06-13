@@ -70,6 +70,10 @@ module Norm
 
     module ClassMethods
 
+      def collection(records)
+        collection_class.new(records, record_class: self)
+      end
+
       def from_repo(attributes)
         new(attributes).tap { |record| record.stored! }
       end

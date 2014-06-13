@@ -36,6 +36,22 @@ module Norm
 
     end
 
+    describe '.collection_class' do
+
+      it 'is Collection by default' do
+        subject.collection_class.must_equal Record::Collection
+      end
+
+    end
+
+    describe '.collection' do
+
+      it 'returns a new collection with a matching record class' do
+        subject.collection([]).record_class.must_equal subject
+      end
+
+    end
+
     describe '.constraints' do
       it 'allows addition of constraint rules' do
         subject.constraints do |rule|

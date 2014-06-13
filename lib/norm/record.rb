@@ -14,6 +14,14 @@ module Norm
       attr_reader :attributes_class
       private :attributes_class
 
+      def collection_class
+        Collection
+      end
+
+      def collection(records)
+        collection_class.new(records, record_class: self)
+      end
+
       def identity(*args)
         attributes_class.identity(*args)
       end

@@ -3,13 +3,25 @@ module Norm
     class Collection
       attr_reader :records, :record_class
 
-      def initialize(records = nil)
+      def self.for(records)
+        if records.empty?
+          new(records)
+        else
+          records.first.class.collection(records)
+        end
+      end
+
+      def initialize(records = nil, record_class: Record)
         @records = Array(records).dup.freeze
-        @record_class = @records.any? ? @records.first.class : Record
+        @record_class = record_class
       end
 
       def constraint_error(error)
         nil
+      end
+
+      def constraint_rule_for(error)
+        record_class.new.constraint_rule_for(error)
       end
 
       def insert_attributes(attributes)
@@ -138,7 +150,7 @@ module Norm
       if Collection === records
         records
       else
-        records = Collection.new(records)
+        records = Collection.for(Array(records))
       end
     end
 

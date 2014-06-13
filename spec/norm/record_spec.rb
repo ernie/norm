@@ -32,6 +32,22 @@ module Norm
       subclass::AttributeMethods.wont_be_same_as subject::AttributeMethods
     end
 
+    describe '.collection_class' do
+
+      it 'is Collection by default' do
+        subject.collection_class.must_equal Record::Collection
+      end
+
+    end
+
+    describe '.collection' do
+
+      it 'returns a new collection with a matching record class' do
+        subject.collection([]).record_class.must_equal subject
+      end
+
+    end
+
     describe '.attribute_names' do
 
       it 'defaults to an empty array' do
