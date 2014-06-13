@@ -22,17 +22,16 @@ module Norm
       let(:records) {
         [ernie, bert, oscar]
       }
-      let(:person_collection_class) { person_record_class::Collection }
-      subject { person_collection_class.new(records) }
+      subject { Collection.new(records) }
 
       describe 'initialization' do
 
         it 'is empty when no records are supplied' do
-          person_collection_class.new.must_be :empty?
+          Collection.new.must_be :empty?
         end
 
         it 'has one record when a single record is supplied' do
-          person_collection_class.new(ernie).size.must_equal 1
+          Collection.new(ernie).size.must_equal 1
           subject.first.must_equal ernie
         end
 
@@ -48,33 +47,10 @@ module Norm
 
       end
 
-      describe '.constraints' do
-        subject { person_collection_class }
-
-        it 'allows addition of constraint rules' do
-          subject.constraints do |rule|
-            rule.must_be_kind_of Constraint::RuleSet
-          end
-        end
-
-        it 'defines constraint_rule_for to match against the new RuleSet' do
-          subject.constraints do |rule|
-            rule.map type: :not_null, to: {base: 'ZOMG NOT NULL CONSTRAINT!!!'}
-          end
-          error = MiniTest::Mock.new
-          error.expect(:type, :not_null)
-          rule = subject.new.constraint_rule_for(error)
-          rule.each.to_a.must_equal [[:base, 'ZOMG NOT NULL CONSTRAINT!!!']]
-          error.verify
-        end
-
-      end
-
-
       describe '#insert_attributes' do
 
         it 'batch updates attributes in order provided' do
-          records = person_collection_class.new(
+          records = Collection.new(
             2.times.map { person_record_class.new }
           )
           records.insert_attributes(
@@ -87,7 +63,7 @@ module Norm
         end
 
         it 'raises ArgumentError if differing number of records and attrs' do
-          records = person_collection_class.new(
+          records = Collection.new(
             2.times.map { person_record_class.new }
           )
           error = proc {
@@ -190,7 +166,7 @@ module Norm
       describe '#valid?' do
 
         it 'is true for an empty collection' do
-          person_collection_class.new.must_be :valid?
+          Collection.new.must_be :valid?
         end
 
         it 'is true for a collection of valid records' do
@@ -210,7 +186,7 @@ module Norm
       describe '#stored?' do
 
         it 'is true for an empty collection' do
-          person_collection_class.new.must_be :stored?
+          Collection.new.must_be :stored?
         end
 
         it 'is true for a collection of stored records' do
@@ -228,7 +204,7 @@ module Norm
       describe '#deleted?' do
 
         it 'is true for an empty collection' do
-          person_collection_class.new.must_be :deleted?
+          Collection.new.must_be :deleted?
         end
 
         it 'is true for a collection of deleted records' do
@@ -329,7 +305,6 @@ module Norm
 
         it 'returns a collection with class of the first record with array' do
           collection = Record::Collection(records)
-          collection.must_be_kind_of(person_record_class::Collection)
           collection.must_equal subject
         end
 
@@ -337,24 +312,6 @@ module Norm
           collection = Record::Collection([])
           collection.class.must_equal Record::Collection
           collection.must_be :empty?
-        end
-
-      end
-
-      describe 'an empty Record::Collection' do
-        let(:person_record_collection) { person_record_class::Collection.new }
-        subject { Record::Collection.new }
-
-        it 'is equal to an empty subclass' do
-          subject.must_equal person_record_collection
-        end
-
-        it 'is not eql? to an empty subclass' do
-          subject.wont_be :eql?, person_record_collection
-        end
-
-        it 'does not have the same hash as an empty subclass' do
-          subject.hash.wont_equal person_record_collection.hash
         end
 
       end

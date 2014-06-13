@@ -20,7 +20,6 @@ module Norm
 
       def inherited(klass)
         klass.inherit_attributes_class(attributes_class)
-        klass.inherit_collection_class(Collection)
         klass.attribute_methods_module
       end
 
@@ -38,16 +37,6 @@ module Norm
 
       def inherit_attributes_class(klass)
         @attributes_class ||= const_set(:Attributes, Class.new(klass))
-      end
-
-      def inherit_collection_class(klass)
-        me = self
-        const_set(
-          :Collection,
-          Class.new(klass) {
-            define_method(:record_class) { me }
-          }
-        )
       end
 
       def attribute_methods_module

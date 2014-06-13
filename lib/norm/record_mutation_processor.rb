@@ -45,13 +45,13 @@ module Norm
       records = Norm::Record::Collection(records)
       return false unless records.valid?
 
-      constraint_delegate ||= records
       yield ->(result, conn) {
         assert_result_size(records.size, result)
         records.insert_attributes(result) and records.inserted!
       }
       true
     rescue Constraint::ConstraintError => e
+      constraint_delegate ||= records
       constraint_delegate.constraint_error(e)
       false
     end
@@ -73,13 +73,13 @@ module Norm
       records = Norm::Record::Collection(records)
       return false unless records.valid?
 
-      constraint_delegate ||= records
       yield ->(result, conn) {
         assert_result_size(records.size, result)
         records.set_attributes(result) and records.updated!
       }
       true
     rescue Constraint::ConstraintError => e
+      constraint_delegate ||= records
       constraint_delegate.constraint_error(e)
       false
     end
@@ -101,13 +101,13 @@ module Norm
       records = Norm::Record::Collection(records)
       return true if records.deleted?
 
-      constraint_delegate ||= records
       yield ->(result, conn) {
         assert_result_size(records.size, result)
         records.set_attributes(result) and records.deleted!
       }
       true
     rescue Constraint::ConstraintError => e
+      constraint_delegate ||= records
       constraint_delegate.constraint_error(e)
       false
     end

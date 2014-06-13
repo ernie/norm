@@ -2,12 +2,6 @@ module Norm
   module RecordDelegator
 
     def self.included(base)
-      base.const_set(
-        :Collection,
-        Class.new(Record::Collection) do
-          define_method(:record_class) { base }
-        end
-      )
       base.extend ClassMethods
     end
 
@@ -75,20 +69,6 @@ module Norm
     end
 
     module ClassMethods
-
-      def inherited(klass)
-        klass.inherit_collection_class(self::Collection)
-      end
-
-      def inherit_collection_class(klass)
-        me = self
-        const_set(
-          :Collection,
-          Class.new(klass) {
-            define_method(:record_class) { me }
-          }
-        )
-      end
 
       def from_repo(attributes)
         new(attributes).tap { |record| record.stored! }

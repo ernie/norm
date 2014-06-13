@@ -22,27 +22,27 @@ module Norm
       raise NotImplementedError, "This processor doesn't implement #noop_many"
     end
 
-    def insert_one(record, constraint_delegate: raise_delegate)
+    def insert_one(record, constraint_delegate: nil)
       raise NotImplementedError, "This processor doesn't implement #insert_one"
     end
 
-    def insert_many(records, constraint_delegate: raise_delegate)
+    def insert_many(records, constraint_delegate: nil)
       raise NotImplementedError, "This processor doesn't implement #insert_many"
     end
 
-    def update_one(record, constraint_delegate: raise_delegate)
+    def update_one(record, constraint_delegate: nil)
       raise NotImplementedError, "This processor doesn't implement #update_one"
     end
 
-    def update_many(records, constraint_delegate: raise_delegate)
+    def update_many(records, constraint_delegate: nil)
       raise NotImplementedError, "This processor doesn't implement #update_many"
     end
 
-    def delete_one(record, constraint_delegate: raise_delegate)
+    def delete_one(record, constraint_delegate: nil)
       raise NotImplementedError, "This processor doesn't implement #delete_one"
     end
 
-    def delete_many(records, constraint_delegate: raise_delegate)
+    def delete_many(records, constraint_delegate: nil)
       raise NotImplementedError, "This processor doesn't implement #delete_many"
     end
 
@@ -53,10 +53,6 @@ module Norm
         raise ResultMismatchError,
           "#{result.ntuples} results returned, but #{size} expected"
       end
-    end
-
-    def raise_delegate
-      @raise_delegate ||= Constraint::RaiseDelegate.new
     end
 
   end

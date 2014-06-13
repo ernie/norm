@@ -15,17 +15,6 @@ module Norm
     }
     subject { delegator_class }
 
-    it 'has a Collection with its class as its record_class' do
-      subject::Collection.new.record_class.must_be_same_as subject
-    end
-
-    it 'provides subclasses with their own Collection class' do
-      subclass = Class.new(subject)
-      record_class = subclass::Collection.new.record_class
-      record_class.must_be_same_as subclass
-      record_class.wont_be_same_as subject
-    end
-
     describe 'generated module' do
 
       it 'adds a __record_class__ class method' do
