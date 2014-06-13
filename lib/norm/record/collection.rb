@@ -7,6 +7,14 @@ module Norm
         @records = Array(records).dup.freeze
       end
 
+      def self.constraints
+        rules = Constraint::RuleSet.new
+        yield rules
+        define_method(:constraint_rule_for) { |error|
+          rules.match(error) || super(error)
+        }
+      end
+
       def record_class
         Record
       end
