@@ -69,14 +69,6 @@ module Norm
         new(attributes).tap { |record| record.stored! }
       end
 
-      def constraints
-        rules = Constraint::RuleSet.new
-        yield rules
-        define_method(:constraint_ruleset) {
-          rules + super()
-        }
-      end
-
     end
 
     identity :id
@@ -94,10 +86,6 @@ module Norm
 
     def valid?
       true
-    end
-
-    def constraint_ruleset
-      Constraint::RuleSet.new
     end
 
     def constraint_delegate

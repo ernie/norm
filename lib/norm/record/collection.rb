@@ -16,10 +16,6 @@ module Norm
         @record_class = record_class
       end
 
-      def constraint_ruleset
-        record_class.new.constraint_ruleset
-      end
-
       def constraint_delegate
         Constraint::Delegate.new
       end

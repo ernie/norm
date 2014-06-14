@@ -5,13 +5,11 @@ class Person < Norm::Record
   attribute :name, Attr::String
   attribute :age,  Attr::Integer
   identity  :id, :name, :age
-
-  constraints do |rule|
-    rule.map type: :not_null, column_name: 'name', to: {name: "can't be blank"}
-  end
 end
 
 describe_integration 'railsification' do
+  I18n.enforce_available_locales = false
+  I18n.locale = :en
 
   let(:railsified_delegator_class) {
     Class.new {
@@ -78,7 +76,7 @@ describe_integration 'railsification' do
 
   describe '#constraint_delegate' do
 
-    it 'captures the mapping from a matching rule in the errors object' do
+    it 'adds errors to the object' do
       person = subject.new
       error = Struct.new(:type, :column_name).new(:not_null, 'name')
       person.constraint_delegate.constraint_error(error)

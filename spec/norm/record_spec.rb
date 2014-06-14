@@ -128,28 +128,6 @@ module Norm
 
     end
 
-    describe '.constraints' do
-      subject { simple_record_class }
-
-      it 'allows addition of constraint rules' do
-        subject.constraints do |rule|
-          rule.must_be_kind_of Constraint::RuleSet
-        end
-      end
-
-      it 'defines constraint_ruleset' do
-        subject.constraints do |rule|
-          rule.map type: :not_null, to: {base: 'ZOMG NOT NULL CONSTRAINT!!!'}
-        end
-        error = MiniTest::Mock.new
-        error.expect(:type, :not_null)
-        rule = subject.new.constraint_ruleset.match(error)
-        rule.each.to_a.must_equal [[:base, 'ZOMG NOT NULL CONSTRAINT!!!']]
-        error.verify
-      end
-
-    end
-
     describe '.identity' do
       subject { simple_record_class }
 
@@ -388,14 +366,6 @@ module Norm
             :name => 'Ernie Miller',
             :age  => Attribute::DEFAULT
           )
-        end
-
-      end
-
-      describe '#constraint_ruleset' do
-
-        it 'defaults to an empty set' do
-          subject.constraint_ruleset.rules.must_be :empty?
         end
 
       end

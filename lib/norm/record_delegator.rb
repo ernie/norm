@@ -86,14 +86,6 @@ module Norm
         __record_class__.respond_to?(method_id, include_private) or super
       end
 
-      def constraints
-        rules = Constraint::RuleSet.new
-        yield rules
-        define_method(:constraint_ruleset) {
-          rules + super()
-        }
-      end
-
       def method_missing(method_id, *args, &block)
         if __record_class__.respond_to?(method_id)
           __record_class__.send(method_id, *args, &block)
@@ -123,7 +115,7 @@ module Norm
       end
 
       def constraint_delegate
-        Constraint::AddErrorsDelegate.new(self.errors, self.constraint_ruleset)
+        Constraint::AddErrorsDelegate.new(self.errors)
       end
 
       module ClassMethods
