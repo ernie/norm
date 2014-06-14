@@ -3,8 +3,8 @@ module Norm
     class RuleSet
       attr_reader :rules
 
-      def initialize
-        @rules = []
+      def initialize(rules = [])
+        @rules = rules.dup
       end
 
       def map(**attrs)
@@ -13,6 +13,10 @@ module Norm
 
       def match(error)
         @rules.detect { |rule| rule === error }
+      end
+
+      def +(other)
+        self.class.new(self.rules + other.rules)
       end
 
     end

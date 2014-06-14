@@ -72,8 +72,8 @@ module Norm
       def constraints
         rules = Constraint::RuleSet.new
         yield rules
-        define_method(:constraint_rule_for) { |error|
-          rules.match(error) || super(error)
+        define_method(:constraint_ruleset) {
+          rules + super()
         }
       end
 
@@ -96,12 +96,12 @@ module Norm
       true
     end
 
-    def constraint_rule_for(error)
-      nil
+    def constraint_ruleset
+      Constraint::RuleSet.new
     end
 
-    def constraint_error(error)
-      nil
+    def constraint_delegate
+      Constraint::Delegate.new
     end
 
     def inspect

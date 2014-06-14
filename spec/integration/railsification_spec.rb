@@ -76,12 +76,12 @@ describe_integration 'railsification' do
 
   end
 
-  describe '#constraint_error' do
+  describe '#constraint_delegate' do
 
     it 'captures the mapping from a matching rule in the errors object' do
       person = subject.new
       error = Struct.new(:type, :column_name).new(:not_null, 'name')
-      person.constraint_error(error)
+      person.constraint_delegate.constraint_error(error)
       person.errors[:name].must_include "can't be blank"
     end
 

@@ -10,6 +10,21 @@ module Norm
 
       subject { RuleSet.new }
 
+      describe 'initialization' do
+
+        it 'initializes with a prebuilt array of rules' do
+          RuleSet.new([1, 2, 3]).rules.must_equal [1, 2, 3]
+        end
+
+        it 'does not reuse the same array passed in' do
+          rules = [1, 2, 3]
+          ruleset = RuleSet.new(rules)
+          rules << 4
+          ruleset.rules.size.must_equal 3
+        end
+
+      end
+
       describe '#map' do
 
         it 'adds rules to the RuleSet' do
@@ -18,6 +33,31 @@ module Norm
             to: { username: "can't be blank" }
           )
           subject.rules.size.must_equal 1
+        end
+
+      end
+
+      describe '#+' do
+        let(:ruleset1) {
+          RuleSet.new.tap { |rs|
+            rs.map(
+              type: :not_null, column_name: 'username',
+              to: { username: "can't be blank" }
+            )
+          }
+        }
+        let(:ruleset2) {
+          RuleSet.new.tap { |rs|
+            rs.map(
+              type: :check, constraint_name: 'username_length',
+              to: { username: "must be between 3 and 16 characters" }
+            )
+          }
+        }
+
+        it 'returns a new ruleset with the rules from both sets' do
+          new_ruleset = ruleset1 + ruleset2
+          new_ruleset.rules.must_equal ruleset1.rules + ruleset2.rules
         end
 
       end

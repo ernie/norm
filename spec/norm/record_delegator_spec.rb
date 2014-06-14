@@ -53,22 +53,24 @@ module Norm
     end
 
     describe '.constraints' do
+
       it 'allows addition of constraint rules' do
         subject.constraints do |rule|
           rule.must_be_kind_of Constraint::RuleSet
         end
       end
 
-      it 'defines constraint_rule_for to match against the new RuleSet' do
+      it 'defines constraint_ruleset' do
         subject.constraints do |rule|
           rule.map type: :not_null, to: {base: 'ZOMG NOT NULL CONSTRAINT!!!'}
         end
         error = MiniTest::Mock.new
         error.expect(:type, :not_null)
-        rule = subject.new.constraint_rule_for(error)
+        rule = subject.new.constraint_ruleset.match(error)
         rule.each.to_a.must_equal [[:base, 'ZOMG NOT NULL CONSTRAINT!!!']]
         error.verify
       end
+
     end
 
     describe '.from_repo' do

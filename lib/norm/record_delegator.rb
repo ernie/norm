@@ -89,8 +89,8 @@ module Norm
       def constraints
         rules = Constraint::RuleSet.new
         yield rules
-        define_method(:constraint_rule_for) { |error|
-          rules.match(error) || super(error)
+        define_method(:constraint_ruleset) {
+          rules + super()
         }
       end
 
@@ -122,12 +122,8 @@ module Norm
         __record__.identifying_attributes.values
       end
 
-      def constraint_error(error)
-        if rule = constraint_rule_for(error)
-          rule.each do |attr, message|
-            errors.add(attr, message)
-          end
-        end
+      def constraint_delegate
+        Constraint::AddErrorsDelegate.new(self.errors, self.constraint_ruleset)
       end
 
       module ClassMethods

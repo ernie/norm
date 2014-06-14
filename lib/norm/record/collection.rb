@@ -16,12 +16,12 @@ module Norm
         @record_class = record_class
       end
 
-      def constraint_error(error)
-        nil
+      def constraint_ruleset
+        record_class.new.constraint_ruleset
       end
 
-      def constraint_rule_for(error)
-        record_class.new.constraint_rule_for(error)
+      def constraint_delegate
+        Constraint::Delegate.new
       end
 
       def insert_attributes(attributes)

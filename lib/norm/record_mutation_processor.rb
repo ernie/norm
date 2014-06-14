@@ -28,7 +28,7 @@ module Norm
     # client code wraps the statement in a transaction before executing it, to
     # so the transaction will have been rolled back before the constraint error
     # is rescued here.
-    def insert_one(record, constraint_delegate: record)
+    def insert_one(record, constraint_delegate: nil)
       return false unless record.valid?
 
       yield ->(result, conn) {
@@ -37,6 +37,7 @@ module Norm
       }
       true
     rescue Constraint::ConstraintError => e
+      constraint_delegate ||= record.constraint_delegate
       constraint_delegate.constraint_error(e)
       false
     end
@@ -51,12 +52,12 @@ module Norm
       }
       true
     rescue Constraint::ConstraintError => e
-      constraint_delegate ||= records
+      constraint_delegate ||= records.constraint_delegate
       constraint_delegate.constraint_error(e)
       false
     end
 
-    def update_one(record, constraint_delegate: record)
+    def update_one(record, constraint_delegate: nil)
       return false unless record.valid?
 
       yield ->(result, conn) {
@@ -65,6 +66,7 @@ module Norm
       }
       true
     rescue Constraint::ConstraintError => e
+      constraint_delegate ||= record.constraint_delegate
       constraint_delegate.constraint_error(e)
       false
     end
@@ -79,12 +81,12 @@ module Norm
       }
       true
     rescue Constraint::ConstraintError => e
-      constraint_delegate ||= records
+      constraint_delegate ||= records.constraint_delegate
       constraint_delegate.constraint_error(e)
       false
     end
 
-    def delete_one(record, constraint_delegate: record)
+    def delete_one(record, constraint_delegate: nil)
       return true if record.deleted?
 
       yield ->(result, conn) {
@@ -93,6 +95,7 @@ module Norm
       }
       true
     rescue Constraint::ConstraintError => e
+      constraint_delegate ||= record.constraint_delegate
       constraint_delegate.constraint_error(e)
       false
     end
@@ -107,7 +110,7 @@ module Norm
       }
       true
     rescue Constraint::ConstraintError => e
-      constraint_delegate ||= records
+      constraint_delegate ||= records.constraint_delegate
       constraint_delegate.constraint_error(e)
       false
     end

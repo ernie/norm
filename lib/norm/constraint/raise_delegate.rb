@@ -1,6 +1,6 @@
 module Norm
   module Constraint
-    class RaiseDelegate
+    class RaiseDelegate < Delegate
 
       def constraint_error(error)
         raise error
