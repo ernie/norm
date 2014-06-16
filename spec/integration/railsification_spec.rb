@@ -78,7 +78,8 @@ describe_integration 'railsification' do
 
     it 'adds errors to the object' do
       person = subject.new
-      error = Struct.new(:type, :column_name).new(:not_null, 'name')
+      error = Struct.new(:type, :column_name, :constraint_name).
+        new(:not_null, 'name', 'constraint_name')
       person.constraint_delegate.constraint_error(error)
       person.errors[:name].must_include "can't be blank"
     end

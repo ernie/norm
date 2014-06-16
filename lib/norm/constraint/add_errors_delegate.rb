@@ -8,17 +8,14 @@ module Norm
       end
 
       def constraint_error(error)
-        send("#{error.type}_error", error)
+        add_error_from_constraint_name(error.constraint_name) ||
+          send("#{error.type}_error", error)
       end
 
       private
 
       def check_error(error)
-        if error.constraint_name
-          @errors.add(*options_from_constraint_name(error.constraint_name))
-        else
-          @errors.add(error.column_name || :base, :invalid)
-        end
+        @errors.add(error.column_name || :base, :invalid)
       end
 
       def exclusion_error(error)
@@ -41,8 +38,8 @@ module Norm
         @errors.add(error.column_name || :base, :invalid)
       end
 
-      def options_from_constraint_name(name)
-        if match = CONSTRAINT.match(name)
+      def add_error_from_constraint_name(name)
+        if match = CONSTRAINT.match(name.to_s)
           column, key, opts = match[:column], match[:key], match[:opts]
           opts = Hash[
             opts.to_s.split(/,\s*/).map { |kv|
@@ -50,9 +47,8 @@ module Norm
               [k.to_sym, v]
             }
           ]
-          [column.to_sym, key.to_sym, opts]
-        else
-          [:base, :invalid]
+          @errors.add(column.to_sym, key.to_sym, opts)
+          true
         end
       end
 
