@@ -15,15 +15,15 @@ module Norm
       private
 
       def check_error(error)
-        @errors.add(error.column_name || :base, :invalid)
+        @errors.add(:base, :invalid)
       end
 
       def exclusion_error(error)
-        @errors.add(error.column_name || :base, :invalid)
+        @errors.add(:base, :invalid)
       end
 
       def foreign_key_error(error)
-        @errors.add(error.column_name || :base, :invalid)
+        @errors.add(:base, :invalid)
       end
 
       def not_null_error(error)
@@ -31,11 +31,11 @@ module Norm
       end
 
       def restrict_error(error)
-        @errors.add(error.column_name || :base, :invalid)
+        @errors.add(:base, :invalid)
       end
 
       def unique_error(error)
-        @errors.add(error.column_name || :base, :invalid)
+        @errors.add(:base, :invalid)
       end
 
       def add_error_from_constraint_name(name)
