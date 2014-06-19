@@ -28,17 +28,12 @@ module Norm
         TYPES[error.class]
       end
 
-      def respond_to_missing?(method_id, include_private = false)
-        PG.const_defined?("PG_DIAG_#{method_id}".upcase) or super
-      end
-
-      def method_missing(method_id, *args, &block)
-        const_name = "PG_DIAG_#{method_id}".upcase
-        if PG.const_defined?(const_name)
-          result.error_field(PG.const_get(const_name))
-        else
-          super
-        end
+      PG.constants.map(&:to_s).select { |name|
+        name.start_with? 'PG_DIAG_'
+      }.each do |name|
+        field = PG.const_get(name)
+        name = name.sub(/\APG_DIAG_/, '').downcase
+        define_method(name) { result.error_field(field) }
       end
 
     end
