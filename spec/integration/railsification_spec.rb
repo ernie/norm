@@ -13,7 +13,7 @@ describe_integration 'railsification' do
 
   let(:railsified_delegator_class) {
     Class.new {
-      include Norm::RecordDelegator(Person, railsify: true)
+      include Norm::Record::Delegator(Person, railsify: true)
     }
   }
   subject { railsified_delegator_class }
@@ -36,7 +36,7 @@ describe_integration 'railsification' do
 
   describe '.model_name' do
 
-    it 'uses the Record class, not the RecordDelegator, for naming' do
+    it 'uses the Record class, not the Delegator, for naming' do
       subject.model_name.must_be_kind_of ActiveModel::Name
       subject.model_name.to_s.must_equal 'Person'
     end
