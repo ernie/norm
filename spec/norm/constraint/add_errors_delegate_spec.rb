@@ -28,6 +28,33 @@ module Norm
           errors.verify
         end
 
+        it 'allows trailer for constraint uniqueness with options' do
+          errors = mock_errors(:name, :between, :low => '3', :high => '64')
+          delegate = AddErrorsDelegate.new(errors)
+          error = Struct.new(:type, :constraint_name).
+            new(:check, 'name:between(low:3,high:64)#ignore me')
+          delegate.constraint_error(error)
+          errors.verify
+        end
+
+        it 'allows trailer for constraint uniqueness with options' do
+          errors = mock_errors(:name, :some_key, {})
+          delegate = AddErrorsDelegate.new(errors)
+          error = Struct.new(:type, :constraint_name).
+            new(:check, 'name:some_key#ignore me')
+          delegate.constraint_error(error)
+          errors.verify
+        end
+
+        it 'stops considering key at spaces' do
+          errors = mock_errors(:name, :invalid, {})
+          delegate = AddErrorsDelegate.new(errors)
+          error = Struct.new(:type, :constraint_name).
+            new(:check, 'name:invalid (low:3,high:64)')
+          delegate.constraint_error(error)
+          errors.verify
+        end
+
       end
 
     end

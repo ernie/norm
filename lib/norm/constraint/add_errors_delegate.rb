@@ -1,7 +1,7 @@
 module Norm
   module Constraint
     class AddErrorsDelegate < Delegate
-      CONSTRAINT = /\A(?<column>[^:]+):(?<key>[^\(]+)(\((?<opts>[^)]*)\))?\z/
+      CONSTRAINT = /\A(?<column>[^:]+):(?<key>[^\(\s#]+)(\((?<opts>[^)]*)\))?/
 
       def initialize(errors)
         @errors = errors
