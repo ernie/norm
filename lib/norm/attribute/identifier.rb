@@ -43,11 +43,7 @@ module Norm
     end
 
     def self.Identifier(value)
-      if Identifier === value
-        value
-      else
-        Identifier.new(value)
-      end
+      Identifier === value ? value : Identifier.new(value)
     end
 
   end

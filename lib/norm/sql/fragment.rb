@@ -10,14 +10,16 @@ module Norm
         if Hash === args.first
           @params = []
           @sql = interpolate_hash_params(sql.to_s, args.first)
-        elsif Symbol === sql
-          @sql, @params = Attribute::Identifier(sql).to_s, args
         else
-          @sql, @params = sql.to_s, args
+          @sql, @params = sqlify(sql).to_s, args
         end
       end
 
       private
+
+      def sqlify(object)
+        Symbol === object ? Attribute::Identifier(object) : object
+      end
 
       def interpolate_hash_params(sql, hash_params)
         hash_params = stringify_hash(hash_params)

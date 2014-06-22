@@ -31,9 +31,15 @@ module Norm
         fragment.params.must_equal ['bar']
       end
 
-      it 'converts SQL of a Symbol type to an identifier string' do
+      it 'converts an sql value of a Symbol type to an identifier string' do
         fragment = subject.new(:foo)
         fragment.sql.must_equal '"foo"'
+        fragment.params.must_equal []
+      end
+
+      it 'converts an sql value of an Identifier type to its string value' do
+        fragment = subject.new(Attribute::Identifier('foo.bar'))
+        fragment.sql.must_equal '"foo"."bar"'
         fragment.params.must_equal []
       end
 
