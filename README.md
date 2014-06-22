@@ -75,9 +75,9 @@ could possibly work -- the thing that other, more "magical" things can be
 derived from. For instance, if you take a look at the basic Repository you'll
 you'll see that it expects subclasses to implement
 `[select|insert|update|delete]_statement` methods, which are used as the base
-of more complicated queries. From this, we can derive a class that instead
-supports specification of a table name, and which has its methods implemented
-accordingly.
+of more complicated queries. From this, an Isomorphic repository type is
+derived. This class only requires that we define a table name, and the statement
+methods are built from this.
 
 ## Contributing
 

@@ -233,3 +233,5 @@ module Norm
 
   end
 end
+
+require 'norm/repository/isomorphic'

@@ -31,6 +31,12 @@ module Norm
         fragment.params.must_equal ['bar']
       end
 
+      it 'converts SQL of a Symbol type to an identifier string' do
+        fragment = subject.new(:foo)
+        fragment.sql.must_equal '"foo"'
+        fragment.params.must_equal []
+      end
+
       it 'allows interpolation of nested hash params' do
         fragment = subject.new(
           '$foo.bar.baz', :foo => {:bar => {:baz => 'qux'}}
