@@ -72,7 +72,7 @@ connection_pool gem. I don't anticipate that list to grow much.
 There are a lot of features that Norm doesn't have. This is by design. A core
 principle as I've been working on it has been to build the minimal thing that
 could possibly work -- the thing that other, more "magical" things can be
-derived from. For instance, if you take a look at the basic PostgreSQLRepository
+derived from. For instance, if you take a look at the basic Repository you'll
 you'll see that it expects subclasses to implement
 `[select|insert|update|delete]_statement` methods, which are used as the base
 of more complicated queries. From this, we can derive a class that instead
