@@ -34,6 +34,14 @@ describe_integration 'railsification' do
     subject.new.must_be_kind_of ActiveModel::Conversion
   end
 
+  it 'includes ActiveModel::Serializers::JSON' do
+    subject.new.must_be_kind_of ActiveModel::Serializers::JSON
+  end
+
+  it 'includes ActiveModel::Serializers::Xml' do
+    subject.new.must_be_kind_of ActiveModel::Serializers::Xml
+  end
+
   describe '.model_name' do
 
     it 'uses the Record class, not the Delegator, for naming' do
@@ -70,6 +78,17 @@ describe_integration 'railsification' do
     it 'returns an array of identifying values for the record' do
       person = subject.new(:id => 1, :name => 'Ernie', :age => 36)
       person.to_key.must_equal [1, 'Ernie', 36]
+    end
+
+  end
+
+  describe '#attributes' do
+
+    it 'returns a hash of attributes with stringified keys' do
+      person = subject.new(:id => 1, :name => 'Ernie', :age => 36)
+      person.attributes.must_equal(
+        'id' => 1, 'name' => 'Ernie', 'age' => 36
+      )
     end
 
   end

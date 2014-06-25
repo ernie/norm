@@ -111,6 +111,10 @@ module Norm
           !persisted?
         end
 
+        def attributes
+          __record__.get_attributes(*__record__.attribute_names.map(&:to_s))
+        end
+
         def to_key
           __record__.identifying_attributes.values
         end
@@ -141,6 +145,8 @@ module Norm
                 extend  ActiveModel::Translation
                 include ActiveModel::Validations
                 include ActiveModel::Conversion
+                include ActiveModel::Serializers::JSON
+                include ActiveModel::Serializers::Xml
                 include Delegator::Railsification
               end
               include Delegator

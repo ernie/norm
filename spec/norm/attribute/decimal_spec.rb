@@ -29,7 +29,12 @@ module Norm
         subject { Decimal.load(42) }
 
         it 'casts to string' do
-          subject.to_s.must_equal '0.42E2'
+          if ENV['INTEGRATION'] # FREEDOM PATCHING, AMIRITE?
+            subject.to_s.must_equal '42.0'
+            subject._original_to_s.must_equal '0.42E2'
+          else
+            subject.to_s.must_equal '0.42E2'
+          end
         end
       end
 
