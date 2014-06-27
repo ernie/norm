@@ -235,3 +235,4 @@ module Norm
 end
 
 require 'norm/repository/isomorphic'
+require 'norm/repository/scoped'
