@@ -14,12 +14,12 @@ module Norm
     end
 
     def noop_one(record)
-      record.valid? && true
+      record.valid?
     end
 
     def noop_many(records)
       records = Norm::Record::Collection(records)
-      records.valid? && true
+      records.valid?
     end
 
     # Update the record's attributes and mark it as inserted if the query

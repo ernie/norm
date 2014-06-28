@@ -181,6 +181,15 @@ module Norm
 
       let(:post_repo) {
         Class.new(Repository) {
+          def insert_by_person(record, person)
+            record.person_id = person.id
+            insert(record)
+          end
+
+          def all_by_person(person)
+            select_many(select_statement.where(:person_id => person.id))
+          end
+
           def select_statement
             Norm::SQL.select.from('posts')
           end
@@ -915,6 +924,33 @@ module Norm
         end
 
       end
+
+      describe '"associations"' do
+
+        it 'allows creation of special-purpose methods' do
+          ernie = person_record_class.new(:name => 'Ernie', :age => 36)
+          bert  = person_record_class.new(:name => 'Bert', :age => 37)
+          person_repo.mass_insert([ernie, bert])
+          (1..3).each do |number|
+            ernie_post = post_record_class.
+              new(:title => "Ernie #{number}", :body => "Ernie #{number}")
+            bert_post = post_record_class.
+              new(:title => "Bert #{number}", :body => "Bert #{number}")
+            post_repo.insert_by_person(ernie_post, ernie)
+            post_repo.insert_by_person(bert_post, bert)
+          end
+
+          post_repo.all.size.must_equal 6
+          ernie_posts = post_repo.all_by_person(ernie)
+          bert_posts = post_repo.all_by_person(bert)
+          ernie_posts.size.must_equal 3
+          bert_posts.size.must_equal 3
+          ernie_posts.all? { |post| post.person_id.must_equal ernie.id }
+          bert_posts.all? { |post| post.person_id.must_equal bert.id }
+        end
+
+      end
+
     end
 
   end
