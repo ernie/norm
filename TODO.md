@@ -1,5 +1,6 @@
 # Stuff left to do before release
 
+* Consider alternate extractions for Repository
 * Add remaining clauses to Statement types (WITH, etc)
 * More loaders, and possibly improved parsing support
 * Sample application
