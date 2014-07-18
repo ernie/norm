@@ -3,6 +3,7 @@ module Norm
     class Select < Statement
 
       def initialize(*args)
+        @withs   = WithClause.new
         @selects = SelectClause.new
         @froms   = FromClause.new
         @wheres  = WhereClause.new
@@ -15,6 +16,7 @@ module Norm
       end
 
       def initialize_copy(orig)
+        @withs      = @withs.dup
         @selects    = @selects.dup
         @froms      = @froms.dup
         @wheres     = @wheres.dup
@@ -37,6 +39,15 @@ module Norm
         return @params if @params
         compile!
         @params
+      end
+
+      def with(*args)
+        dup.with!(*args)
+      end
+
+      def with!(*args)
+        @withs << CTE.new(*args)
+        self
       end
 
       def select(*args)
@@ -114,7 +125,7 @@ module Norm
       private
 
       def non_empty_clauses
-        [@selects, @froms, @wheres, @havings,
+        [@withs, @selects, @froms, @wheres, @havings,
          @groups, @orders, @limit, @offset].reject(&:empty?)
       end
 

@@ -12,6 +12,46 @@ module Norm
         Select.new('"id", "name"').sql.must_equal 'SELECT "id", "name"'
       end
 
+      describe '#with!' do
+
+        it 'appends to the existing statement WITH clause' do
+          select = Select.new
+          select.with!(:stmt, Select.new(:foo))
+          select.sql.must_equal "WITH \"stmt\" AS (SELECT \"foo\")\nSELECT *"
+        end
+
+        it 'supports specifying column names' do
+          select = Select.new
+          select.with!(:stmt, Select.new(:foo), columns: [:bar])
+          select.sql.must_equal(
+            "WITH \"stmt\"(\"bar\") AS (SELECT \"foo\")\nSELECT *"
+          )
+        end
+
+      end
+
+      describe '#with' do
+
+        it 'returns a new statement with appended WITH clause' do
+          select = Select.new
+          another_select = select.with(:stmt, Select.new(:foo))
+          select.sql.must_equal 'SELECT *'
+          another_select.sql.must_equal(
+            "WITH \"stmt\" AS (SELECT \"foo\")\nSELECT *"
+          )
+        end
+
+        it 'supports specifying column names' do
+          select = Select.new
+          another_select = select.with(:stmt, Select.new(:foo), columns: [:bar])
+          select.sql.must_equal 'SELECT *'
+          another_select.sql.must_equal(
+            "WITH \"stmt\"(\"bar\") AS (SELECT \"foo\")\nSELECT *"
+          )
+        end
+
+      end
+
       describe '#select!' do
 
         it 'appends to the existing statement SELECT clause' do
