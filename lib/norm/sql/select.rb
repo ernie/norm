@@ -45,8 +45,9 @@ module Norm
         dup.with!(*args)
       end
 
-      def with!(*args)
-        @withs << CTE.new(*args)
+      def with!(*args, recursive: false, **opts)
+        @withs << CTE.new(*args, **opts)
+        @withs.recursive! if recursive
         self
       end
 

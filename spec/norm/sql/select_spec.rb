@@ -28,6 +28,14 @@ module Norm
           )
         end
 
+        it 'supports recursion' do
+          select = Select.new
+          select.with!(:stmt, Select.new(:foo), recursive: true)
+          select.sql.must_equal(
+            "WITH RECURSIVE \"stmt\" AS (SELECT \"foo\")\nSELECT *"
+          )
+        end
+
       end
 
       describe '#with' do
@@ -47,6 +55,15 @@ module Norm
           select.sql.must_equal 'SELECT *'
           another_select.sql.must_equal(
             "WITH \"stmt\"(\"bar\") AS (SELECT \"foo\")\nSELECT *"
+          )
+        end
+
+        it 'supports recursion' do
+          select = Select.new
+          another_select = select.with(:stmt, Select.new(:foo), recursive: true)
+          select.sql.must_equal 'SELECT *'
+          another_select.sql.must_equal(
+            "WITH RECURSIVE \"stmt\" AS (SELECT \"foo\")\nSELECT *"
           )
         end
 

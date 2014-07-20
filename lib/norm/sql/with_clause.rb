@@ -4,7 +4,7 @@ module Norm
 
       def initialize(recursive: false)
         super()
-        @recursive = recursive
+        @recursive = !!recursive
       end
 
       def recursive!
