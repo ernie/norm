@@ -3,6 +3,7 @@ module Norm
     class Insert < Statement
 
       def initialize(*args)
+        @withs     = WithClause.new
         @insert    = InsertClause.new
         @values    = ValuesClause.new
         @returning = ReturningClause.new
@@ -10,6 +11,7 @@ module Norm
       end
 
       def initialize_copy(orig)
+        @withs     = @withs.dup
         @insert    = @insert.dup
         @values    = @values.dup
         @returning = @returning.dup
@@ -29,11 +31,21 @@ module Norm
         @params
       end
 
+      def with(*args)
+        dup.with!(*args)
+      end
+
+      def with!(*args, recursive: false, **opts)
+        @withs << CTE.new(*args, **opts)
+        @withs.recursive! if recursive
+        self
+      end
+
       def insert(*args)
         dup.insert!(*args)
       end
 
-      def insert!(table_name, column_names)
+      def insert!(table_name, column_names = [])
         column_names = Array(column_names)
         if column_names.empty?
           @insert.value = Fragment.new(Attribute::Identifier(table_name))
@@ -85,7 +97,7 @@ module Norm
       private
 
       def non_empty_clauses
-        [@insert, @values, @returning].reject(&:empty?)
+        [@withs, @insert, @values, @returning].reject(&:empty?)
       end
 
     end

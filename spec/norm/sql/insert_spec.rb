@@ -13,12 +13,77 @@ module Norm
           must_equal 'INSERT INTO "people" ("id", "name")'
       end
 
+      describe '#with!' do
+
+        it 'appends to the existing statement WITH clause' do
+          insert = Insert.new(:stmt)
+          insert.with!(:stmt, Insert.new(:foo))
+          insert.sql.must_equal(
+            "WITH \"stmt\" AS (INSERT INTO \"foo\")\nINSERT INTO \"stmt\""
+          )
+        end
+
+        it 'supports specifying column names' do
+          insert = Insert.new(:stmt)
+          insert.with!(:stmt, Insert.new(:foo), columns: [:bar])
+          insert.sql.must_equal(
+            "WITH \"stmt\"(\"bar\") AS (INSERT INTO \"foo\")\nINSERT INTO \"stmt\""
+          )
+        end
+
+        it 'supports recursion' do
+          insert = Insert.new(:stmt)
+          insert.with!(:stmt, Insert.new(:foo), recursive: true)
+          insert.sql.must_equal(
+            "WITH RECURSIVE \"stmt\" AS (INSERT INTO \"foo\")\nINSERT INTO \"stmt\""
+          )
+        end
+
+      end
+
+      describe '#with' do
+
+        it 'returns a new statement with appended WITH clause' do
+          insert = Insert.new(:stmt)
+          another_insert = insert.with(:stmt, Insert.new(:foo))
+          insert.sql.must_equal 'INSERT INTO "stmt"'
+          another_insert.sql.must_equal(
+            "WITH \"stmt\" AS (INSERT INTO \"foo\")\nINSERT INTO \"stmt\""
+          )
+        end
+
+        it 'supports specifying column names' do
+          insert = Insert.new(:stmt)
+          another_insert = insert.with(:stmt, Insert.new(:foo), columns: [:bar])
+          insert.sql.must_equal 'INSERT INTO "stmt"'
+          another_insert.sql.must_equal(
+            "WITH \"stmt\"(\"bar\") AS (INSERT INTO \"foo\")\nINSERT INTO \"stmt\""
+          )
+        end
+
+        it 'supports recursion' do
+          insert = Insert.new(:stmt)
+          another_insert = insert.with(:stmt, Insert.new(:foo), recursive: true)
+          insert.sql.must_equal 'INSERT INTO "stmt"'
+          another_insert.sql.must_equal(
+            "WITH RECURSIVE \"stmt\" AS (INSERT INTO \"foo\")\nINSERT INTO \"stmt\""
+          )
+        end
+
+      end
+
       describe '#insert!' do
 
         it 'replaces the INSERT clause of the statement' do
           insert = Insert.new(:people, :name)
           insert.insert!(:customers, :name)
           insert.sql.must_equal 'INSERT INTO "customers" ("name")'
+        end
+
+        it 'does not require columns' do
+          insert = Insert.new(:people)
+          insert.insert!(:customers)
+          insert.sql.must_equal 'INSERT INTO "customers"'
         end
 
       end
