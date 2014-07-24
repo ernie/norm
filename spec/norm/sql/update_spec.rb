@@ -12,6 +12,65 @@ module Norm
         Update.new('people').sql.must_equal 'UPDATE people'
       end
 
+      describe '#with!' do
+
+        it 'appends to the existing statement WITH clause' do
+          update = Update.new(:stmt)
+          update.with!(:stmt, Insert.new(:foo))
+          update.sql.must_equal(
+            "WITH \"stmt\" AS (INSERT INTO \"foo\")\nUPDATE \"stmt\""
+          )
+        end
+
+        it 'supports specifying column names' do
+          update = Update.new(:stmt)
+          update.with!(:stmt, Insert.new(:foo), columns: [:bar])
+          update.sql.must_equal(
+            "WITH \"stmt\"(\"bar\") AS (INSERT INTO \"foo\")\nUPDATE \"stmt\""
+          )
+        end
+
+        it 'supports recursion' do
+          update = Update.new(:stmt)
+          update.with!(:stmt, Insert.new(:foo), recursive: true)
+          update.sql.must_equal(
+            "WITH RECURSIVE \"stmt\" AS (INSERT INTO \"foo\")\nUPDATE \"stmt\""
+          )
+        end
+
+      end
+
+      describe '#with' do
+
+        it 'returns a new statement with appended WITH clause' do
+          update = Update.new(:stmt)
+          another_update = update.with(:stmt, Insert.new(:foo))
+          update.sql.must_equal 'UPDATE "stmt"'
+          another_update.sql.must_equal(
+            "WITH \"stmt\" AS (INSERT INTO \"foo\")\nUPDATE \"stmt\""
+          )
+        end
+
+        it 'supports specifying column names' do
+          update = Update.new(:stmt)
+          another_update = update.with(:stmt, Insert.new(:foo), columns: [:bar])
+          update.sql.must_equal 'UPDATE "stmt"'
+          another_update.sql.must_equal(
+            "WITH \"stmt\"(\"bar\") AS (INSERT INTO \"foo\")\nUPDATE \"stmt\""
+          )
+        end
+
+        it 'supports recursion' do
+          update = Update.new(:stmt)
+          another_update = update.with(:stmt, Insert.new(:foo), recursive: true)
+          update.sql.must_equal 'UPDATE "stmt"'
+          another_update.sql.must_equal(
+            "WITH RECURSIVE \"stmt\" AS (INSERT INTO \"foo\")\nUPDATE \"stmt\""
+          )
+        end
+
+      end
+
       describe '#update!' do
 
         it 'replaces the existing UPDATE clause of the statement' do

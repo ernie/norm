@@ -3,6 +3,7 @@ module Norm
     class Delete < Statement
 
       def initialize(*args)
+        @withs     = WithClause.new
         @delete    = DeleteClause.new
         @usings    = UsingClause.new
         @wheres    = WhereClause.new
@@ -11,6 +12,7 @@ module Norm
       end
 
       def initialize_copy(orig)
+        @withs    = @withs.dup
         @delete    = @delete.dup
         @usings    = @usings.dup
         @wheres    = @wheres.dup
@@ -29,6 +31,16 @@ module Norm
         return @params if @params
         compile!
         @params
+      end
+
+      def with(*args)
+        dup.with!(*args)
+      end
+
+      def with!(*args, recursive: false, **opts)
+        @withs << CTE.new(*args, **opts)
+        @withs.recursive! if recursive
+        self
       end
 
       def delete(*args)
@@ -70,7 +82,7 @@ module Norm
       private
 
       def non_empty_clauses
-        [@delete, @usings, @wheres, @returning].reject(&:empty?)
+        [@withs, @delete, @usings, @wheres, @returning].reject(&:empty?)
       end
 
     end

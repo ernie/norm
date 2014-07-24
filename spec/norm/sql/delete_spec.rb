@@ -12,6 +12,65 @@ module Norm
         Delete.new('people').sql.must_equal 'DELETE FROM people'
       end
 
+      describe '#with!' do
+
+        it 'appends to the existing statement WITH clause' do
+          delete = Delete.new(:stmt)
+          delete.with!(:stmt, Insert.new(:foo))
+          delete.sql.must_equal(
+            "WITH \"stmt\" AS (INSERT INTO \"foo\")\nDELETE FROM \"stmt\""
+          )
+        end
+
+        it 'supports specifying column names' do
+          delete = Delete.new(:stmt)
+          delete.with!(:stmt, Insert.new(:foo), columns: [:bar])
+          delete.sql.must_equal(
+            "WITH \"stmt\"(\"bar\") AS (INSERT INTO \"foo\")\nDELETE FROM \"stmt\""
+          )
+        end
+
+        it 'supports recursion' do
+          delete = Delete.new(:stmt)
+          delete.with!(:stmt, Insert.new(:foo), recursive: true)
+          delete.sql.must_equal(
+            "WITH RECURSIVE \"stmt\" AS (INSERT INTO \"foo\")\nDELETE FROM \"stmt\""
+          )
+        end
+
+      end
+
+      describe '#with' do
+
+        it 'returns a new statement with appended WITH clause' do
+          delete = Delete.new(:stmt)
+          another_delete = delete.with(:stmt, Insert.new(:foo))
+          delete.sql.must_equal 'DELETE FROM "stmt"'
+          another_delete.sql.must_equal(
+            "WITH \"stmt\" AS (INSERT INTO \"foo\")\nDELETE FROM \"stmt\""
+          )
+        end
+
+        it 'supports specifying column names' do
+          delete = Delete.new(:stmt)
+          another_delete = delete.with(:stmt, Insert.new(:foo), columns: [:bar])
+          delete.sql.must_equal 'DELETE FROM "stmt"'
+          another_delete.sql.must_equal(
+            "WITH \"stmt\"(\"bar\") AS (INSERT INTO \"foo\")\nDELETE FROM \"stmt\""
+          )
+        end
+
+        it 'supports recursion' do
+          delete = Delete.new(:stmt)
+          another_delete = delete.with(:stmt, Insert.new(:foo), recursive: true)
+          delete.sql.must_equal 'DELETE FROM "stmt"'
+          another_delete.sql.must_equal(
+            "WITH RECURSIVE \"stmt\" AS (INSERT INTO \"foo\")\nDELETE FROM \"stmt\""
+          )
+        end
+
+      end
+
       describe '#delete!' do
 
         it 'replaces the existing DELETE FROM clause of the statement' do

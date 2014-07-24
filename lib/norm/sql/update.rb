@@ -3,6 +3,7 @@ module Norm
     class Update < Statement
 
       def initialize(*args)
+        @withs     = WithClause.new
         @update    = UpdateClause.new
         @sets      = SetClause.new
         @froms     = FromClause.new
@@ -12,6 +13,7 @@ module Norm
       end
 
       def initialize_copy(orig)
+        @withs     = @withs.dup
         @update    = @update.dup
         @sets      = @sets.dup
         @froms     = @froms.dup
@@ -31,6 +33,16 @@ module Norm
         return @params if @params
         compile!
         @params
+      end
+
+      def with(*args)
+        dup.with!(*args)
+      end
+
+      def with!(*args, recursive: false, **opts)
+        @withs << CTE.new(*args, **opts)
+        @withs.recursive! if recursive
+        self
       end
 
       def update(*args)
@@ -81,7 +93,7 @@ module Norm
       private
 
       def non_empty_clauses
-        [@update, @sets, @froms, @wheres, @returning].reject(&:empty?)
+        [@withs, @update, @sets, @froms, @wheres, @returning].reject(&:empty?)
       end
 
     end
