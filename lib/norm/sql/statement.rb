@@ -9,10 +9,14 @@ module Norm
       private
 
       def compile!
-        clauses = non_empty_clauses
-        sql = clauses.map(&:sql).join("\n")
-        params = clauses.map(&:params).inject(&:+) || []
+        nec = non_empty_clauses
+        sql = nec.map(&:sql).join("\n")
+        params = nec.map(&:params).inject(&:+) || []
         @sql, @params = sql, params
+      end
+
+      def non_empty_clauses
+        clauses.reject(&:empty?)
       end
 
     end

@@ -125,9 +125,9 @@ module Norm
 
       private
 
-      def non_empty_clauses
-        [@withs, @selects, @froms, @wheres, @havings,
-         @groups, @orders, @limit, @offset].reject(&:empty?)
+      def clauses
+        [@withs, @selects, @froms, @wheres, @havings, @groups, @orders, @limit,
+         @offset]
       end
 
     end

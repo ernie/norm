@@ -81,8 +81,8 @@ module Norm
 
       private
 
-      def non_empty_clauses
-        [@withs, @delete, @usings, @wheres, @returning].reject(&:empty?)
+      def clauses
+        [@withs, @delete, @usings, @wheres, @returning]
       end
 
     end
