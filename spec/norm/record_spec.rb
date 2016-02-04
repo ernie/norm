@@ -158,7 +158,7 @@ module Norm
       end
 
       it 'sets attributes present on the record' do
-        record = subject.new(:name => 'Ernie Miller', :langauge => 'Ruby')
+        record = subject.new(:name => 'Ernie Miller', :language => 'Ruby')
         record.name.must_equal 'Ernie Miller'
         record.age.must_be_nil
       end
