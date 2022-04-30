@@ -88,6 +88,7 @@ module Norm
           end
         })
         mock_pg.expect(:reset, nil)
+        mock_pg.expect(:exec, nil, ['SET application_name = "norm"'])
         mock_pg.expect(:exec, nil, ['SET bytea_output = "hex"'])
         mock_pg.expect(:exec, nil, ['SET backslash_quote = "safe_encoding"'])
         error = proc { subject.exec_string('select 1') }.

@@ -17,11 +17,7 @@ module Norm
         end
       } }
 
-      let(:subclass_of_subclass) { Class.new(subclass) {
-        def self.load_Fixnum(object, *args)
-          'load_Fixnum'
-        end
-      } }
+      let(:subclass_of_subclass) { Class.new(subclass) }
 
       describe 'extension' do
         subject { extender }
@@ -48,8 +44,8 @@ module Norm
         it 'allows reset of method dispatch cache' do
           subject.load(42)
           subject.reset_dispatch!
-          subject.instance_variable_get(:@dispatch)[Fixnum].must_equal(
-            'load_Fixnum'
+          subject.instance_variable_get(:@dispatch)[::Integer].must_equal(
+            'load_Integer'
           )
         end
 
@@ -78,12 +74,10 @@ module Norm
       end
 
       describe 'additional inheritance' do
-        before { subclass.load(42) }
         subject { subclass_of_subclass }
 
         it 'gives inheriters of inheriters their own dispatch cache' do
-          subject.load(42).must_equal 'load_Fixnum'
-          subject.instance_variable_get(:@dispatch).wont_equal(
+          subject.instance_variable_get(:@dispatch).wont_be_same_as(
             subclass.instance_variable_get(:@dispatch)
           )
         end

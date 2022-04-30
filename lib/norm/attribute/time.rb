@@ -1,4 +1,5 @@
 require 'date'
+require 'time'
 
 module Norm
   module Attribute

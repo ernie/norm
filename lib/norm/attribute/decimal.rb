@@ -10,9 +10,9 @@ module Norm
 
         def new_big_decimal(object, precision = 0, scale = nil, *args)
           if scale
-            BigDecimal.new(object, precision).round(scale)
+            BigDecimal(object, precision).round(scale)
           else
-            BigDecimal.new(object, precision)
+            BigDecimal(object, precision)
           end
         end
         alias :load_Numeric :new_big_decimal

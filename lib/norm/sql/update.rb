@@ -35,8 +35,8 @@ module Norm
         @params
       end
 
-      def with(*args)
-        dup.with!(*args)
+      def with(*args, **opts)
+        dup.with!(*args, **opts)
       end
 
       def with!(*args, recursive: false, **opts)

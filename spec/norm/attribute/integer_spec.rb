@@ -17,7 +17,7 @@ module Norm
         end
 
         it 'loads bigdecimals' do
-          subject.load(BigDecimal.new('42.1')).must_equal 42
+          subject.load(BigDecimal('42.1')).must_equal 42
         end
 
         it 'loads floats' do

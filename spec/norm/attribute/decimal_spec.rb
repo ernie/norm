@@ -33,7 +33,7 @@ module Norm
             subject.to_s.must_equal '42.0'
             subject._original_to_s.must_equal '0.42E2'
           else
-            subject.to_s.must_equal '0.42E2'
+            subject.to_s.must_include '0.42e2'
           end
         end
       end

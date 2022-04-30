@@ -187,7 +187,7 @@ module Norm
         it 'returns a legible string listing object attributes' do
           subject.name, subject.age = 'Ernie', 36
           subject.inspect.must_match(
-            /\A#<#<Class:.*?> #<#<Class:.*?> id: <DEFAULT>, name: "Ernie", age: 36>>\z/
+            /\A#<#<Class:.*?> #<#<Class:.*?>::Attributes id: <DEFAULT>, name: "Ernie", age: 36>>\z/
           )
         end
 
